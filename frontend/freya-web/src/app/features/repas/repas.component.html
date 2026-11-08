@@ -1,40 +1,40 @@
-<section class="page">
-  <header class="plan-head">
+<section class="page repas">
+  <header class="hero">
+    <div class="icon" aria-hidden="true">🍴</div>
     <h1>Repas</h1>
-    <p class="sub">Organise tes menus, tes courses et tes recettes</p>
-    <div class="seg">
-      <button type="button" [class.active]="tab() === 'semaine'" (click)="setTab('semaine')">Semaine</button>
-      <button type="button" [class.active]="tab() === 'courses'" (click)="setTab('courses')">Courses</button>
-      <button type="button" [class.active]="tab() === 'recettes'" (click)="setTab('recettes')">Recettes</button>
-    </div>
+    <p class="sub">
+      {{ tab() === 'semaine' ? 'Organise tes menus, tes courses et tes recettes' : 'Planifie, cuisine et organise tes repas' }}
+    </p>
   </header>
+
+  <div class="seg tabs">
+    <button type="button" [class.active]="tab() === 'semaine'" (click)="setTab('semaine')">Semaine</button>
+    <button type="button" [class.active]="tab() === 'courses'" (click)="setTab('courses')">Courses</button>
+    <button type="button" [class.active]="tab() === 'recettes'" (click)="setTab('recettes')">Recettes</button>
+  </div>
 
   @if (tab() === 'semaine') {
     <div class="toolbar">
-      <span class="meta">{{ weekLabel() }}</span>
-      <input type="text" [(ngModel)]="newMealTitle" placeholder="Nom du repas">
-      <input type="date" [(ngModel)]="newMealDate">
-      <select [(ngModel)]="newMealSlot">
-        <option value="Lunch">Déjeuner</option>
-        <option value="Main">Repas</option>
-        <option value="Snack">Collation</option>
-        <option value="Dinner">Dîner</option>
-      </select>
-      <button type="button" (click)="addMeal()">Ajouter un repas</button>
+      <span class="meta-pill">{{ weekLabel() }}</span>
+      <button type="button" class="btn">Générer la semaine</button>
+      <button type="button" class="btn primary" (click)="addMeal()">+ Ajouter un repas</button>
     </div>
 
     <div class="meal-grid">
-      <div></div>
+      <div class="axis"></div>
       @for (slot of slots; track slot) {
         <p class="colhead">{{ slotLabels[slot] }}</p>
       }
       @for (day of days; track day; let i = $index) {
-        <h3>{{ dayLabel(i) }}</h3>
+        <h3 class="day">{{ dayLabel(i) }}</h3>
         @for (slot of slots; track slot) {
           @if (mealAt(i, slot); as meal) {
-            <article class="cell">{{ meal.title }}</article>
+            <article class="cell filled">
+              <div class="thumb" aria-hidden="true"></div>
+              <p>{{ meal.title }}</p>
+            </article>
           } @else {
-            <button type="button" class="slot" (click)="newMealDate = dateForPublic(i); newMealSlot = $any(slot)">Ajouter un repas</button>
+            <button type="button" class="cell slot" (click)="quickAdd(i, slot)">+ Ajouter un repas</button>
           }
         }
       }
@@ -42,35 +42,216 @@
   }
 
   @if (tab() === 'courses') {
-    <section class="panel">
-      <h2>Courses</h2>
-      @if (grocery().length === 0) {
-        <p class="empty">Aucun article pour le moment.</p>
-      } @else {
-        <ul>
-          @for (item of grocery(); track item.id) {
-            <li>{{ item.name }} · {{ item.quantity }} · {{ item.aisle }}</li>
+    <form class="grocery-add" (ngSubmit)="addArticle()">
+      <div class="name-wrap">
+        <label class="field name-field">
+          <span class="sr-only">Article</span>
+          <input
+            type="text"
+            name="newArticle"
+            [ngModel]="newArticle"
+            (ngModelChange)="onArticleQuery($event)"
+            (focus)="suggestionsOpen.set(true)"
+            placeholder="Rechercher un article..."
+            autocomplete="off"
+          >
+        </label>
+        @if (suggestionsOpen() && catalogSuggestions().length) {
+          <ul class="suggestions" role="listbox">
+            @for (item of catalogSuggestions(); track item.name) {
+              <li>
+                <button type="button" (click)="pickCatalogArticle(item)">
+                  <strong>{{ item.name }}</strong>
+                  <span>{{ item.aisle }} · {{ item.unit }}</span>
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+      <label class="field qty-field">
+        <span class="sr-only">Quantité</span>
+        <input type="text" name="newQty" [(ngModel)]="newQty" inputmode="decimal" placeholder="Qté">
+      </label>
+      <label class="field unit-field">
+        <span class="sr-only">Unité</span>
+        <select name="newUnit" [(ngModel)]="newUnit" aria-label="Unité">
+          @for (unit of units; track unit) {
+            <option [value]="unit">{{ unit }}</option>
           }
-        </ul>
+        </select>
+      </label>
+      <button type="submit" class="add-btn" aria-label="Ajouter l'article">+</button>
+    </form>
+
+    @for (aisle of aisles; track aisle) {
+      @if (itemsForAisle(aisle).length) {
+        <section class="panel aisle">
+          <div class="aisle-head">
+            <h2>{{ aisle }}</h2>
+            <div class="aisle-meta">
+              <span>{{ itemsForAisle(aisle).length }} articles</span>
+              <button
+                type="button"
+                class="trash-btn"
+                [disabled]="!boughtCount(aisle)"
+                (click)="askDeleteBought(aisle)"
+                [attr.aria-label]="'Supprimer les articles cochés de ' + aisle"
+                title="Supprimer les articles cochés"
+              >
+                🗑
+              </button>
+            </div>
+          </div>
+          <ul>
+            @for (item of itemsForAisle(aisle); track item.id) {
+              <li [class.bought]="isBought(item)">
+                <button type="button" class="check" [class.on]="isBought(item)" (click)="toggleBought(item)" aria-label="Cocher">
+                  {{ isBought(item) ? '✓' : '' }}
+                </button>
+                <span class="name">{{ item.name }}</span>
+                <span class="qty">{{ item.quantity }}</span>
+              </li>
+            }
+          </ul>
+        </section>
       }
-    </section>
+    }
+
+    @if (deleteConfirmAisle()) {
+      <div class="modal-backdrop" (click)="cancelDeleteBought()" role="presentation"></div>
+      <div class="modal confirm-modal" role="dialog" aria-modal="true" aria-labelledby="delete-confirm-title">
+        <h2 id="delete-confirm-title">Confirmer la suppression</h2>
+        <p>
+          Supprimer {{ boughtCount(deleteConfirmAisle()!) }} article(s) coché(s) de
+          <strong>{{ deleteConfirmAisle() }}</strong> ?
+        </p>
+        <div class="modal-actions">
+          <button type="button" class="btn" (click)="cancelDeleteBought()">Annuler</button>
+          <button type="button" class="btn primary" (click)="confirmDeleteBought()">Supprimer</button>
+        </div>
+      </div>
+    }
   }
 
   @if (tab() === 'recettes') {
-    <section class="panel">
-      <h2>Recettes</h2>
-      @if (recipes().length === 0) {
-        <p class="empty">Aucune recette pour le moment.</p>
-      } @else {
-        <div class="recipes">
-          @for (recipe of recipes(); track recipe.id) {
-            <article>
-              <h3>{{ recipe.title }}</h3>
-              <p>{{ recipe.durationMin }} min · {{ recipe.difficulty }}</p>
-            </article>
+    <label class="search">
+      <input
+        type="search"
+        [ngModel]="recipeQuery()"
+        (ngModelChange)="recipeQuery.set($event)"
+        placeholder="Rechercher une recette..."
+      >
+    </label>
+    <div class="cats">
+      @for (cat of recipeCats; track cat) {
+        <button type="button" [class.active]="recipeCat() === cat.toLowerCase()" (click)="recipeCat.set(cat.toLowerCase())">
+          {{ cat }}
+        </button>
+      }
+    </div>
+    <div class="recipes-head">
+      <h2>Mes recettes ({{ filteredRecipes().length }})</h2>
+      <span class="meta-pill">Plus récentes</span>
+    </div>
+    <div class="recipes">
+      @for (recipe of filteredRecipes(); track recipe.id) {
+        <article>
+          <div
+            class="cover"
+            aria-hidden="true"
+            [style.background-image]="recipe.imageUrl ? 'url(' + recipe.imageUrl + ')' : null"
+            [class.has-photo]="!!recipe.imageUrl"
+          ></div>
+          <div class="info">
+            <h3>{{ recipe.title }}</h3>
+            <p>{{ recipe.durationMin }} min · {{ recipe.difficulty }}</p>
+          </div>
+        </article>
+      }
+    </div>
+    <button type="button" class="btn primary wide" (click)="openRecipeModal()">+ Ajouter une recette</button>
+  }
+
+  @if (recipeModalOpen()) {
+    <div class="modal-backdrop" (click)="closeRecipeModal()" role="presentation"></div>
+    <div
+      class="modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="recipe-modal-title"
+      (click)="$event.stopPropagation()"
+    >
+      <header class="modal-head">
+        <h2 id="recipe-modal-title">Nouvelle recette</h2>
+        <button type="button" class="modal-close" (click)="closeRecipeModal()" aria-label="Fermer">×</button>
+      </header>
+
+      <form class="modal-form" (ngSubmit)="submitRecipe()">
+        <label class="field">Titre
+          <input type="text" name="title" [(ngModel)]="recipeForm.title" placeholder="Ex. Poulet curry coco" required autocomplete="off">
+        </label>
+
+        <div class="modal-row">
+          <label class="field">Durée (min)
+            <input type="number" name="durationMin" [(ngModel)]="recipeForm.durationMin" min="1" max="600" required>
+          </label>
+          <label class="field">Difficulté
+            <select name="difficulty" [(ngModel)]="recipeForm.difficulty">
+              @for (level of difficulties; track level) {
+                <option [value]="level">{{ level }}</option>
+              }
+            </select>
+          </label>
+        </div>
+
+        <label class="field">Catégorie
+          <select name="category" [(ngModel)]="recipeForm.category">
+            @for (cat of recipeFormCats; track cat) {
+              <option [value]="cat">{{ cat }}</option>
+            }
+          </select>
+        </label>
+
+        <div class="photo-field">
+          <span class="photo-label">Photo</span>
+          @if (recipeForm.imageUrl) {
+            <div class="photo-preview" [style.background-image]="'url(' + recipeForm.imageUrl + ')'"></div>
+            <div class="photo-actions">
+              <label class="btn">
+                Changer
+                <input type="file" accept="image/*" (change)="onRecipePhotoSelected($event)" hidden>
+              </label>
+              <button type="button" class="btn" (click)="clearRecipePhoto()">Retirer</button>
+            </div>
+          } @else {
+            <label class="photo-upload btn">
+              + Ajouter une photo
+              <input type="file" accept="image/*" (change)="onRecipePhotoSelected($event)" hidden>
+            </label>
           }
         </div>
-      }
-    </section>
+
+        <label class="field">Instructions
+          <textarea
+            name="instructions"
+            [(ngModel)]="recipeForm.instructions"
+            rows="4"
+            placeholder="Étapes, conseils, quantités…"
+          ></textarea>
+        </label>
+
+        @if (recipeFormError()) {
+          <p class="error">{{ recipeFormError() }}</p>
+        }
+
+        <div class="modal-actions">
+          <button type="button" class="btn" (click)="closeRecipeModal()" [disabled]="recipeSaving()">Annuler</button>
+          <button type="submit" class="btn primary" [disabled]="recipeSaving()">
+            {{ recipeSaving() ? 'Enregistrement…' : 'Enregistrer' }}
+          </button>
+        </div>
+      </form>
+    </div>
   }
 </section>

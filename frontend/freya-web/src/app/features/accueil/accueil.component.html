@@ -1,52 +1,144 @@
-@if (data(); as d) {
-  <section class="page">
-    <header>
-      <h1>Planning</h1>
-      <p class="sub">Ta journée en un coup d’œil</p>
-    </header>
-    <div class="meta">
-      <span>{{ formatDate(d.date) }}</span>
-      <span>{{ d.time }}</span>
-      <span>{{ d.temperatureC ?? '—' }} °C</span>
+<section class="page accueil">
+  <header class="hero">
+    <div class="icon" aria-hidden="true">⌂</div>
+    <h1>Accueil</h1>
+    <p class="sub">Ta journée en un coup d’œil</p>
+  </header>
+
+  @if (nextTrip(); as trip) {
+    <a class="trip-banner" routerLink="/voyages">
+      <span class="trip-label">Voyage</span>
+      <strong>{{ trip.title }}</strong>
+      <span class="trip-count">{{ countdown(trip.daysUntil) }}</span>
+    </a>
+  }
+
+  <div class="top-meta">
+    <p class="meta-pill">{{ dateLabel() }} · {{ time() }}</p>
+    <p class="meta-pill weather">☀ {{ temperature() }}°C</p>
+  </div>
+
+  <section class="panel composer" aria-label="Nouvel événement">
+    <label class="field">Événement
+      <input type="text" [(ngModel)]="newTitle" placeholder="Musculation" autocomplete="off">
+    </label>
+    <label class="field">Date
+      <app-date-picker [(ngModel)]="newDate" name="newDate"></app-date-picker>
+    </label>
+    <label class="field">Heure
+      <input type="time" [(ngModel)]="newTime">
+    </label>
+    <button type="button" class="btn primary add" (click)="addEvent()" aria-label="Ajouter">+</button>
+    @if (error()) {
+      <p class="error">{{ error() }}</p>
+    }
+  </section>
+
+  <section class="panel tasks">
+    <div class="section-head">
+      <h2>✓ Tâches du jour</h2>
+      <a routerLink="/planning">Voir le planning →</a>
     </div>
-    <div class="split">
-      <section class="panel">
-        <div class="head">
-          <h2>Tâches du jour</h2>
-          <a routerLink="/planning">Voir le planning</a>
-        </div>
-        @if (d.events.length === 0) {
-          <p class="empty">Aucun événement aujourd’hui. Ajoute-en depuis le planning.</p>
-        } @else {
-          <ul>
-            @for (event of d.events; track event.title + event.startTime) {
-              <li>
-                <span>{{ event.startTime.slice(0, 5) }}@if (event.endTime) { – {{ event.endTime.slice(0, 5) }} }</span>
+
+    <div class="task-group">
+      <h3>Événements</h3>
+      @if (events().length === 0) {
+        <p class="empty-group">Aucun événement aujourd’hui.</p>
+      } @else {
+        <ol>
+          @for (event of events(); track event.title + event.startTime; let i = $index) {
+            <li [class.current]="i === 0 && !event.done">
+              <span class="time">{{ event.startTime }}@if (event.endTime) { – {{ event.endTime }} }</span>
+              <div class="task-card">
+                <span class="task-ico" aria-hidden="true">{{ event.icon }}</span>
                 <span>{{ event.title }}</span>
-              </li>
-            }
-          </ul>
-        }
-      </section>
-      <section class="panel">
-        <div class="head">
-          <h2>Repas du jour</h2>
-          <a routerLink="/repas">Voir les recettes</a>
-        </div>
-        @if (d.meals.length === 0) {
-          <p class="empty">Aucun repas planifié pour aujourd’hui.</p>
-        } @else {
-          <div class="meals">
-            @for (meal of d.meals; track meal.slot) {
-              <article>
-                <h3>{{ meal.slot }}</h3>
-                <p>{{ meal.title }}</p>
-                <p class="state">{{ meal.done ? 'Fait' : 'À faire' }}</p>
-              </article>
-            }
-          </div>
-        }
-      </section>
+              </div>
+              <span class="check" [class.on]="event.done" aria-hidden="true">{{ event.done ? '✓' : '' }}</span>
+            </li>
+          }
+        </ol>
+      }
+    </div>
+
+    <div class="task-group">
+      <h3>Objectifs</h3>
+      @if (todayObjectives().length === 0) {
+        <p class="empty-group">Aucun objectif aujourd’hui.</p>
+      } @else {
+        <ol>
+          @for (item of todayObjectives(); track item.id) {
+            <li>
+              <span class="time">{{ item.meta }}</span>
+              <div class="task-card">
+                <span class="task-ico" aria-hidden="true">🎯</span>
+                <span>{{ item.title }}</span>
+              </div>
+              <span class="check" [class.on]="item.done" aria-hidden="true">{{ item.done ? '✓' : '' }}</span>
+            </li>
+          }
+        </ol>
+      }
+    </div>
+
+    <div class="task-group">
+      <h3>Habitudes</h3>
+      @if (todayHabits().length === 0) {
+        <p class="empty-group">Aucune habitude aujourd’hui.</p>
+      } @else {
+        <ol>
+          @for (item of todayHabits(); track item.id) {
+            <li>
+              <span class="time">{{ item.meta }}</span>
+              <div class="task-card">
+                <span class="task-ico" aria-hidden="true">🏠</span>
+                <span>{{ item.title }}</span>
+              </div>
+              <span class="check" [class.on]="item.done" aria-hidden="true">{{ item.done ? '✓' : '' }}</span>
+            </li>
+          }
+        </ol>
+      }
     </div>
   </section>
-}
+
+  <section class="panel meals">
+    <div class="section-head">
+      <h2>🍴 Repas du jour</h2>
+      <a routerLink="/repas">Voir les recettes →</a>
+    </div>
+    <div class="meal-row">
+      @for (meal of meals(); track meal.slot) {
+        <article>
+          <div class="ph" aria-hidden="true"></div>
+          <span class="status" [class.on]="meal.done">{{ meal.done ? '✓' : '' }}</span>
+          <h3>{{ meal.slot }}</h3>
+          <p>{{ meal.title }}</p>
+        </article>
+      }
+    </div>
+  </section>
+
+  <section class="panel week" aria-label="Planning de la semaine">
+    <div class="section-head">
+      <h2>▦ Planning de la semaine</h2>
+      <a routerLink="/planning">Voir →</a>
+    </div>
+    <div class="week-row">
+      @for (day of weekDays(); track day.date) {
+        <article [class.today]="day.isToday">
+          <h3>{{ day.label }}</h3>
+          <p class="day-num">{{ day.dayNum }}</p>
+          @if (day.events.length === 0) {
+            <p class="empty-day">Libre</p>
+          } @else {
+            <ul>
+              @for (item of day.events; track item) {
+                <li>{{ item }}</li>
+              }
+            </ul>
+          }
+        </article>
+      }
+    </div>
+  </section>
+</section>

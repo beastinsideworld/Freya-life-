@@ -384,6 +384,24 @@ api.MapPatch("/grocery/items/{id:guid}", async (Guid id, GroceryPatchRequest req
     return Results.Ok(entity);
 }).RequireAuthorization();
 
+api.MapDelete("/grocery/items/{id:guid}", async (Guid id, ICurrentUser current, FreyaDbContext db) =>
+{
+    if (current.UserId is null)
+    {
+        return Results.Unauthorized();
+    }
+
+    var entity = await db.GroceryItems.FirstOrDefaultAsync(g => g.Id == id && g.UserId == current.UserId);
+    if (entity is null)
+    {
+        return Results.NotFound();
+    }
+
+    db.GroceryItems.Remove(entity);
+    await db.SaveChangesAsync();
+    return Results.NoContent();
+}).RequireAuthorization();
+
 api.MapGet("/recipes", async (string? q, string? category, ICurrentUser current, FreyaDbContext db) =>
 {
     if (current.UserId is null)

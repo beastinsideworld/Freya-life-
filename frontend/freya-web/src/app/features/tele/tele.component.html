@@ -1,0 +1,132 @@
+<section class="page tele">
+  <header class="hero">
+    <div class="icon" aria-hidden="true">📺</div>
+    <h1>Télé</h1>
+    <p class="sub">Note ce que tu vois pour ne rien oublier</p>
+  </header>
+
+  <div class="seg tabs">
+    @for (cat of categories; track cat.id) {
+      <button type="button" [class.active]="category() === cat.id" (click)="setCategory(cat.id)">
+        {{ cat.label }}
+      </button>
+    }
+  </div>
+
+  <section class="panel">
+    <div class="section-head">
+      <div>
+        <h2>{{ currentCategory().label }}</h2>
+        <p class="hint">{{ currentCategory().hint }}</p>
+      </div>
+      <button type="button" class="btn primary" (click)="toggleForm()">+ Ajouter</button>
+    </div>
+
+    @if (showForm()) {
+      <form class="inline-form" (ngSubmit)="addItem()">
+        <label class="field">Titre
+          <input type="text" name="title" [(ngModel)]="title" placeholder="Ex. Nom du film, jeu, manga…" required autocomplete="off">
+        </label>
+
+        @if (category() === 'audiovisuel') {
+          <fieldset class="type-field">
+            <legend>Type</legend>
+            <div class="seg">
+              @for (type of mediaTypes; track type.id) {
+                <button
+                  type="button"
+                  class="chip"
+                  [class.active]="mediaType === type.id"
+                  (click)="mediaType = type.id"
+                >
+                  {{ type.label }}
+                </button>
+              }
+            </div>
+          </fieldset>
+        }
+
+        <label class="field">Note
+          <input type="text" name="note" [(ngModel)]="note" placeholder="Où tu l’as vu, pourquoi…" autocomplete="off">
+        </label>
+
+        <div class="form-actions">
+          <button type="button" class="btn" (click)="toggleForm()">Annuler</button>
+          <button type="submit" class="btn primary">Enregistrer</button>
+        </div>
+      </form>
+    }
+
+    @if (filteredItems().length === 0) {
+      <p class="empty">Rien noté dans cette catégorie pour le moment.</p>
+    } @else {
+      <ul class="item-list">
+        @for (item of filteredItems(); track item.id) {
+          <li class="item-row-clickable" [class.done]="item.done" (click)="openEditor(item)">
+            <button type="button" class="check" [class.on]="item.done" (click)="toggleDone(item.id); $event.stopPropagation()" aria-label="Marquer comme fait">
+              {{ item.done ? '✓' : '' }}
+            </button>
+            <div class="item-body">
+              <strong>{{ item.title }}</strong>
+              <span>
+                @if (item.mediaType) { {{ mediaLabel(item.mediaType) }} · }
+                {{ item.note || 'Sans note' }}
+              </span>
+            </div>
+            <button type="button" class="ghost" (click)="removeItem(item.id); $event.stopPropagation()" aria-label="Supprimer">×</button>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+
+  @if (editingItem(); as item) {
+    <div class="modal-backdrop" (click)="closeEditor()" role="presentation"></div>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="edit-tele-title">
+      <header class="modal-head">
+        <h2 id="edit-tele-title">Modifier</h2>
+        <button type="button" class="modal-close" (click)="closeEditor()" aria-label="Fermer">×</button>
+      </header>
+      <form class="modal-form" (ngSubmit)="saveEdit()">
+        <label class="field">Titre
+          <input type="text" name="editTitle" [(ngModel)]="editTitle" required autocomplete="off">
+        </label>
+
+        <label class="field">Catégorie
+          <select name="editCategory" [(ngModel)]="editCategory">
+            @for (cat of categories; track cat.id) {
+              <option [value]="cat.id">{{ cat.label }}</option>
+            }
+          </select>
+        </label>
+
+        @if (editCategory === 'audiovisuel') {
+          <fieldset class="type-field">
+            <legend>Type</legend>
+            <div class="seg">
+              @for (type of mediaTypes; track type.id) {
+                <button
+                  type="button"
+                  class="chip"
+                  [class.active]="editMediaType === type.id"
+                  (click)="editMediaType = type.id"
+                >
+                  {{ type.label }}
+                </button>
+              }
+            </div>
+          </fieldset>
+        }
+
+        <label class="field">Note
+          <input type="text" name="editNote" [(ngModel)]="editNote" autocomplete="off">
+        </label>
+
+        <div class="modal-actions">
+          <button type="button" class="btn" (click)="closeEditor()">Annuler</button>
+          <button type="submit" class="btn primary">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  }
+</section>

@@ -1,19 +1,397 @@
-<section class="page">
-  <header>
+<section class="page voyages">
+  <header class="hero">
+    <div class="icon" aria-hidden="true">✈</div>
     <h1>Voyages</h1>
-    <p class="sub">Prépare, organise et suis tous tes voyages</p>
+    <p class="sub">
+      {{
+        selectedTrip()
+          ? 'Organise chaque destination en un seul endroit'
+          : 'Prépare, organise et suis tous tes voyages'
+      }}
+    </p>
   </header>
-  @if (trips().length === 0) {
-    <p class="empty">Aucun voyage pour le moment.</p>
-  } @else {
-    <div class="list">
-      @for (trip of trips(); track trip.id) {
+
+  @if (!selectedTrip()) {
+    <div class="seg tabs">
+      <button type="button" [class.active]="tab() === 'mes'" (click)="setTab('mes')">Mes voyages</button>
+      <button type="button" [class.active]="tab() === 'inspirations'" (click)="setTab('inspirations')">Inspirations</button>
+      <button type="button" [class.active]="tab() === 'budget'" (click)="setTab('budget')">Budget</button>
+    </div>
+  }
+
+  @if (!selectedTrip() && tab() === 'mes') {
+    <div class="section-head">
+      <h2>Mes prochains voyages</h2>
+    </div>
+
+    @if (upcomingTrips().length === 0) {
+      <p class="empty">Aucun voyage à venir pour le moment.</p>
+    } @else {
+      <div class="trip-list">
+        @for (trip of upcomingTrips(); track trip.id) {
+          <article class="trip-card" (click)="openTrip(trip)">
+            <div
+              class="cover"
+              [class.has-photo]="!!trip.coverUrl"
+              [style.background-image]="trip.coverUrl ? 'url(' + trip.coverUrl + ')' : null"
+            ></div>
+            <div class="body">
+              <h3>{{ trip.title }}</h3>
+              <p>{{ trip.subtitle }}</p>
+              <p class="dates">{{ formatDates(trip.startDate, trip.endDate) }}</p>
+              <span class="badge">{{ countdown(trip.daysUntil) }}</span>
+            </div>
+          </article>
+        }
+      </div>
+    }
+
+    <button type="button" class="btn primary wide" (click)="openTripModal()">+ Ajouter un voyage</button>
+
+    <div class="section-head archive-head">
+      <h2>Voyages passés</h2>
+      <span class="archive-tag">Archive</span>
+    </div>
+
+    @if (pastTrips().length === 0) {
+      <p class="empty">Aucun voyage archivé pour le moment.</p>
+    } @else {
+      <div class="trip-list archive-list">
+        @for (trip of pastTrips(); track trip.id) {
+          <article class="trip-card past" (click)="openTrip(trip)">
+            <div
+              class="cover"
+              [class.has-photo]="!!trip.coverUrl"
+              [style.background-image]="trip.coverUrl ? 'url(' + trip.coverUrl + ')' : null"
+            ></div>
+            <div class="body">
+              <h3>{{ trip.title }}</h3>
+              <p>{{ trip.subtitle }}</p>
+              <p class="dates">{{ formatDates(trip.startDate, trip.endDate) }}</p>
+              <span class="badge muted">Passé</span>
+            </div>
+          </article>
+        }
+      </div>
+    }
+  }
+
+  @if (!selectedTrip() && tab() === 'inspirations') {
+    <div class="section-head">
+      <h2>Idées de destinations</h2>
+    </div>
+
+    <div class="inspire-grid">
+      @for (item of inspirations(); track item.id) {
         <article>
-          <h2>{{ trip.title }}</h2>
-          <p>{{ trip.startDate }} – {{ trip.endDate }}</p>
-          <p class="meta">{{ countdown(trip.daysUntil) }}</p>
+          <div class="cover tall"></div>
+          <h3>{{ item.title }}</h3>
+          <p>{{ item.hint }}</p>
+          @if (item.notes) {
+            <p class="notes">{{ item.notes }}</p>
+          }
         </article>
       }
+    </div>
+
+    <button type="button" class="btn primary wide" (click)="openInspirationModal()">+ Ajouter une inspiration</button>
+  }
+
+  @if (!selectedTrip() && tab() === 'budget') {
+    <section class="panel">
+      <h2>Budget des prochains voyages</h2>
+      @if (globalBudget().length === 0) {
+        <p class="empty">Aucun budget à afficher.</p>
+      } @else {
+        <ul class="budget">
+          @for (line of globalBudget(); track line.id) {
+            <li><span>{{ line.label }}</span><span>{{ line.amount }}</span></li>
+          }
+        </ul>
+      }
+    </section>
+  }
+
+  @if (selectedTrip(); as trip) {
+    <button type="button" class="back-link" (click)="closeDetail()">← Retour aux voyages</button>
+
+    <article class="hero-card">
+      <h2>{{ trip.title }}</h2>
+      <p>{{ trip.places }}</p>
+      <span class="meta-pill">{{ formatDates(trip.startDate, trip.endDate) }}</span>
+      <span class="badge">{{ countdown(trip.daysUntil) }}</span>
+    </article>
+
+    <div class="seg tabs detail-tabs">
+      <button type="button" [class.active]="detailSection() === 'outils'" (click)="setDetailSection('outils')">Préparation</button>
+      <button type="button" [class.active]="detailSection() === 'checklist'" (click)="setDetailSection('checklist')">Checklist</button>
+      <button type="button" [class.active]="detailSection() === 'budget'" (click)="setDetailSection('budget')">Budget</button>
+      <button type="button" [class.active]="detailSection() === 'infos'" (click)="setDetailSection('infos')">Infos</button>
+    </div>
+
+    @if (detailSection() === 'outils') {
+      <h2>Outils de préparation</h2>
+      <div class="tools">
+        @for (tool of tools; track tool.title) {
+          <div class="tool">
+            <strong>{{ tool.title }}</strong>
+            <span>{{ tool.sub }}</span>
+          </div>
+        }
+      </div>
+
+      @if (matchedInspirations().length) {
+        <section class="panel inspire-match">
+          <h3>Inspirations liées</h3>
+          <p class="help">Des idées correspondent à ce voyage. Importe-les dans tes infos.</p>
+          <div class="inspire-actions">
+            @for (item of matchedInspirations(); track item.id) {
+              <button type="button" class="btn primary" (click)="applyInspiration(item)">
+                Inspiration · {{ item.title }}
+              </button>
+            }
+          </div>
+          @if (inspirationAppliedMsg()) {
+            <p class="ok">{{ inspirationAppliedMsg() }}</p>
+          }
+        </section>
+      }
+    }
+
+    @if (detailSection() === 'checklist') {
+      <section class="panel">
+        <h2>Checklist du voyage</h2>
+        <ul class="check-list">
+          @for (item of trip.checklist; track item.id) {
+            <li [class.done]="item.done">
+              <button
+                type="button"
+                class="check"
+                [class.on]="item.done"
+                (click)="toggleChecklistItem(trip.id, item.id)"
+                aria-label="Cocher"
+              >
+                {{ item.done ? '✓' : '' }}
+              </button>
+              <span>{{ item.label }}</span>
+            </li>
+          }
+        </ul>
+
+        <form class="inline-add" (ngSubmit)="addChecklistItem(trip.id)">
+          <input
+            type="text"
+            name="checklistDraft"
+            [(ngModel)]="checklistDraft"
+            placeholder="Ajouter un élément…"
+            autocomplete="off"
+          >
+          <button type="submit" class="btn primary">+</button>
+        </form>
+      </section>
+    }
+
+    @if (detailSection() === 'budget') {
+      <section class="panel">
+        <h2>Budget {{ trip.title }}</h2>
+        <ul class="budget">
+          @for (line of trip.budget; track line.id) {
+            <li><span>{{ line.label }}</span><span>{{ line.amount }}</span></li>
+          }
+        </ul>
+
+        <form class="inline-add budget-add" (ngSubmit)="addBudgetLine(trip.id)">
+          <input
+            type="text"
+            name="budgetLabelDraft"
+            [(ngModel)]="budgetLabelDraft"
+            placeholder="Poste (ex. Location voiture)"
+            autocomplete="off"
+          >
+          <input
+            type="text"
+            name="budgetAmountDraft"
+            [(ngModel)]="budgetAmountDraft"
+            placeholder="Montant"
+            autocomplete="off"
+          >
+          <button type="submit" class="btn primary">+</button>
+        </form>
+      </section>
+    }
+
+    @if (detailSection() === 'infos') {
+      <div class="detail-grid">
+        <section class="panel">
+          <h3>Restaurants à voir</h3>
+          @if (trip.restos.length === 0) {
+            <p class="empty">Aucune adresse pour l’instant.</p>
+          } @else {
+            <ul>@for (x of trip.restos; track x) { <li>{{ x }}</li> }</ul>
+          }
+        </section>
+        <section class="panel">
+          <h3>Randonnées à faire</h3>
+          @if (trip.hikes.length === 0) {
+            <p class="empty">Aucune idée pour l’instant.</p>
+          } @else {
+            <ul>@for (x of trip.hikes; track x) { <li>{{ x }}</li> }</ul>
+          }
+        </section>
+        <section class="panel">
+          <h3>Endroits à visiter</h3>
+          @if (trip.visits.length === 0) {
+            <p class="empty">Aucune idée pour l’instant.</p>
+          } @else {
+            <ul>@for (x of trip.visits; track x) { <li>{{ x }}</li> }</ul>
+          }
+        </section>
+        <section class="panel">
+          <h3>Hôtels / où dormir</h3>
+          @if (trip.hotels.length === 0) {
+            <p class="empty">Aucune adresse pour l’instant.</p>
+          } @else {
+            <ul>@for (x of trip.hotels; track x) { <li>{{ x }}</li> }</ul>
+          }
+        </section>
+        <section class="panel">
+          <h3>Transport à prendre</h3>
+          @if (trip.transport.length === 0) {
+            <p class="empty">Aucune idée pour l’instant.</p>
+          } @else {
+            <ul>@for (x of trip.transport; track x) { <li>{{ x }}</li> }</ul>
+          }
+        </section>
+      </div>
+
+      <div class="detail-actions">
+        <button type="button" class="btn primary">+ Ajouter une adresse</button>
+        <button type="button" class="btn">Créer mon itinéraire</button>
+      </div>
+    }
+  }
+
+  @if (tripModalOpen()) {
+    <div class="modal-backdrop" (click)="closeTripModal()"></div>
+    <div
+      class="modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="trip-modal-title"
+      (click)="$event.stopPropagation()"
+    >
+      <header class="modal-head">
+        <h2 id="trip-modal-title">Nouveau voyage</h2>
+        <button type="button" class="modal-close" (click)="closeTripModal()" aria-label="Fermer">×</button>
+      </header>
+
+      <form class="modal-form" (ngSubmit)="submitTrip()">
+        <label class="field">Nom du voyage
+          <input type="text" name="title" [(ngModel)]="tripForm.title" placeholder="Ex. Portugal" required autocomplete="off">
+        </label>
+
+        <label class="field">Endroit
+          <input type="text" name="places" [(ngModel)]="tripForm.places" placeholder="Ex. Porto · Lisbonne · Sintra" required autocomplete="off">
+        </label>
+
+        <div class="modal-row">
+          <label class="field">Départ
+            <app-date-picker name="startDate" [(ngModel)]="tripForm.startDate"></app-date-picker>
+          </label>
+          <label class="field">Retour
+            <app-date-picker name="endDate" [(ngModel)]="tripForm.endDate"></app-date-picker>
+          </label>
+        </div>
+
+        <div class="photo-field">
+          <span class="photo-label">Photo</span>
+          @if (tripForm.coverUrl) {
+            <div class="photo-preview" [style.background-image]="'url(' + tripForm.coverUrl + ')'"></div>
+            <div class="photo-actions">
+              <label class="btn">
+                Changer
+                <input type="file" accept="image/*" (change)="onTripPhotoSelected($event)" hidden>
+              </label>
+              <button type="button" class="btn" (click)="clearTripPhoto()">Retirer</button>
+            </div>
+          } @else {
+            <label class="photo-upload btn">
+              + Ajouter une photo
+              <input type="file" accept="image/*" (change)="onTripPhotoSelected($event)" hidden>
+            </label>
+          }
+        </div>
+
+        @if (tripFormError()) {
+          <p class="error">{{ tripFormError() }}</p>
+        }
+
+        <div class="modal-actions">
+          <button type="button" class="btn" (click)="closeTripModal()" [disabled]="tripSaving()">Annuler</button>
+          <button type="submit" class="btn primary" [disabled]="tripSaving()">
+            {{ tripSaving() ? 'Création…' : 'Créer' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  }
+
+  @if (inspirationModalOpen()) {
+    <div class="modal-backdrop" (click)="closeInspirationModal()"></div>
+    <div
+      class="modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="inspiration-modal-title"
+      (click)="$event.stopPropagation()"
+    >
+      <header class="modal-head">
+        <h2 id="inspiration-modal-title">Nouvelle inspiration</h2>
+        <button type="button" class="modal-close" (click)="closeInspirationModal()" aria-label="Fermer">×</button>
+      </header>
+
+      <form class="modal-form" (ngSubmit)="submitInspiration()">
+        <label class="field">Ville ou pays
+          <input type="text" name="inspTitle" [(ngModel)]="inspirationForm.title" placeholder="Ex. Japon" required autocomplete="off">
+        </label>
+
+        <label class="field">Lieux / idée courte
+          <input type="text" name="inspHint" [(ngModel)]="inspirationForm.hint" placeholder="Ex. Tokyo · Kyoto" autocomplete="off">
+        </label>
+
+        <label class="field">Notes
+          <textarea name="inspNotes" [(ngModel)]="inspirationForm.notes" rows="2" placeholder="Ambiance, conseils…"></textarea>
+        </label>
+
+        <label class="field">Restaurants
+          <textarea name="inspRestos" [(ngModel)]="inspirationForm.restos" rows="2" placeholder="Un par ligne ou séparés par des virgules"></textarea>
+        </label>
+
+        <label class="field">Visites
+          <textarea name="inspVisits" [(ngModel)]="inspirationForm.visits" rows="2" placeholder="Un par ligne ou séparés par des virgules"></textarea>
+        </label>
+
+        <label class="field">Randonnées
+          <textarea name="inspHikes" [(ngModel)]="inspirationForm.hikes" rows="2" placeholder="Un par ligne ou séparés par des virgules"></textarea>
+        </label>
+
+        <label class="field">Hôtels
+          <textarea name="inspHotels" [(ngModel)]="inspirationForm.hotels" rows="2" placeholder="Un par ligne ou séparés par des virgules"></textarea>
+        </label>
+
+        <label class="field">Transport
+          <textarea name="inspTransport" [(ngModel)]="inspirationForm.transport" rows="2" placeholder="Un par ligne ou séparés par des virgules"></textarea>
+        </label>
+
+        @if (inspirationFormError()) {
+          <p class="error">{{ inspirationFormError() }}</p>
+        }
+
+        <div class="modal-actions">
+          <button type="button" class="btn" (click)="closeInspirationModal()">Annuler</button>
+          <button type="submit" class="btn primary">Enregistrer</button>
+        </div>
+      </form>
     </div>
   }
 </section>

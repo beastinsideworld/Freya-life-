@@ -36,4 +36,8 @@ export class EventsService {
   create(payload: CreateEventPayload) {
     return this.http.post<CalendarEvent>(`${environment.apiUrl}/events`, payload);
   }
+
+  update(id: string, payload: CreateEventPayload) {
+    return this.http.put<CalendarEvent>(`${environment.apiUrl}/events/${id}`, payload);
+  }
 }

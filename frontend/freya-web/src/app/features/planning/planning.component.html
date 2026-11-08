@@ -1,64 +1,328 @@
-<section class="page">
-  <header class="plan-head">
+<section class="page planning">
+  <header class="hero">
+    <div class="icon" aria-hidden="true">▦</div>
     <h1>Planning</h1>
     <p class="sub">Organise ton temps, tes objectifs et tes activités</p>
-    <div class="seg" role="group" aria-label="Affichage et type">
-      <button type="button" [class.active]="view() === 'semaine'" (click)="setView('semaine')">Semaine</button>
-      <button type="button" [class.active]="view() === 'mois'" (click)="setView('mois')">Mois</button>
-      <button type="button" [class.active]="kind() === 'tache'" (click)="setKind('tache')">Tâche</button>
-      <button type="button" [class.active]="kind() === 'objectif'" (click)="setKind('objectif')">Objectif</button>
-    </div>
   </header>
 
-  <div class="composer">
-    <label>Événement
-      <input type="text" [(ngModel)]="title" placeholder="Musculation" autocomplete="off">
-    </label>
-    <label>Date
-      <input type="date" [(ngModel)]="date">
-    </label>
-    <label>Heure
-      <input type="time" [(ngModel)]="time">
-    </label>
-    <button type="button" (click)="addEvent()">Ajouter un événement</button>
-    @if (error()) {
-      <p class="error">{{ error() }}</p>
-    }
+  <div class="seg tabs">
+    <button type="button" [class.active]="tab() === 'semaine'" (click)="setTab('semaine')">Semaine</button>
+    <button type="button" [class.active]="tab() === 'mois'" (click)="setTab('mois')">Mois</button>
+    <button type="button" [class.active]="tab() === 'objectif'" (click)="setTab('objectif')">Objectifs</button>
+    <button type="button" [class.active]="tab() === 'habitude'" (click)="setTab('habitude')">Habitudes</button>
   </div>
 
-  @if (view() === 'semaine') {
-    <h2>{{ weekLabel() }}</h2>
-    <div class="week-grid" aria-label="Grille semaine">
-      <div class="corner"></div>
-      <div class="days">
-        @for (day of days(); track day.date) {
-          <p [class.today]="day.isToday">{{ day.label }}</p>
+  @if (tab() === 'semaine' || tab() === 'mois') {
+    <div class="actions">
+      <button type="button" class="btn primary wide" (click)="toggleComposer()">+ Ajouter un événement</button>
+    </div>
+
+    @if (showComposer()) {
+      <div class="composer panel">
+        <label class="field">Événement
+          <input type="text" [(ngModel)]="title" placeholder="Musculation" autocomplete="off">
+        </label>
+        <label class="field">Date
+          <app-date-picker [(ngModel)]="date" name="eventDate"></app-date-picker>
+        </label>
+        <label class="field">Heure
+          <input type="time" [(ngModel)]="time">
+        </label>
+        <button type="button" class="btn primary" (click)="addEvent()">Enregistrer</button>
+        @if (error()) {
+          <p class="error">{{ error() }}</p>
         }
       </div>
-      <div class="hours" aria-hidden="true">
-        @for (hour of hours; track hour) {
-          <span>{{ hour }}</span>
+    }
+
+    @if (tab() === 'semaine') {
+      <div class="week-head">
+        <h2>{{ weekLabel() }}</h2>
+      </div>
+      <div class="week-grid" aria-label="Grille semaine">
+        <div class="corner"></div>
+        <div class="days">
+          @for (day of days(); track day.date) {
+            <p [class.today]="day.isToday">{{ day.label }}</p>
+          }
+        </div>
+        <div class="hours" aria-hidden="true">
+          @for (hour of hours; track hour) {
+            <span>{{ hour }}</span>
+          }
+        </div>
+        <div class="board">
+          @for (day of days(); track day.date) {
+            <div class="col" [class.today]="day.isToday">
+              @for (block of blocksFor(day.date); track block.id) {
+                <article
+                  class="block clickable"
+                  [class]="block.tone"
+                  [style.top.px]="block.top"
+                  [style.height.px]="block.height"
+                  (click)="openEventEditor(block)"
+                >
+                  {{ block.title }}
+                </article>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    } @else {
+      <h2>{{ monthNameNow() }}</h2>
+      <div class="month">
+        <p>Lun</p><p>Mar</p><p>Mer</p><p>Jeu</p><p>Ven</p><p>Sam</p><p>Dim</p>
+        @for (cell of monthCells(); track $index) {
+          <p [class.has]="cell.has" [class.today]="cell.today">{{ cell.day ?? '' }}</p>
         }
       </div>
-      <div class="board">
-        @for (day of days(); track day.date) {
-          <div class="col" [class.today]="day.isToday">
-            @for (block of blocksFor(day.date); track block.id) {
-              <article class="block" [style.top.px]="block.top" [style.height.px]="block.height">
-                {{ block.title }}
-              </article>
+    }
+  }
+
+  @if (tab() === 'objectif') {
+    <section class="panel mode-panel">
+      <div class="section-head">
+        <h2>Objectifs ({{ objectives().length }})</h2>
+        <button type="button" class="btn primary" (click)="toggleObjectiveForm()">+ Ajouter un objectif</button>
+      </div>
+
+      @if (showObjectiveForm()) {
+        <form class="inline-form" (ngSubmit)="addObjective()">
+          <label class="field">Objectif
+            <input type="text" name="objectiveTitle" [(ngModel)]="objectiveTitle" placeholder="Ex. Courir 5 km" required autocomplete="off">
+          </label>
+          <label class="field">Date
+            <app-date-picker name="objectiveDate" [(ngModel)]="objectiveDate"></app-date-picker>
+          </label>
+          <fieldset class="repeat-field">
+            <legend>Récurrence</legend>
+            <div class="seg repeat-options">
+              @for (option of repeatOptions; track option.value) {
+                <button
+                  type="button"
+                  class="chip"
+                  [class.active]="objectiveRepeat === option.value"
+                  (click)="objectiveRepeat = option.value"
+                >
+                  {{ option.label }}
+                </button>
+              }
+            </div>
+          </fieldset>
+          <div class="form-actions">
+            <button type="button" class="btn" (click)="toggleObjectiveForm()">Annuler</button>
+            <button type="submit" class="btn primary">Enregistrer</button>
+          </div>
+        </form>
+      }
+
+      @if (objectives().length === 0) {
+        <p class="empty">Aucun objectif pour le moment.</p>
+      } @else {
+        <ul class="item-list">
+          @for (item of objectives(); track item.id) {
+            <li class="item-row-clickable" [class.done]="item.done" (click)="openObjectiveEditor(item)">
+              <button type="button" class="check" [class.on]="item.done" (click)="toggleObjective(item.id); $event.stopPropagation()" aria-label="Marquer comme fait">
+                {{ item.done ? '✓' : '' }}
+              </button>
+              <div class="item-body">
+                <strong>{{ item.title }}</strong>
+                <span>{{ item.date }} · {{ labelForRepeat(item.repeat) }}</span>
+              </div>
+              <button type="button" class="ghost" (click)="removeObjective(item.id); $event.stopPropagation()" aria-label="Supprimer">×</button>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+  }
+
+  @if (tab() === 'habitude') {
+    <section class="panel mode-panel">
+      <div class="section-head">
+        <h2>Habitudes du quotidien</h2>
+        <button type="button" class="btn primary" (click)="toggleRoomForm()">+ Ajouter une pièce</button>
+      </div>
+      <p class="hint">Organise les tâches de la maison par pièce, avec date et récurrence.</p>
+
+      @if (showRoomForm()) {
+        <form class="inline-form" (ngSubmit)="addRoom()">
+          <label class="field">Nom de la pièce
+            <input type="text" name="newRoomName" [(ngModel)]="newRoomName" placeholder="Ex. Salle de bain" required autocomplete="off">
+          </label>
+          <div class="form-actions">
+            <button type="button" class="btn" (click)="toggleRoomForm()">Annuler</button>
+            <button type="submit" class="btn primary">Ajouter</button>
+          </div>
+        </form>
+      }
+
+      <div class="room-tabs">
+        @for (room of rooms(); track room.id) {
+          <button type="button" class="chip" [class.active]="selectedRoomId() === room.id" (click)="selectRoom(room.id)">
+            {{ room.name }}
+            <span>{{ room.tasks.length }}</span>
+          </button>
+        }
+      </div>
+
+      @if (selectedRoom(); as room) {
+        <div class="room-panel">
+          <div class="section-head compact">
+            <h3>{{ room.name }}</h3>
+            <button type="button" class="btn primary" (click)="toggleHabitForm()">+ Ajouter une tâche</button>
+          </div>
+
+          @if (showHabitForm()) {
+            <form class="inline-form" (ngSubmit)="addHabitTask()">
+              <label class="field">Tâche
+                <input type="text" name="newTaskTitle" [(ngModel)]="newTaskTitle" placeholder="Ex. Aérer la pièce" required autocomplete="off">
+              </label>
+              <label class="field">Date
+                <app-date-picker name="newTaskDate" [(ngModel)]="newTaskDate"></app-date-picker>
+              </label>
+              <fieldset class="repeat-field">
+                <legend>Récurrence</legend>
+                <div class="seg repeat-options">
+                  @for (option of repeatOptions; track option.value) {
+                    <button
+                      type="button"
+                      class="chip"
+                      [class.active]="newTaskRepeat === option.value"
+                      (click)="newTaskRepeat = option.value"
+                    >
+                      {{ option.label }}
+                    </button>
+                  }
+                </div>
+              </fieldset>
+              <div class="form-actions">
+                <button type="button" class="btn" (click)="toggleHabitForm()">Annuler</button>
+                <button type="submit" class="btn primary">Enregistrer</button>
+              </div>
+            </form>
+          }
+
+          @if (room.tasks.length === 0) {
+            <p class="empty">Aucune tâche dans cette pièce.</p>
+          } @else {
+            <ul class="item-list">
+              @for (task of room.tasks; track task.id) {
+                <li class="item-row-clickable" [class.done]="task.done" (click)="openHabitEditor(room.id, task.id)">
+                  <button type="button" class="check" [class.on]="task.done" (click)="toggleHabitTask(room.id, task.id); $event.stopPropagation()" aria-label="Marquer comme fait">
+                    {{ task.done ? '✓' : '' }}
+                  </button>
+                  <div class="item-body">
+                    <strong>{{ task.title }}</strong>
+                    <span>{{ task.date }} · {{ labelForRepeat(task.repeat) }}</span>
+                  </div>
+                  <button type="button" class="ghost" (click)="removeHabitTask(room.id, task.id); $event.stopPropagation()" aria-label="Supprimer">×</button>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      }
+    </section>
+  }
+
+  @if (editingEvent(); as event) {
+    <div class="modal-backdrop" (click)="closeAllEditors()" role="presentation"></div>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="edit-event-title">
+      <header class="modal-head">
+        <h2 id="edit-event-title">Modifier l’événement</h2>
+        <button type="button" class="modal-close" (click)="closeAllEditors()" aria-label="Fermer">×</button>
+      </header>
+      <form class="modal-form" (ngSubmit)="saveEventEdit()">
+        <label class="field">Événement
+          <input type="text" name="editEventTitle" [(ngModel)]="editEventTitle" required autocomplete="off">
+        </label>
+        <label class="field">Date
+          <app-date-picker name="editEventDate" [(ngModel)]="editEventDate"></app-date-picker>
+        </label>
+        <label class="field">Heure
+          <input type="time" name="editEventTime" [(ngModel)]="editEventTime" required>
+        </label>
+        <div class="modal-actions">
+          <button type="button" class="btn" (click)="closeAllEditors()">Annuler</button>
+          <button type="submit" class="btn primary">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  }
+
+  @if (editingObjective(); as objective) {
+    <div class="modal-backdrop" (click)="closeAllEditors()" role="presentation"></div>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="edit-objective-title">
+      <header class="modal-head">
+        <h2 id="edit-objective-title">Modifier l’objectif</h2>
+        <button type="button" class="modal-close" (click)="closeAllEditors()" aria-label="Fermer">×</button>
+      </header>
+      <form class="modal-form" (ngSubmit)="saveObjectiveEdit()">
+        <label class="field">Objectif
+          <input type="text" name="editObjectiveTitle" [(ngModel)]="editObjectiveTitle" required autocomplete="off">
+        </label>
+        <label class="field">Date
+          <app-date-picker name="editObjectiveDate" [(ngModel)]="editObjectiveDate"></app-date-picker>
+        </label>
+        <fieldset class="repeat-field">
+          <legend>Récurrence</legend>
+          <div class="seg repeat-options">
+            @for (option of repeatOptions; track option.value) {
+              <button
+                type="button"
+                class="chip"
+                [class.active]="editObjectiveRepeat === option.value"
+                (click)="editObjectiveRepeat = option.value"
+              >
+                {{ option.label }}
+              </button>
             }
           </div>
-        }
-      </div>
+        </fieldset>
+        <div class="modal-actions">
+          <button type="button" class="btn" (click)="closeAllEditors()">Annuler</button>
+          <button type="submit" class="btn primary">Enregistrer</button>
+        </div>
+      </form>
     </div>
-  } @else {
-    <h2>{{ monthNameNow() }}</h2>
-    <div class="month">
-      <p>Lun</p><p>Mar</p><p>Mer</p><p>Jeu</p><p>Ven</p><p>Sam</p><p>Dim</p>
-      @for (cell of monthCells(); track $index) {
-        <p [class.has]="cell.has" [class.today]="cell.today">{{ cell.day ?? '' }}</p>
-      }
+  }
+
+  @if (editingHabit()) {
+    <div class="modal-backdrop" (click)="closeAllEditors()" role="presentation"></div>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="edit-habit-title">
+      <header class="modal-head">
+        <h2 id="edit-habit-title">Modifier l’habitude</h2>
+        <button type="button" class="modal-close" (click)="closeAllEditors()" aria-label="Fermer">×</button>
+      </header>
+      <form class="modal-form" (ngSubmit)="saveHabitEdit()">
+        <label class="field">Tâche
+          <input type="text" name="editHabitTitle" [(ngModel)]="editHabitTitle" required autocomplete="off">
+        </label>
+        <label class="field">Date
+          <app-date-picker name="editHabitDate" [(ngModel)]="editHabitDate"></app-date-picker>
+        </label>
+        <fieldset class="repeat-field">
+          <legend>Récurrence</legend>
+          <div class="seg repeat-options">
+            @for (option of repeatOptions; track option.value) {
+              <button
+                type="button"
+                class="chip"
+                [class.active]="editHabitRepeat === option.value"
+                (click)="editHabitRepeat = option.value"
+              >
+                {{ option.label }}
+              </button>
+            }
+          </div>
+        </fieldset>
+        <div class="modal-actions">
+          <button type="button" class="btn" (click)="closeAllEditors()">Annuler</button>
+          <button type="submit" class="btn primary">Enregistrer</button>
+        </div>
+      </form>
     </div>
   }
 </section>

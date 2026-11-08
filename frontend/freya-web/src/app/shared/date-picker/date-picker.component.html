@@ -1,0 +1,43 @@
+<div class="date-picker" [class.open]="open()" [class.disabled]="disabled()">
+  <button type="button" class="trigger" (click)="toggle()" [disabled]="disabled()">
+    <span class="value" [class.placeholder]="!value()">{{ displayValue() }}</span>
+    <span class="ico" aria-hidden="true">📅</span>
+  </button>
+
+  @if (open()) {
+    <div class="popover" role="dialog" aria-label="Choisir une date">
+      <div class="nav">
+        <button type="button" class="nav-btn" (click)="prevMonth()" aria-label="Mois précédent">‹</button>
+        <p class="month">{{ monthLabel() }}</p>
+        <button type="button" class="nav-btn" (click)="nextMonth()" aria-label="Mois suivant">›</button>
+      </div>
+
+      <div class="weekdays">
+        @for (day of weekdays; track day) {
+          <span>{{ day }}</span>
+        }
+      </div>
+
+      <div class="grid">
+        @for (cell of cells(); track $index) {
+          <button
+            type="button"
+            class="day"
+            [class.outside]="cell.outside"
+            [class.today]="cell.today"
+            [class.selected]="cell.selected"
+            [disabled]="!cell.iso || cell.outside"
+            (click)="selectDay(cell)"
+          >
+            {{ cell.day ?? '' }}
+          </button>
+        }
+      </div>
+
+      <div class="footer">
+        <button type="button" class="btn ghost" (click)="clear()">Effacer</button>
+        <button type="button" class="btn primary" (click)="open.set(false)">OK</button>
+      </div>
+    </div>
+  }
+</div>

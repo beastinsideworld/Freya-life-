@@ -1,16 +1,20 @@
 .auth {
-  max-width: 380px;
-  margin: 4rem auto;
-  padding: 1.5rem;
+  width: min(400px, calc(100% - 2rem));
+  margin: 3rem auto;
+  padding: 1.4rem;
   border: 1px solid var(--border);
-  border-radius: 1rem;
-  background: var(--surface);
+  border-radius: 1.1rem;
+  background:
+    radial-gradient(circle at top, rgba(143, 45, 59, 0.25), transparent 50%),
+    rgba(14, 6, 9, 0.95);
+  box-shadow: var(--shadow-glow);
 }
 
 h1 {
   font-family: var(--font-display);
   margin: 0;
   text-align: center;
+  font-size: 2.4rem;
 }
 
 p {
@@ -38,15 +42,16 @@ button {
   font: inherit;
   border-radius: 999px;
   border: 1px solid var(--border);
-  padding: 0.65rem 0.9rem;
-  background: var(--bg);
+  padding: 0.7rem 0.95rem;
+  background: rgba(8, 3, 5, 0.9);
   color: var(--text);
 }
 
 button {
-  background: var(--accent);
-  color: #f8f1ea;
-  border-color: var(--accent);
+  background: linear-gradient(180deg, #a33445, var(--accent-deep));
+  border-color: #b04555;
+  box-shadow: var(--shadow-glow);
+  color: #fff7f2;
   cursor: pointer;
 }
 

@@ -7,6 +7,7 @@ import { AccueilComponent } from './features/accueil/accueil.component';
 import { PlanningComponent } from './features/planning/planning.component';
 import { RepasComponent } from './features/repas/repas.component';
 import { VoyagesComponent } from './features/voyages/voyages.component';
+import { TeleComponent } from './features/tele/tele.component';
 import { SimplePageComponent } from './features/placeholders/simple-page.component';
 
 export const routes: Routes = [
@@ -21,11 +22,8 @@ export const routes: Routes = [
       { path: 'planning', component: PlanningComponent },
       { path: 'repas', component: RepasComponent },
       { path: 'voyages', component: VoyagesComponent },
-      {
-        path: 'sport',
-        component: SimplePageComponent,
-        data: { title: 'Sport', subtitle: 'Séances de la semaine à venir.' }
-      },
+      { path: 'tele', component: TeleComponent },
+      { path: 'sport', redirectTo: 'tele', pathMatch: 'full' },
       {
         path: 'chat',
         component: SimplePageComponent,

@@ -8,25 +8,22 @@ import { map } from 'rxjs/operators';
   standalone: true,
   template: `
     <section class="page">
-      <h1>{{ data()['title'] }}</h1>
-      <p>{{ data()['subtitle'] }}</p>
+      <header class="hero">
+        <h1>{{ data()['title'] }}</h1>
+        <p class="sub">{{ data()['subtitle'] }}</p>
+      </header>
+      <div class="panel">
+        <p class="empty">Écran prévu dans la navigation Freya. Contenu détaillé à venir.</p>
+      </div>
     </section>
   `,
   styles: `
-    .page {
-      text-align: center;
-      padding: 2rem 1rem;
-    }
-    h1 {
-      font-family: var(--font-display);
-      margin: 0 0 0.5rem;
-    }
-    p {
-      color: var(--muted);
-    }
+    .page { display: flex; flex-direction: column; gap: 0.85rem; }
   `
 })
 export class SimplePageComponent {
   private readonly route = inject(ActivatedRoute);
-  readonly data = toSignal(this.route.data.pipe(map((d) => d)), { initialValue: {} as Record<string, string> });
+  readonly data = toSignal(this.route.data.pipe(map((d) => d as Record<string, string>)), {
+    initialValue: {} as Record<string, string>
+  });
 }
