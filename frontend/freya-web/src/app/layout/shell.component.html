@@ -1,0 +1,23 @@
+<div class="shell">
+  <aside class="nav">
+    <p class="brand">Freya</p>
+    <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Accueil</a>
+    <a routerLink="/planning" routerLinkActive="active">Planning</a>
+    <a routerLink="/repas" routerLinkActive="active">Repas</a>
+    <a routerLink="/voyages" routerLinkActive="active">Voyages</a>
+    <a routerLink="/sport" routerLinkActive="active">Sport</a>
+    <a routerLink="/chat" routerLinkActive="active">Chat</a>
+    <a routerLink="/parametres" routerLinkActive="active">Paramètres</a>
+    <button type="button" class="logout" (click)="auth.logout()">Déconnexion</button>
+  </aside>
+  <main class="content">
+    <router-outlet />
+  </main>
+</div>
+<nav class="mobile-nav" aria-label="Navigation mobile">
+  <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Accueil</a>
+  <a routerLink="/chat" routerLinkActive="active">Chat</a>
+  <a routerLink="/planning" routerLinkActive="active">Planning</a>
+  <a routerLink="/repas" routerLinkActive="active">Repas</a>
+  <a routerLink="/voyages" routerLinkActive="active">Voyages</a>
+</nav>

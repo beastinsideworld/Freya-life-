@@ -1,0 +1,76 @@
+<section class="page">
+  <header class="plan-head">
+    <h1>Repas</h1>
+    <p class="sub">Organise tes menus, tes courses et tes recettes</p>
+    <div class="seg">
+      <button type="button" [class.active]="tab() === 'semaine'" (click)="setTab('semaine')">Semaine</button>
+      <button type="button" [class.active]="tab() === 'courses'" (click)="setTab('courses')">Courses</button>
+      <button type="button" [class.active]="tab() === 'recettes'" (click)="setTab('recettes')">Recettes</button>
+    </div>
+  </header>
+
+  @if (tab() === 'semaine') {
+    <div class="toolbar">
+      <span class="meta">{{ weekLabel() }}</span>
+      <input type="text" [(ngModel)]="newMealTitle" placeholder="Nom du repas">
+      <input type="date" [(ngModel)]="newMealDate">
+      <select [(ngModel)]="newMealSlot">
+        <option value="Lunch">Déjeuner</option>
+        <option value="Main">Repas</option>
+        <option value="Snack">Collation</option>
+        <option value="Dinner">Dîner</option>
+      </select>
+      <button type="button" (click)="addMeal()">Ajouter un repas</button>
+    </div>
+
+    <div class="meal-grid">
+      <div></div>
+      @for (slot of slots; track slot) {
+        <p class="colhead">{{ slotLabels[slot] }}</p>
+      }
+      @for (day of days; track day; let i = $index) {
+        <h3>{{ dayLabel(i) }}</h3>
+        @for (slot of slots; track slot) {
+          @if (mealAt(i, slot); as meal) {
+            <article class="cell">{{ meal.title }}</article>
+          } @else {
+            <button type="button" class="slot" (click)="newMealDate = dateForPublic(i); newMealSlot = $any(slot)">Ajouter un repas</button>
+          }
+        }
+      }
+    </div>
+  }
+
+  @if (tab() === 'courses') {
+    <section class="panel">
+      <h2>Courses</h2>
+      @if (grocery().length === 0) {
+        <p class="empty">Aucun article pour le moment.</p>
+      } @else {
+        <ul>
+          @for (item of grocery(); track item.id) {
+            <li>{{ item.name }} · {{ item.quantity }} · {{ item.aisle }}</li>
+          }
+        </ul>
+      }
+    </section>
+  }
+
+  @if (tab() === 'recettes') {
+    <section class="panel">
+      <h2>Recettes</h2>
+      @if (recipes().length === 0) {
+        <p class="empty">Aucune recette pour le moment.</p>
+      } @else {
+        <div class="recipes">
+          @for (recipe of recipes(); track recipe.id) {
+            <article>
+              <h3>{{ recipe.title }}</h3>
+              <p>{{ recipe.durationMin }} min · {{ recipe.difficulty }}</p>
+            </article>
+          }
+        </div>
+      }
+    </section>
+  }
+</section>

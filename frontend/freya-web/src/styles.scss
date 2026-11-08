@@ -1,0 +1,32 @@
+:root {
+  --bg: #120d0e;
+  --surface: #1c1416;
+  --text: #f6eee6;
+  --muted: #cbb6aa;
+  --border: #4a3330;
+  --accent: #8f2d3b;
+  --accent-soft: #e4b8a8;
+  --font-display: Georgia, 'Palatino Linotype', serif;
+  --font-body: 'Segoe UI', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--accent-soft);
+  outline-offset: 2px;
+}

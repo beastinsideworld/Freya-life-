@@ -1,0 +1,17 @@
+<section class="auth">
+  <h1>Freya</h1>
+  <p>Connexion</p>
+  <form (ngSubmit)="submit()">
+    <label>Email
+      <input type="email" name="email" [(ngModel)]="email" required autocomplete="username">
+    </label>
+    <label>Mot de passe
+      <input type="password" name="password" [(ngModel)]="password" required autocomplete="current-password">
+    </label>
+    @if (error()) {
+      <p class="error">{{ error() }}</p>
+    }
+    <button type="submit" [disabled]="loading()">Se connecter</button>
+  </form>
+  <p class="hint">Pas encore de compte ? <a routerLink="/register">Créer un compte</a></p>
+</section>

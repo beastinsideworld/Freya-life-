@@ -1,0 +1,30 @@
+services:
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: freya-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__Default: Data Source=/app/data/freya.db
+      Jwt__Key: FreyaDockerSecretKey_ChangeMe_AtLeast32Chars!
+      Jwt__Issuer: Freya
+      Jwt__Audience: Freya
+    volumes:
+      - freya-data:/app/data
+    ports:
+      - "5180:8080"
+
+  web:
+    build:
+      context: ./frontend/freya-web
+      dockerfile: Dockerfile
+    container_name: freya-web
+    depends_on:
+      - api
+    ports:
+      - "4200:80"
+
+volumes:
+  freya-data:

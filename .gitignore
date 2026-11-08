@@ -1,0 +1,13 @@
+**/bin/
+**/obj/
+**/.vs/
+**/node_modules/
+**/dist/
+**/.angular/
+*.db
+*.db-shm
+*.db-wal
+.idea/
+*.user
+.DS_Store
+frontend/freya-web/.vscode/

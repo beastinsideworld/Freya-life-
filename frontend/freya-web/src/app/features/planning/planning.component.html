@@ -1,0 +1,64 @@
+<section class="page">
+  <header class="plan-head">
+    <h1>Planning</h1>
+    <p class="sub">Organise ton temps, tes objectifs et tes activités</p>
+    <div class="seg" role="group" aria-label="Affichage et type">
+      <button type="button" [class.active]="view() === 'semaine'" (click)="setView('semaine')">Semaine</button>
+      <button type="button" [class.active]="view() === 'mois'" (click)="setView('mois')">Mois</button>
+      <button type="button" [class.active]="kind() === 'tache'" (click)="setKind('tache')">Tâche</button>
+      <button type="button" [class.active]="kind() === 'objectif'" (click)="setKind('objectif')">Objectif</button>
+    </div>
+  </header>
+
+  <div class="composer">
+    <label>Événement
+      <input type="text" [(ngModel)]="title" placeholder="Musculation" autocomplete="off">
+    </label>
+    <label>Date
+      <input type="date" [(ngModel)]="date">
+    </label>
+    <label>Heure
+      <input type="time" [(ngModel)]="time">
+    </label>
+    <button type="button" (click)="addEvent()">Ajouter un événement</button>
+    @if (error()) {
+      <p class="error">{{ error() }}</p>
+    }
+  </div>
+
+  @if (view() === 'semaine') {
+    <h2>{{ weekLabel() }}</h2>
+    <div class="week-grid" aria-label="Grille semaine">
+      <div class="corner"></div>
+      <div class="days">
+        @for (day of days(); track day.date) {
+          <p [class.today]="day.isToday">{{ day.label }}</p>
+        }
+      </div>
+      <div class="hours" aria-hidden="true">
+        @for (hour of hours; track hour) {
+          <span>{{ hour }}</span>
+        }
+      </div>
+      <div class="board">
+        @for (day of days(); track day.date) {
+          <div class="col" [class.today]="day.isToday">
+            @for (block of blocksFor(day.date); track block.id) {
+              <article class="block" [style.top.px]="block.top" [style.height.px]="block.height">
+                {{ block.title }}
+              </article>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  } @else {
+    <h2>{{ monthNameNow() }}</h2>
+    <div class="month">
+      <p>Lun</p><p>Mar</p><p>Mer</p><p>Jeu</p><p>Ven</p><p>Sam</p><p>Dim</p>
+      @for (cell of monthCells(); track $index) {
+        <p [class.has]="cell.has" [class.today]="cell.today">{{ cell.day ?? '' }}</p>
+      }
+    </div>
+  }
+</section>

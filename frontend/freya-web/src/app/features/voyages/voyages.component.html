@@ -1,0 +1,19 @@
+<section class="page">
+  <header>
+    <h1>Voyages</h1>
+    <p class="sub">Prépare, organise et suis tous tes voyages</p>
+  </header>
+  @if (trips().length === 0) {
+    <p class="empty">Aucun voyage pour le moment.</p>
+  } @else {
+    <div class="list">
+      @for (trip of trips(); track trip.id) {
+        <article>
+          <h2>{{ trip.title }}</h2>
+          <p>{{ trip.startDate }} – {{ trip.endDate }}</p>
+          <p class="meta">{{ countdown(trip.daysUntil) }}</p>
+        </article>
+      }
+    </div>
+  }
+</section>

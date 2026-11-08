@@ -1,0 +1,52 @@
+@if (data(); as d) {
+  <section class="page">
+    <header>
+      <h1>Planning</h1>
+      <p class="sub">Ta journée en un coup d’œil</p>
+    </header>
+    <div class="meta">
+      <span>{{ formatDate(d.date) }}</span>
+      <span>{{ d.time }}</span>
+      <span>{{ d.temperatureC ?? '—' }} °C</span>
+    </div>
+    <div class="split">
+      <section class="panel">
+        <div class="head">
+          <h2>Tâches du jour</h2>
+          <a routerLink="/planning">Voir le planning</a>
+        </div>
+        @if (d.events.length === 0) {
+          <p class="empty">Aucun événement aujourd’hui. Ajoute-en depuis le planning.</p>
+        } @else {
+          <ul>
+            @for (event of d.events; track event.title + event.startTime) {
+              <li>
+                <span>{{ event.startTime.slice(0, 5) }}@if (event.endTime) { – {{ event.endTime.slice(0, 5) }} }</span>
+                <span>{{ event.title }}</span>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+      <section class="panel">
+        <div class="head">
+          <h2>Repas du jour</h2>
+          <a routerLink="/repas">Voir les recettes</a>
+        </div>
+        @if (d.meals.length === 0) {
+          <p class="empty">Aucun repas planifié pour aujourd’hui.</p>
+        } @else {
+          <div class="meals">
+            @for (meal of d.meals; track meal.slot) {
+              <article>
+                <h3>{{ meal.slot }}</h3>
+                <p>{{ meal.title }}</p>
+                <p class="state">{{ meal.done ? 'Fait' : 'À faire' }}</p>
+              </article>
+            }
+          </div>
+        }
+      </section>
+    </div>
+  </section>
+}

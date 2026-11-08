@@ -1,0 +1,20 @@
+<section class="auth">
+  <h1>Freya</h1>
+  <p>Créer un compte</p>
+  <form (ngSubmit)="submit()">
+    <label>Prénom / pseudo
+      <input type="text" name="displayName" [(ngModel)]="displayName" required>
+    </label>
+    <label>Email
+      <input type="email" name="email" [(ngModel)]="email" required autocomplete="username">
+    </label>
+    <label>Mot de passe
+      <input type="password" name="password" [(ngModel)]="password" required minlength="6" autocomplete="new-password">
+    </label>
+    @if (error()) {
+      <p class="error">{{ error() }}</p>
+    }
+    <button type="submit" [disabled]="loading()">Créer le compte</button>
+  </form>
+  <p class="hint">Déjà un compte ? <a routerLink="/login">Se connecter</a></p>
+</section>
