@@ -60,7 +60,7 @@
   padding: 0 0.3rem;
   border-radius: 999px;
   background: var(--accent);
-  color: #fff7f2;
+  color: var(--ivory);
   font-size: 0.72rem;
   font-family: var(--font-body);
 }
@@ -70,7 +70,7 @@
   height: 2rem;
   border-radius: 999px;
   border: 1px solid var(--border);
-  background: rgba(179, 69, 85, 0.25);
+  background: color-mix(in srgb, var(--contour) 25%, transparent);
   color: var(--text);
   font-size: 1.2rem;
   line-height: 1;
@@ -107,7 +107,7 @@
   height: 2.2rem;
   border-radius: 0.7rem;
   border: 1px solid var(--border);
-  background: rgba(179, 69, 85, 0.18);
+  background: color-mix(in srgb, var(--contour) 18%, transparent);
   color: var(--gold);
   flex: 0 0 auto;
 }
@@ -148,7 +148,7 @@
 }
 
 .appt-card.active {
-  border-color: rgba(179, 69, 85, 0.75);
+  border-color: color-mix(in srgb, var(--contour) 75%, transparent);
   box-shadow: var(--shadow-glow);
 }
 
@@ -190,7 +190,7 @@
 }
 
 .sex {
-  color: #ff9aa8 !important;
+  color: var(--accent) !important;
   font-style: normal;
   font-family: var(--font-body);
 }
@@ -234,7 +234,7 @@
   border-radius: 0.35rem;
   border: 1px solid var(--border);
   background: transparent;
-  color: #fff7f2;
+  color: var(--ivory);
   display: grid;
   place-items: center;
   font-size: 0.75rem;
@@ -243,7 +243,7 @@
 
 .check.on {
   background: var(--grad-btn);
-  border-color: #b04555;
+  border-color: var(--contour);
 }
 
 .time {
@@ -275,7 +275,7 @@
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, var(--accent-mid), #ff9aa8);
+  background: linear-gradient(90deg, var(--accent-mid), var(--accent));
 }
 
 .budget-pct {
@@ -301,7 +301,7 @@
   padding: 0.55rem 0.25rem;
   border: 1px solid var(--border);
   border-radius: 0.95rem;
-  background: rgba(10, 4, 7, 0.55);
+  background: color-mix(in srgb, var(--bg) 55%, transparent);
   color: var(--text);
   font-size: 0.72rem;
 }
@@ -329,7 +329,7 @@
   height: 2.2rem;
   border-radius: 999px;
   border: 1px solid var(--border);
-  background: rgba(10, 4, 7, 0.7);
+  background: color-mix(in srgb, var(--bg) 70%, transparent);
   color: var(--text);
   font-size: 1.35rem;
   line-height: 1;
@@ -364,9 +364,9 @@
   align-items: center;
   gap: 0.25rem;
   padding: 0.55rem 0.35rem;
-  border: 1px solid rgba(179, 69, 85, 0.55);
+  border: 1px solid color-mix(in srgb, var(--contour) 55%, transparent);
   border-radius: 0.85rem;
-  background: rgba(179, 69, 85, 0.15);
+  background: color-mix(in srgb, var(--contour) 15%, transparent);
   color: var(--text);
   font-size: 0.75rem;
 }
@@ -407,12 +407,12 @@
 
 .switch.on {
   background: var(--grad-btn);
-  border-color: #b04555;
+  border-color: var(--contour);
 }
 
 .switch.on::after {
   left: calc(100% - 1.2rem);
-  background: #fff7f2;
+  background: var(--ivory);
 }
 
 .subpage-head h1 {
@@ -429,7 +429,7 @@
   padding: 0.35rem 0.45rem;
   border: 1px solid var(--border);
   border-radius: var(--radius-pill);
-  background: rgba(10, 4, 7, 0.55);
+  background: color-mix(in srgb, var(--bg) 55%, transparent);
 }
 
 .month-pill button {
@@ -469,7 +469,7 @@
   width: 4.7rem;
   height: 4.7rem;
   border-radius: 50%;
-  background: rgba(12, 5, 8, 0.95);
+  background: color-mix(in srgb, var(--bg) 95%, transparent);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -480,7 +480,7 @@
 
 .donut-hole span {
   font-size: 0.78rem;
-  color: #ff9aa8;
+  color: var(--accent);
 }
 
 .donut-hole strong {
@@ -526,7 +526,7 @@
 }
 
 .neg {
-  color: #ff9aa8;
+  color: var(--accent);
 }
 
 .pos {
@@ -570,7 +570,7 @@
   width: 0.85rem;
   min-height: 4px;
   border-radius: 0.35rem 0.35rem 0.1rem 0.1rem;
-  background: linear-gradient(180deg, #ffb4c0, #c44d5f);
+  background: linear-gradient(180deg, var(--rose-bright), var(--accent));
   margin-top: auto;
 }
 
@@ -618,7 +618,7 @@
   padding: 0.75rem 0.85rem;
   border: 1px solid var(--border);
   border-radius: 0.85rem;
-  background: rgba(10, 4, 7, 0.45);
+  background: color-mix(in srgb, var(--bg) 45%, transparent);
   margin-bottom: 0.85rem;
 }
 
@@ -669,7 +669,7 @@
   input[type='checkbox'] {
     width: 1.1rem;
     height: 1.1rem;
-    accent-color: var(--accent, #c44d5f);
+    accent-color: var(--accent, var(--accent));
   }
 }
 
@@ -689,7 +689,7 @@
   overflow: auto;
   border-radius: 0.75rem;
   background: #2a1218;
-  border: 1px solid rgba(255, 180, 190, 0.18);
+  border: 1px solid color-mix(in srgb, var(--contour) 18%, transparent);
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
 
   button {
@@ -697,23 +697,23 @@
     text-align: left;
     border: 0;
     background: transparent;
-    color: #f6e9ec;
+    color: var(--ivory);
     padding: 0.55rem 0.65rem;
     border-radius: 0.55rem;
     cursor: pointer;
   }
 
   button:hover {
-    background: rgba(196, 77, 95, 0.22);
+    background: color-mix(in srgb, var(--accent) 22%, transparent);
   }
 }
 
 .date-trigger {
   width: 100%;
   text-align: left;
-  border: 1px solid rgba(255, 180, 190, 0.2);
-  background: rgba(20, 8, 12, 0.55);
-  color: #f6e9ec;
+  border: 1px solid color-mix(in srgb, var(--contour) 20%, transparent);
+  background: color-mix(in srgb, var(--bg-secondary) 55%, transparent);
+  color: var(--ivory);
   border-radius: 0.7rem;
   padding: 0.65rem 0.8rem;
   cursor: pointer;
@@ -723,7 +723,7 @@
   display: block;
   margin-bottom: 0.35rem;
   font-size: 0.86rem;
-  color: var(--muted, #c9a8b0);
+  color: var(--muted, var(--muted));
 }
 
 .field.tight {
@@ -737,9 +737,9 @@
 }
 
 .chip {
-  border: 1px solid rgba(255, 180, 190, 0.22);
+  border: 1px solid color-mix(in srgb, var(--contour) 22%, transparent);
   background: rgba(255, 255, 255, 0.04);
-  color: #f0dce1;
+  color: var(--powder);
   border-radius: 999px;
   padding: 0.35rem 0.7rem;
   font-size: 0.82rem;
@@ -747,8 +747,8 @@
 }
 
 .chip.active {
-  background: rgba(196, 77, 95, 0.35);
-  border-color: rgba(255, 140, 160, 0.55);
+  background: color-mix(in srgb, var(--accent) 35%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
 }
 
 .heat-form,
@@ -786,7 +786,7 @@
   }
 
   span {
-    color: var(--muted, #c9a8b0);
+    color: var(--muted, var(--muted));
     font-size: 0.78rem;
   }
 }
@@ -796,7 +796,7 @@
 }
 
 .icon-btn.danger {
-  color: #ff8fa3;
+  color: var(--accent);
 }
 
 .calendar-layer {
@@ -809,7 +809,7 @@
   padding: 0.85rem;
   border-radius: 1rem;
   background: #241014;
-  border: 1px solid rgba(255, 180, 190, 0.2);
+  border: 1px solid color-mix(in srgb, var(--contour) 20%, transparent);
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
   position: fixed;
   left: 50%;
@@ -827,7 +827,7 @@
   button {
     border: 0;
     background: rgba(255, 255, 255, 0.06);
-    color: #f6e9ec;
+    color: var(--ivory);
     width: 2rem;
     height: 2rem;
     border-radius: 999px;
@@ -853,7 +853,7 @@
   span {
     text-align: center;
     font-size: 0.72rem;
-    color: var(--muted, #c9a8b0);
+    color: var(--muted, var(--muted));
   }
 }
 
@@ -862,16 +862,16 @@
   border: 0;
   border-radius: 0.55rem;
   background: transparent;
-  color: #f6e9ec;
+  color: var(--ivory);
   cursor: pointer;
 }
 
 .cal-day:hover:not(:disabled) {
-  background: rgba(196, 77, 95, 0.25);
+  background: color-mix(in srgb, var(--accent) 25%, transparent);
 }
 
 .cal-day.selected {
-  background: #c44d5f;
+  background: var(--accent);
   font-weight: 700;
 }
 

@@ -24,7 +24,7 @@
   padding: 0.35rem 1.7rem 0.35rem 0.65rem;
   border: 1px solid var(--border);
   border-radius: var(--radius-pill);
-  background: rgba(10, 4, 7, 0.85);
+  background: color-mix(in srgb, var(--bg) 85%, transparent);
   color: var(--text);
   font: inherit;
   font-size: 0.82rem;
@@ -47,7 +47,7 @@
   padding: 0.35rem 0.75rem;
   border: 1px solid var(--border);
   border-radius: var(--radius-pill);
-  background: rgba(10, 4, 7, 0.85);
+  background: color-mix(in srgb, var(--bg) 85%, transparent);
   color: var(--gold);
   font: inherit;
   font-size: 0.82rem;
@@ -101,7 +101,7 @@
   height: 2rem;
   border-radius: 999px;
   border: 1px solid var(--border);
-  background: rgba(179, 69, 85, 0.25);
+  background: color-mix(in srgb, var(--contour) 25%, transparent);
   color: var(--text);
   font-size: 1.2rem;
   line-height: 1;
@@ -133,7 +133,7 @@
 }
 
 .sim-value.neg {
-  color: #ff9aa8;
+  color: var(--accent);
 }
 
 .sim-foot {
@@ -175,7 +175,7 @@
 }
 
 .neg {
-  color: #ff9aa8;
+  color: var(--accent);
 }
 
 .account-list,
@@ -281,7 +281,7 @@
 }
 
 .dot.expense {
-  background: #ff9aa8;
+  background: var(--accent);
 }
 
 .bar-chart {
@@ -337,7 +337,7 @@
 }
 
 .bar.expense {
-  background: linear-gradient(180deg, #ffb4c0, #c44d5f);
+  background: linear-gradient(180deg, var(--rose-bright), var(--accent));
 }
 
 .bar-label {
@@ -362,7 +362,7 @@
   padding: 0.25rem;
   border: 1px solid var(--border);
   border-radius: var(--radius-pill);
-  background: rgba(10, 4, 7, 0.55);
+  background: color-mix(in srgb, var(--bg) 55%, transparent);
 }
 
 .filter-pills button,
@@ -378,7 +378,7 @@
 
 .filter-pills button.active {
   background: var(--grad-btn);
-  color: #fff7f2;
+  color: var(--ivory);
   box-shadow: var(--shadow-glow);
 }
 
@@ -445,7 +445,7 @@
   width: 4.4rem;
   height: 4.4rem;
   border-radius: 50%;
-  background: rgba(12, 5, 8, 0.95);
+  background: color-mix(in srgb, var(--bg) 95%, transparent);
   display: grid;
   place-items: center;
   text-align: center;
@@ -527,7 +527,7 @@
 
 .money-btn.remove {
   border-color: rgba(255, 154, 168, 0.45);
-  color: #ff9aa8;
+  color: var(--accent);
 }
 
 .goals-grid {
@@ -549,8 +549,8 @@
 }
 
 .project-card {
-  border-color: rgba(179, 69, 85, 0.45);
-  box-shadow: 0 0 0 1px rgba(179, 69, 85, 0.12), 0 10px 30px rgba(0, 0, 0, 0.35);
+  border-color: color-mix(in srgb, var(--contour) 45%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--contour) 12%, transparent), 0 10px 30px rgba(0, 0, 0, 0.35);
 }
 
 .project-top {
@@ -563,11 +563,11 @@
   width: 2.6rem;
   height: 2.6rem;
   border-radius: 50%;
-  border: 2px solid rgba(196, 77, 95, 0.85);
+  border: 2px solid color-mix(in srgb, var(--accent) 85%, transparent);
   display: grid;
   place-items: center;
   font-size: 0.72rem;
-  color: #ffb4c0;
+  color: var(--rose-bright);
   flex: 0 0 auto;
 }
 
@@ -583,7 +583,7 @@
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, var(--accent-mid), #ff9aa8);
+  background: linear-gradient(90deg, var(--accent-mid), var(--accent));
 }
 
 .project-meta {
@@ -613,7 +613,7 @@
 }
 
 .error {
-  color: #ffb4c0;
+  color: var(--rose-bright);
   font-size: 0.86rem;
 }
 
@@ -633,7 +633,7 @@
   align-self: center;
   padding: 0.45rem 0.85rem;
   border-radius: var(--radius-pill);
-  background: rgba(18, 8, 11, 0.92);
+  background: color-mix(in srgb, var(--bg-secondary) 92%, transparent);
   border: 1px solid var(--border);
 }
 
@@ -670,7 +670,7 @@
   padding: 0.75rem 0.8rem;
   border: 1px solid var(--border);
   border-radius: 0.85rem;
-  background: rgba(10, 4, 7, 0.55);
+  background: color-mix(in srgb, var(--bg) 55%, transparent);
 }
 
 .share-list strong {

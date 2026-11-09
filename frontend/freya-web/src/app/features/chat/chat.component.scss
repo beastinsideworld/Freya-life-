@@ -39,7 +39,7 @@
   padding: 0.75rem 0.8rem;
   border: 1px solid var(--border);
   border-radius: 0.95rem;
-  background: rgba(10, 4, 7, 0.65);
+  background: color-mix(in srgb, var(--bg) 65%, transparent);
   color: var(--text);
   text-align: left;
 }
@@ -51,7 +51,7 @@
   height: 2.5rem;
   border-radius: 50%;
   background: var(--grad-btn);
-  color: #fff7f2;
+  color: var(--ivory);
   font-family: var(--font-display);
   background-position: center;
   background-size: cover;
@@ -100,7 +100,7 @@
   padding: 0 0.35rem;
   border-radius: 999px;
   background: var(--accent);
-  color: #fff7f2;
+  color: var(--ivory);
   font-size: 0.7rem;
   line-height: 1.15rem;
   text-align: center;
@@ -115,7 +115,7 @@
   padding: 0.7rem 0.8rem;
   border: 1px solid var(--border);
   border-radius: 0.85rem;
-  background: rgba(10, 4, 7, 0.55);
+  background: color-mix(in srgb, var(--bg) 55%, transparent);
 }
 
 .friend-start-list strong {
@@ -167,7 +167,7 @@
   align-self: flex-end;
   margin-left: auto;
   background: var(--grad-btn);
-  color: #fff7f2;
+  color: var(--ivory);
 }
 
 .message-list li.theirs {
@@ -198,7 +198,7 @@
   padding: 0.65rem;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: rgba(18, 8, 11, 0.96);
+  background: color-mix(in srgb, var(--bg-secondary) 96%, transparent);
   backdrop-filter: blur(8px);
 }
 
@@ -213,7 +213,7 @@
 }
 
 .error {
-  color: #ffb4c0;
+  color: var(--rose-bright);
   font-size: 0.86rem;
 }
 

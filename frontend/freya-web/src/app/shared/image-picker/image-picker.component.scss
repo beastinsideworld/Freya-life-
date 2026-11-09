@@ -52,7 +52,7 @@
   padding: 0.35rem;
   border-radius: 0.85rem;
   border: 1px solid var(--border);
-  background: rgba(18, 8, 11, 0.98);
+  background: color-mix(in srgb, var(--bg-secondary) 98%, transparent);
   box-shadow: var(--shadow-glow);
 }
 

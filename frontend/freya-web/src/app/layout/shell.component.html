@@ -1,4 +1,78 @@
 <div class="app-frame">
+  <div class="theme-deco" aria-hidden="true">
+    <div class="theme-deco-ange">
+      <svg class="deco-wings deco-wings-ange" viewBox="0 0 320 180" fill="none">
+        <path
+          d="M160 95c-8-22-28-48-58-68-18-12-38-18-52-18 8 22 10 42 4 62-8 26-28 42-48 52 28 2 54-6 74-22 14-12 26-28 34-46 4 22 2 48-8 72 18-8 34-24 42-48 8 24 24 40 42 48-10-24-12-50-8-72 8 18 20 34 34 46 20 16 46 24 74 22-20-10-40-26-48-52-6-20-4-40 4-62-14 0-34 6-52 18-30 20-50 46-58 68z"
+          fill="url(#angeWingGrad)"
+          opacity="0.55"
+        />
+        <circle cx="160" cy="78" r="14" fill="url(#angeHalo)" opacity="0.7" />
+        <path d="M160 62v32M146 78h28" stroke="#D8B981" stroke-width="1.4" stroke-linecap="round" opacity="0.75" />
+        <defs>
+          <radialGradient id="angeHalo" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#FFFDF8" />
+            <stop offset="55%" stop-color="#DCEEFF" stop-opacity="0.8" />
+            <stop offset="100%" stop-color="#D8B981" stop-opacity="0" />
+          </radialGradient>
+          <linearGradient id="angeWingGrad" x1="0" y1="0" x2="320" y2="180">
+            <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.95" />
+            <stop offset="50%" stop-color="#DCEEFF" stop-opacity="0.65" />
+            <stop offset="100%" stop-color="#D8B981" stop-opacity="0.45" />
+          </linearGradient>
+        </defs>
+      </svg>
+      <svg class="deco-stars" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <g fill="#D8B981">
+          <path d="M12 18l1.2 3.2 3.2 1.2-3.2 1.2L12 26.8l-1.2-3.2-3.2-1.2 3.2-1.2z" opacity="0.55" />
+          <path d="M78 14l0.9 2.4 2.4 0.9-2.4 0.9L78 21.6l-0.9-2.4-2.4-0.9 2.4-0.9z" opacity="0.45" />
+          <path d="M88 42l1.1 2.8 2.8 1.1-2.8 1.1L88 50.8l-1.1-2.8-2.8-1.1 2.8-1.1z" opacity="0.4" />
+          <path d="M22 58l0.8 2 2 0.8-2 0.8L22 64.4l-0.8-2-2-0.8 2-0.8z" opacity="0.35" />
+          <path d="M64 72l1 2.6 2.6 1-2.6 1L64 80.2l-1-2.6-2.6-1 2.6-1z" opacity="0.4" />
+        </g>
+      </svg>
+      <div class="deco-cloud deco-cloud-1"></div>
+      <div class="deco-cloud deco-cloud-2"></div>
+      <div class="deco-cloud deco-cloud-3"></div>
+      <div class="deco-feather deco-feather-1"></div>
+      <div class="deco-feather deco-feather-2"></div>
+      <div class="deco-column deco-column-l"></div>
+      <div class="deco-column deco-column-r"></div>
+      <div class="deco-ribbon"></div>
+    </div>
+
+    <div class="theme-deco-demon">
+      <div class="deco-moon"></div>
+      <svg class="deco-wings deco-wings-demon" viewBox="0 0 320 180" fill="none">
+        <path
+          d="M160 70c-18-8-48-10-78 2-22 9-42 28-54 48 20-4 38-2 52 8 12 8 22 22 26 38 8-28 26-48 54-56 28 8 46 28 54 56 4-16 14-30 26-38 14-10 32-12 52-8-12-20-32-39-54-48-30-12-60-10-78-2z"
+          fill="url(#demonWingGrad)"
+          opacity="0.5"
+        />
+        <path
+          d="M160 88l-7 18h14zM153 108h14M156 112h8"
+          stroke="#D61C2A"
+          stroke-width="2"
+          stroke-linejoin="round"
+          fill="none"
+          opacity="0.85"
+        />
+        <defs>
+          <linearGradient id="demonWingGrad" x1="0" y1="20" x2="320" y2="160">
+            <stop offset="0%" stop-color="#7A0E17" stop-opacity="0.9" />
+            <stop offset="45%" stop-color="#230C12" stop-opacity="0.95" />
+            <stop offset="100%" stop-color="#D61C2A" stop-opacity="0.55" />
+          </linearGradient>
+        </defs>
+      </svg>
+      <div class="deco-lava"></div>
+      <div class="deco-smoke deco-smoke-1"></div>
+      <div class="deco-smoke deco-smoke-2"></div>
+      <div class="deco-chain deco-chain-l"></div>
+      <div class="deco-chain deco-chain-r"></div>
+    </div>
+  </div>
+
   <aside class="side-nav" aria-label="Navigation bureau">
     <p class="brand">Freya</p>
     @for (tab of visibleTabs(); track tab.id) {

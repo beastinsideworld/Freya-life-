@@ -13,7 +13,7 @@
   padding: 0.85rem 0.9rem;
   border: 1px solid var(--border);
   border-radius: 1rem;
-  background: rgba(10, 4, 7, 0.75);
+  background: color-mix(in srgb, var(--bg) 75%, transparent);
 }
 
 .avatar {
@@ -23,7 +23,7 @@
   height: 3rem;
   border-radius: 50%;
   background: var(--grad-btn);
-  color: #fff7f2;
+  color: var(--ivory);
   font-family: var(--font-display);
   font-size: 1.35rem;
   background-position: center;
@@ -75,8 +75,8 @@
 
 .btn.danger {
   margin-top: 0.35rem;
-  border-color: rgba(179, 69, 85, 0.55);
-  color: #ffd7de;
+  border-color: color-mix(in srgb, var(--contour) 55%, transparent);
+  color: var(--powder);
 }
 
 .add-friend {
@@ -109,7 +109,7 @@
   padding: 0.7rem 0.8rem;
   border: 1px solid var(--border);
   border-radius: 0.85rem;
-  background: rgba(10, 4, 7, 0.55);
+  background: color-mix(in srgb, var(--bg) 55%, transparent);
 }
 
 .friend-main {
@@ -126,7 +126,7 @@
   height: 2.2rem;
   border-radius: 50%;
   background: var(--grad-btn);
-  color: #fff7f2;
+  color: var(--ivory);
   font-family: var(--font-display);
   background-position: center;
   background-size: cover;
@@ -150,7 +150,7 @@
 }
 
 .error {
-  color: #ffb4c0;
+  color: var(--rose-bright);
   font-size: 0.86rem;
 }
 
@@ -191,7 +191,7 @@
   padding: 0.85rem 0.9rem;
   border: 1px solid var(--border);
   border-radius: 1rem;
-  background: rgba(10, 4, 7, 0.75);
+  background: color-mix(in srgb, var(--bg) 75%, transparent);
 }
 
 .nav-tabs-row {
@@ -232,12 +232,12 @@
 .nav-tab-item.dragging {
   opacity: 0.72;
   transform: scale(1.02);
-  box-shadow: 0 0 18px rgba(196, 77, 95, 0.35);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--accent) 35%, transparent);
 }
 
 .nav-tab-item.drop-target .nav-tab-toggle {
-  border-color: rgba(255, 160, 175, 0.55);
-  background: rgba(196, 77, 95, 0.18);
+  border-color: color-mix(in srgb, var(--red-glow) 55%, transparent);
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
 .nav-tab-toggle {
@@ -248,7 +248,7 @@
   padding: 0.7rem 0.85rem;
   border: 1px solid var(--border);
   border-radius: 0.85rem;
-  background: rgba(10, 4, 7, 0.75);
+  background: color-mix(in srgb, var(--bg) 75%, transparent);
 }
 
 .nav-tab-label {
@@ -369,7 +369,7 @@
   padding: 0.55rem 0.7rem;
   border: 1px solid var(--border);
   border-radius: 0.85rem;
-  background: rgba(10, 4, 7, 0.75);
+  background: color-mix(in srgb, var(--bg) 75%, transparent);
   color: var(--text);
   text-align: left;
 }
@@ -381,7 +381,7 @@
 
 .theme-card:hover,
 .theme-card:focus-visible {
-  border-color: rgba(179, 69, 85, 0.75);
+  border-color: color-mix(in srgb, var(--contour) 75%, transparent);
 }
 
 .theme-name {
@@ -423,7 +423,7 @@
   padding: 0.65rem 0.75rem;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: rgba(18, 8, 11, 0.96);
+  background: color-mix(in srgb, var(--bg-secondary) 96%, transparent);
   backdrop-filter: blur(8px);
 }
 

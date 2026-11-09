@@ -1,0 +1,226 @@
+/* Fonds décoratifs PNG — thèmes Ange / Démon */
+
+.theme-modules {
+  display: none;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+}
+
+:root[data-theme='ange'] .theme-modules,
+:root[data-theme='demon'] .theme-modules {
+  display: grid;
+}
+
+.theme-module {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 7.5rem;
+  padding: 0.85rem 0.9rem;
+  border-radius: var(--radius);
+  overflow: hidden;
+  text-decoration: none;
+  isolation: isolate;
+  background-color: var(--bg-card);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border: 1.5px solid var(--contour);
+  box-shadow: var(--shadow-card);
+  color: var(--text-on-card);
+}
+
+.theme-module::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent 25%, rgba(10, 8, 6, 0.45) 100%);
+}
+
+.theme-module > * {
+  position: relative;
+  z-index: 1;
+}
+
+.theme-module__ico {
+  display: grid;
+  place-items: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  margin-bottom: 0.35rem;
+  filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.25));
+}
+
+.theme-module__ico app-nav-icon,
+.theme-module__ico img {
+  width: 1.55rem;
+  height: 1.55rem;
+}
+
+.theme-module__label {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: 0.01em;
+}
+
+/* Ange — textes foncés + voile clair */
+:root[data-theme='ange'] .theme-module {
+  color: #4a3f35;
+  border-color: color-mix(in srgb, #d8b981 70%, white);
+}
+
+:root[data-theme='ange'] .theme-module::before {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 253, 248, 0.15) 10%,
+    rgba(255, 253, 248, 0.55) 55%,
+    rgba(245, 233, 214, 0.78) 100%
+  );
+}
+
+:root[data-theme='ange'] .theme-module--planning {
+  background-image: url('/assets/themes/ange/planning.png');
+}
+:root[data-theme='ange'] .theme-module--repas {
+  background-image: url('/assets/themes/ange/repas.png');
+}
+:root[data-theme='ange'] .theme-module--voyage {
+  background-image: url('/assets/themes/ange/voyage.png');
+}
+:root[data-theme='ange'] .theme-module--sport {
+  background-image: url('/assets/themes/ange/sport.png');
+}
+:root[data-theme='ange'] .theme-module--finances {
+  background-image: url('/assets/themes/ange/finances.png');
+}
+:root[data-theme='ange'] .theme-module--animaux {
+  background-image: url('/assets/themes/ange/animaux.png');
+}
+
+/* Démon — textes clairs + voile sombre */
+:root[data-theme='demon'] .theme-module {
+  color: #f2e9e7;
+  border-color: #7a0e17;
+}
+
+:root[data-theme='demon'] .theme-module::before {
+  background: linear-gradient(
+    180deg,
+    rgba(11, 11, 14, 0.2) 5%,
+    rgba(35, 12, 18, 0.45) 45%,
+    rgba(11, 11, 14, 0.78) 100%
+  );
+}
+
+:root[data-theme='demon'] .theme-module--planning {
+  background-image: url('/assets/themes/demon/planning.png');
+}
+:root[data-theme='demon'] .theme-module--repas {
+  background-image: url('/assets/themes/demon/repas.png');
+}
+:root[data-theme='demon'] .theme-module--voyage {
+  background-image: url('/assets/themes/demon/voyage.png');
+}
+:root[data-theme='demon'] .theme-module--sport {
+  background-image: url('/assets/themes/demon/sport.png');
+}
+:root[data-theme='demon'] .theme-module--finances {
+  background-image: url('/assets/themes/demon/finances.png');
+}
+:root[data-theme='demon'] .theme-module--animaux {
+  background-image: url('/assets/themes/demon/animaux.png');
+}
+
+/* Héros Accueil Démon — bandeau (Ange géré par theme-ange-headers) */
+:root[data-theme='demon'] .page.accueil > .hero {
+  background-image: url('/assets/themes/demon/bandeau.png');
+  background-size: cover;
+  background-position: center;
+}
+
+:root[data-theme='demon'] .page.accueil > .hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  z-index: 0;
+  background: linear-gradient(180deg, rgba(11, 11, 14, 0.35), rgba(11, 11, 14, 0.72));
+}
+
+:root[data-theme='demon'] .page.accueil > .hero > * {
+  position: relative;
+  z-index: 1;
+}
+
+@mixin theme-page-hero-bg($theme, $selector, $file) {
+  :root[data-theme='#{$theme}'] #{$selector} > .hero {
+    background-image: url('/assets/themes/#{$theme}/#{$file}');
+    background-size: cover;
+    background-position: center;
+  }
+
+  :root[data-theme='#{$theme}'] #{$selector} > .hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    z-index: 0;
+  }
+
+  :root[data-theme='#{$theme}'] #{$selector} > .hero > * {
+    position: relative;
+    z-index: 1;
+  }
+}
+
+@include theme-page-hero-bg('ange', '.page.planning', 'planning.png');
+@include theme-page-hero-bg('ange', '.page.repas', 'repas.png');
+@include theme-page-hero-bg('ange', '.page.voyages', 'voyage.png');
+@include theme-page-hero-bg('ange', '.page.sport-page', 'sport.png');
+@include theme-page-hero-bg('ange', '.page.budget-page', 'finances.png');
+@include theme-page-hero-bg('ange', '.page.animaux-page', 'animaux.png');
+
+@include theme-page-hero-bg('demon', '.page.planning', 'planning.png');
+@include theme-page-hero-bg('demon', '.page.repas', 'repas.png');
+@include theme-page-hero-bg('demon', '.page.voyages', 'voyage.png');
+@include theme-page-hero-bg('demon', '.page.sport-page', 'sport.png');
+@include theme-page-hero-bg('demon', '.page.budget-page', 'finances.png');
+@include theme-page-hero-bg('demon', '.page.animaux-page', 'animaux.png');
+
+:root[data-theme='ange'] .page.planning > .hero::after,
+:root[data-theme='ange'] .page.repas > .hero::after,
+:root[data-theme='ange'] .page.voyages > .hero::after,
+:root[data-theme='ange'] .page.sport-page > .hero::after,
+:root[data-theme='ange'] .page.budget-page > .hero::after,
+:root[data-theme='ange'] .page.animaux-page > .hero::after {
+  background: linear-gradient(180deg, rgba(255, 253, 248, 0.3), rgba(255, 253, 248, 0.75));
+}
+
+:root[data-theme='demon'] .page.planning > .hero::after,
+:root[data-theme='demon'] .page.repas > .hero::after,
+:root[data-theme='demon'] .page.voyages > .hero::after,
+:root[data-theme='demon'] .page.sport-page > .hero::after,
+:root[data-theme='demon'] .page.budget-page > .hero::after,
+:root[data-theme='demon'] .page.animaux-page > .hero::after {
+  background: linear-gradient(180deg, rgba(11, 11, 14, 0.3), rgba(11, 11, 14, 0.75));
+}
+
+@media (min-width: 768px) {
+  .theme-modules {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.9rem;
+  }
+
+  .theme-module {
+    min-height: 9rem;
+  }
+}

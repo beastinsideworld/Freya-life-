@@ -17,20 +17,25 @@
 
     <button type="button" class="share-btn" (click)="openShare()" aria-label="Partager mon budget">Partager</button>
 
-    <div class="icon" aria-hidden="true"><app-nav-icon name="budget" /></div>
+    <div class="icon" aria-hidden="true">
+      <img class="theme-ico" [src]="icons.portefeuille" alt="" draggable="false" />
+    </div>
     <h1>Finances</h1>
     <p class="sub">Gère ton budget, tes comptes et tes projets</p>
   </header>
 
   <div class="seg finance-tabs" role="tablist" aria-label="Sections finances">
     <button type="button" role="tab" [class.active]="tab() === 'synthese'" (click)="setTab('synthese')">
-      <span aria-hidden="true">📊</span><span>Synthèse</span>
+      <img class="theme-ico theme-ico--tab" [src]="icons.graphique" alt="" aria-hidden="true" draggable="false" />
+      <span>Synthèse</span>
     </button>
     <button type="button" role="tab" [class.active]="tab() === 'mouvements'" (click)="setTab('mouvements')">
-      <span aria-hidden="true">⇄</span><span>Mouvements</span>
+      <img class="theme-ico theme-ico--tab" [src]="icons.transfert" alt="" aria-hidden="true" draggable="false" />
+      <span>Mouvements</span>
     </button>
     <button type="button" role="tab" [class.active]="tab() === 'projets'" (click)="setTab('projets')">
-      <span aria-hidden="true">🎯</span><span>Projets</span>
+      <img class="theme-ico theme-ico--tab" [src]="icons.cible" alt="" aria-hidden="true" draggable="false" />
+      <span>Projets</span>
     </button>
   </div>
 
@@ -44,7 +49,10 @@
     @if (tab() === 'synthese') {
       <section class="panel sim-card">
         <header class="card-head">
-          <h2><span aria-hidden="true">📅</span> Simulation du mois</h2>
+          <h2>
+            <img class="theme-ico theme-ico--inline" [src]="icons.calendrier" alt="" aria-hidden="true" draggable="false" />
+            Simulation du mois
+          </h2>
         </header>
         <div class="sim-grid">
           <div class="sim-main">
@@ -82,7 +90,9 @@
           <ul class="account-list">
             @for (account of accounts(); track account.id) {
               <li>
-                <span class="row-ico" aria-hidden="true">{{ account.icon }}</span>
+                <span class="row-ico" aria-hidden="true">
+                  <img class="theme-ico" [src]="financeEmojiIconSrc(account.icon || account.label)" alt="" draggable="false" />
+                </span>
                 <div class="row-main">
                   <strong>{{ account.label }}</strong>
                   @if (account.performancePct != null) {
@@ -171,7 +181,9 @@
             <ul class="cat-list">
               @for (slice of expenseBreakdown(); track slice.category) {
                 <li>
-                  <span class="row-ico" aria-hidden="true">{{ slice.icon }}</span>
+                  <span class="row-ico" aria-hidden="true">
+                    <img class="theme-ico" [src]="financeEmojiIconSrc(slice.icon || slice.category)" alt="" draggable="false" />
+                  </span>
                   <span class="cat-name">{{ slice.category }}</span>
                   <span class="cat-amt">{{ slice.amount > 0 ? money(slice.amount) : '—' }}</span>
                   <span class="cat-pct">{{ slice.pct.toFixed(1) }}%</span>
@@ -200,7 +212,9 @@
             <ul class="move-list">
               @for (item of filteredIncomes(); track item.id) {
                 <li>
-                  <span class="row-ico" aria-hidden="true">{{ categoryIcon(item.category) }}</span>
+                  <span class="row-ico" aria-hidden="true">
+                    <img class="theme-ico" [src]="financeEmojiIconSrc(item.category)" alt="" draggable="false" />
+                  </span>
                   <div class="row-main">
                     <strong>{{ item.label }}</strong>
                     <span>{{ formatMoveDate(item.date) }} · {{ item.accountName || 'Compte courant' }}</span>
@@ -237,7 +251,9 @@
             <ul class="move-list">
               @for (item of filteredExpenses(); track item.id) {
                 <li>
-                  <span class="row-ico" aria-hidden="true">{{ categoryIcon(item.category) }}</span>
+                  <span class="row-ico" aria-hidden="true">
+                    <img class="theme-ico" [src]="financeEmojiIconSrc(item.category)" alt="" draggable="false" />
+                  </span>
                   <div class="row-main">
                     <strong>{{ item.label }}</strong>
                     <span>{{ formatMoveDate(item.date) }} · {{ item.accountName || 'Compte courant' }}</span>
@@ -283,7 +299,9 @@
         @for (project of activeProjects(); track project.id) {
           <article class="panel project-card">
             <div class="project-top">
-              <span class="row-ico lg" aria-hidden="true">{{ project.icon }}</span>
+              <span class="row-ico lg" aria-hidden="true">
+                <img class="theme-ico" [src]="financeEmojiIconSrc(project.icon)" alt="" draggable="false" />
+              </span>
               <div class="row-main">
                 <strong>{{ project.label }}</strong>
                 <span>{{ money(project.savedAmount, 0) }} / {{ money(project.targetAmount, 0) }}</span>
@@ -333,7 +351,9 @@
             <ul class="move-list">
               @for (project of archivedProjects(); track project.id) {
                 <li>
-                  <span class="row-ico" aria-hidden="true">{{ project.icon }}</span>
+                  <span class="row-ico" aria-hidden="true">
+                    <img class="theme-ico" [src]="financeEmojiIconSrc(project.icon)" alt="" draggable="false" />
+                  </span>
                   <div class="row-main">
                     <strong>{{ project.label }}</strong>
                     <span>

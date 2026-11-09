@@ -23,7 +23,10 @@
     <div class="meal-grid">
       <div class="axis"></div>
       @for (slot of slots; track slot) {
-        <p class="colhead">{{ slotLabels[slot] }}</p>
+        <div class="colhead">
+          <img class="slot-ico" [src]="slotIcons[slot]" alt="" aria-hidden="true" draggable="false" />
+          <span>{{ slotLabels[slot] }}</span>
+        </div>
       }
       @for (day of days; track day; let i = $index) {
         <div class="day">
@@ -33,14 +36,19 @@
         @for (slot of slots; track slot) {
           @if (mealAt(i, slot); as meal) {
             <button type="button" class="cell filled" (click)="openMealRecipe(meal)">
-              <div class="thumb" aria-hidden="true"></div>
+              <div class="thumb" aria-hidden="true">
+                <img [src]="slotIcons[slot]" alt="" draggable="false" />
+              </div>
               <p>{{ meal.title }}</p>
               @if (meal.kcal) {
                 <span class="meal-kcal">{{ formatKcal(meal.kcal) }}</span>
               }
             </button>
           } @else {
-            <button type="button" class="cell slot" (click)="quickAdd(i, slot)">+ Ajouter un repas</button>
+            <button type="button" class="cell slot" (click)="quickAdd(i, slot)">
+              <img class="slot-ico ghost" [src]="slotIcons[slot]" alt="" aria-hidden="true" draggable="false" />
+              <span>+ Ajouter</span>
+            </button>
           }
         }
       }

@@ -632,9 +632,9 @@ export const EXPENSE_CATEGORY_META: Record<
   ExpenseCategory,
   { icon: string; color: string }
 > = {
-  Alimentation: { icon: '🥣', color: '#c44d5f' },
-  Vétérinaire: { icon: '🩺', color: '#8f3d4a' },
-  Toilettage: { icon: '✂', color: '#b87333' },
-  'Soins / Traitements': { icon: '💊', color: '#6b8f71' },
-  Autres: { icon: '📦', color: '#5c6bc0' }
+  Alimentation: { icon: '🥣', color: 'var(--chart-1)' },
+  Vétérinaire: { icon: '🩺', color: 'var(--chart-3)' },
+  Toilettage: { icon: '✂', color: 'var(--chart-2)' },
+  'Soins / Traitements': { icon: '💊', color: 'var(--ok)' },
+  Autres: { icon: '📦', color: 'var(--project)' }
 };

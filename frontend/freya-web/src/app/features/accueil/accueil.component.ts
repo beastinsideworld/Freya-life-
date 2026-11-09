@@ -35,6 +35,8 @@ interface WeatherDay {
   date: string;
   label: string;
   icon: string;
+  /** Clé fichier météo Ange : soleil, nuageux, tres-couvert, pluie, neige, orage, vent, nuit */
+  iconKey: string;
   tempMax: number;
   tempMin: number;
   summary: string;
@@ -83,25 +85,25 @@ const MEAL_SLOTS: Array<{ key: MealSlotKey; slot: string; iconSrc: string; alias
     key: 'breakfast',
     slot: 'Petit-déjeuner',
     iconSrc: 'assets/meals/petit-dejeuner.png',
-    aliases: ['breakfast', 'petit-déjeuner', 'petit dejeuner', 'petit-dejeuner']
+    aliases: ['breakfast', 'petit-déjeuner', 'petit dejeuner', 'petit-dejeuner', '0']
   },
   {
     key: 'lunch',
     slot: 'Déjeuner',
     iconSrc: 'assets/meals/dejeuner.png',
-    aliases: ['lunch', 'déjeuner', 'dejeuner', 'main']
+    aliases: ['lunch', 'déjeuner', 'dejeuner', 'main', '1']
   },
   {
     key: 'snack',
     slot: 'Collation',
     iconSrc: 'assets/meals/collation.png',
-    aliases: ['snack', 'collation']
+    aliases: ['snack', 'collation', '2']
   },
   {
     key: 'dinner',
     slot: 'Dîner',
     iconSrc: 'assets/meals/diner.png',
-    aliases: ['dinner', 'dîner', 'diner', 'repas']
+    aliases: ['dinner', 'dîner', 'diner', 'repas', '3']
   }
 ];
 
@@ -204,6 +206,13 @@ export class AccueilComponent implements OnInit, OnDestroy {
     this.reloadScopedDay();
   }
 
+  /** Libellé court pour le bouton famille (jamais « Moi » au milieu). */
+  familyScopeShort(): string {
+    const id = this.selectedFamilyId();
+    if (id === 'me') return 'Famille';
+    return this.families().find((f) => f.id === id)?.name ?? 'Famille';
+  }
+
   private reloadScopedDay(): void {
     this.loadTodayTasks();
     this.loadWeekEvents();
@@ -246,6 +255,15 @@ export class AccueilComponent implements OnInit, OnDestroy {
 
   weatherFor(date: string): WeatherDay | null {
     return this.weatherDays().find((d) => d.date === date) ?? null;
+  }
+
+  isAngeTheme(): boolean {
+    return document.documentElement.getAttribute('data-theme') === 'ange';
+  }
+
+  weatherIconSrc(iconKey: string | undefined | null): string | null {
+    if (!iconKey || !this.isAngeTheme()) return null;
+    return `assets/themes/ange/meteo/${iconKey}.png`;
   }
 
   closeReminderPopup(): void {
@@ -442,6 +460,7 @@ export class AccueilComponent implements OnInit, OnDestroy {
             date,
             label: d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' }),
             icon: info.icon,
+            iconKey: info.iconKey,
             tempMax: Math.round(maxes[i] ?? this.temperature()),
             tempMin: Math.round(mins[i] ?? this.temperature() - 4),
             summary: info.summary
@@ -507,29 +526,43 @@ export class AccueilComponent implements OnInit, OnDestroy {
     attemptFetch(0);
   }
 
-  private weatherFromCode(code: number): { icon: string; summary: string } {
-    if (code === 0) return { icon: '☀', summary: 'Ensoleillé' };
-    if (code <= 3) return { icon: '🌤', summary: 'Peu nuageux' };
-    if (code <= 48) return { icon: '☁', summary: 'Nuageux' };
-    if (code <= 67) return { icon: '🌧', summary: 'Pluie' };
-    if (code <= 77) return { icon: '❄', summary: 'Neige' };
-    if (code <= 82) return { icon: '🌦', summary: 'Averses' };
-    return { icon: '⛈', summary: 'Orage' };
+  private weatherFromCode(code: number): { icon: string; iconKey: string; summary: string } {
+    if (code === 0) return { icon: '☀', iconKey: 'soleil', summary: 'Ensoleillé' };
+    if (code === 1 || code === 2) return { icon: '🌤', iconKey: 'nuageux', summary: 'Peu nuageux' };
+    if (code === 3) return { icon: '☁', iconKey: 'tres-couvert', summary: 'Couvert' };
+    if (code <= 48) return { icon: '☁', iconKey: 'tres-couvert', summary: 'Brouillard' };
+    if (code <= 67) return { icon: '🌧', iconKey: 'pluie', summary: 'Pluie' };
+    if (code <= 77) return { icon: '❄', iconKey: 'neige', summary: 'Neige' };
+    if (code <= 82) return { icon: '🌦', iconKey: 'pluie', summary: 'Averses' };
+    if (code <= 86) return { icon: '❄', iconKey: 'neige', summary: 'Averses de neige' };
+    if (code >= 95) return { icon: '⛈', iconKey: 'orage', summary: 'Orage' };
+    return { icon: '🌬', iconKey: 'vent', summary: 'Vent' };
   }
 
   private demoWeatherWeek(): WeatherDay[] {
     const base = this.temperature();
+    const demo = [
+      { icon: '☀', iconKey: 'soleil', summary: 'Ensoleillé' },
+      { icon: '🌤', iconKey: 'nuageux', summary: 'Peu nuageux' },
+      { icon: '☁', iconKey: 'tres-couvert', summary: 'Couvert' },
+      { icon: '🌧', iconKey: 'pluie', summary: 'Pluie' },
+      { icon: '⛈', iconKey: 'orage', summary: 'Orage' },
+      { icon: '❄', iconKey: 'neige', summary: 'Neige' },
+      { icon: '🌬', iconKey: 'vent', summary: 'Vent' }
+    ];
     return Array.from({ length: 7 }, (_, i) => {
       const d = this.addDays(new Date(), i);
       const iso = toIsoDate(d);
       const swing = ((i % 3) - 1) * 2;
+      const info = demo[i % demo.length];
       return {
         date: iso,
         label: d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' }),
-        icon: i % 4 === 0 ? '☀' : i % 4 === 1 ? '🌤' : i % 4 === 2 ? '☁' : '🌧',
+        icon: info.icon,
+        iconKey: info.iconKey,
         tempMax: base + swing + 2,
         tempMin: base + swing - 3,
-        summary: i % 4 === 0 ? 'Ensoleillé' : i % 4 === 1 ? 'Peu nuageux' : i % 4 === 2 ? 'Nuageux' : 'Pluie'
+        summary: info.summary
       };
     });
   }

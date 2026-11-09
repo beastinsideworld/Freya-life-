@@ -4,27 +4,34 @@ import {
   ACTIVITY_OPTIONS,
   ActivityLevel,
   computeEnergy,
+  exerciseIconSrc,
   formatDuration,
   formatRest,
   GOAL_TYPE_OPTIONS,
   GoalType,
   kindIcon,
+  kindIconSrc,
+  MUSCU_ICON,
+  muscuIcon,
   pct,
   SportSex,
   SportStore,
   SportTab
 } from '../../core/sport.store';
-import { NavIconComponent } from '../../shared/nav-icon/nav-icon.component';
 
 @Component({
   selector: 'app-sport',
   standalone: true,
-  imports: [FormsModule, NavIconComponent],
+  imports: [FormsModule],
   templateUrl: './sport.component.html',
   styleUrl: './sport.component.scss'
 })
 export class SportComponent {
   readonly store = inject(SportStore);
+  readonly icons = MUSCU_ICON;
+  readonly muscuIcon = muscuIcon;
+  readonly exerciseIconSrc = exerciseIconSrc;
+  readonly kindIconSrc = kindIconSrc;
   readonly tab = signal<SportTab>('suivi');
   readonly period = signal<'1 mois' | '3 mois' | '6 mois'>('3 mois');
   readonly sportFilter = signal('Tous les sports');

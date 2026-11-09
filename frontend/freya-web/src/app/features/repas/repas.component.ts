@@ -80,12 +80,23 @@ export class RepasComponent implements OnInit {
   readonly deleteConfirmAisle = signal<string | null>(null);
 
   readonly days = ['Lun.', 'Mar.', 'Mer.', 'Jeu.', 'Ven.', 'Sam.', 'Dim.'];
-  readonly slots = ['Lunch', 'Main', 'Snack', 'Dinner'];
-  readonly slotLabels: Record<string, string> = {
+  readonly slots: Array<'Breakfast' | 'Lunch' | 'Snack' | 'Dinner'> = [
+    'Breakfast',
+    'Lunch',
+    'Snack',
+    'Dinner'
+  ];
+  readonly slotLabels: Record<'Breakfast' | 'Lunch' | 'Snack' | 'Dinner', string> = {
+    Breakfast: 'Petit-déjeuner',
     Lunch: 'Déjeuner',
-    Main: 'Repas',
     Snack: 'Collation',
     Dinner: 'Dîner'
+  };
+  readonly slotIcons: Record<'Breakfast' | 'Lunch' | 'Snack' | 'Dinner', string> = {
+    Breakfast: 'assets/meals/petit-dejeuner.png',
+    Lunch: 'assets/meals/dejeuner.png',
+    Snack: 'assets/meals/collation.png',
+    Dinner: 'assets/meals/diner.png'
   };
   readonly recipeCats = ['Tout', 'Rapide', 'Healthy', 'Végé', 'Viande', 'Poisson', 'Dessert'];
   readonly recipeFormCats = ['Rapide', 'Healthy', 'Végé', 'Viande', 'Poisson', 'Dessert'];
@@ -98,7 +109,7 @@ export class RepasComponent implements OnInit {
   weekStart = this.toIso(this.startOfWeek(new Date()));
   newMealTitle = '';
   newMealDate = this.toIso(new Date());
-  newMealSlot: 'Lunch' | 'Main' | 'Snack' | 'Dinner' = 'Main';
+  newMealSlot: 'Breakfast' | 'Lunch' | 'Snack' | 'Dinner' = 'Lunch';
   newArticle = '';
   newQty = '1';
   newUnit = 'pièce';
@@ -150,7 +161,28 @@ export class RepasComponent implements OnInit {
 
   mealAt(dayIndex: number, slot: string): MealRow | undefined {
     const date = this.dateFor(dayIndex);
-    return this.meals().find((m) => m.date === date && (m.slot === slot || m.slot === String(this.slots.indexOf(slot))));
+    const idx = this.slots.indexOf(slot as (typeof this.slots)[number]);
+    const aliases = this.slotAliases(slot);
+    return this.meals().find(
+      (m) =>
+        m.date === date &&
+        (aliases.includes(m.slot) || m.slot === String(idx) || m.slot === String(idx + 1))
+    );
+  }
+
+  private slotAliases(slot: string): string[] {
+    switch (slot) {
+      case 'Breakfast':
+        return ['Breakfast', 'Petit-déjeuner', '0'];
+      case 'Lunch':
+        return ['Lunch', 'Main', 'Déjeuner', '1'];
+      case 'Snack':
+        return ['Snack', 'Collation', '2'];
+      case 'Dinner':
+        return ['Dinner', 'Dîner', '3'];
+      default:
+        return [slot];
+    }
   }
 
   openMealRecipe(meal: MealRow): void {
@@ -647,26 +679,28 @@ export class RepasComponent implements OnInit {
   private demoMeals(): MealRow[] {
     const d = (i: number) => this.dateFor(i);
     return [
-      { id: '1', date: d(0), slot: 'Lunch', title: 'Salade poulet césar', kcal: 420 },
-      { id: '2', date: d(0), slot: 'Main', title: 'Pâtes bolognaise', kcal: 680 },
+      { id: '1', date: d(0), slot: 'Breakfast', title: 'Porridge protéiné', kcal: 380 },
+      { id: '2', date: d(0), slot: 'Lunch', title: 'Salade poulet césar', kcal: 420 },
       { id: '3', date: d(0), slot: 'Snack', title: 'Yaourt et fruits rouges', kcal: 180 },
       { id: '4', date: d(0), slot: 'Dinner', title: 'Omelette aux légumes', kcal: 390 },
-      { id: '5', date: d(1), slot: 'Lunch', title: 'Wrap poulet', kcal: 450 },
-      { id: '6', date: d(1), slot: 'Snack', title: 'Amandes', kcal: 160 },
-      { id: '7', date: d(1), slot: 'Dinner', title: 'Saumon et légumes', kcal: 520 },
-      { id: '8', date: d(2), slot: 'Main', title: 'Riz sauté aux légumes', kcal: 560 },
-      { id: '9', date: d(2), slot: 'Dinner', title: 'Soupe maison', kcal: 280 },
-      { id: '10', date: d(3), slot: 'Lunch', title: 'Bowl quinoa et avocat', kcal: 480 },
-      { id: '11', date: d(3), slot: 'Snack', title: 'Pomme et beurre de cacahuète', kcal: 220 },
-      { id: '12', date: d(3), slot: 'Dinner', title: 'Gratin de courgettes', kcal: 410 },
-      { id: '13', date: d(4), slot: 'Main', title: 'Burger maison et salade', kcal: 720 },
-      { id: '14', date: d(4), slot: 'Snack', title: 'Yaourt et granola', kcal: 210 },
-      { id: '15', date: d(5), slot: 'Lunch', title: 'Pancakes maison', kcal: 540 },
-      { id: '16', date: d(5), slot: 'Snack', title: 'Salade de fruits', kcal: 150 },
-      { id: '17', date: d(5), slot: 'Dinner', title: 'Pizza maison', kcal: 780 },
-      { id: '18', date: d(6), slot: 'Lunch', title: 'Brunch maison', kcal: 650 },
-      { id: '19', date: d(6), slot: 'Main', title: 'Poulet rôti et pommes de terre', kcal: 690 },
-      { id: '20', date: d(6), slot: 'Dinner', title: 'Salade composée', kcal: 360 }
+      { id: '5', date: d(1), slot: 'Breakfast', title: 'Pain, beurre et confiture', kcal: 320 },
+      { id: '6', date: d(1), slot: 'Lunch', title: 'Wrap poulet', kcal: 450 },
+      { id: '7', date: d(1), slot: 'Snack', title: 'Amandes', kcal: 160 },
+      { id: '8', date: d(1), slot: 'Dinner', title: 'Saumon et légumes', kcal: 520 },
+      { id: '9', date: d(2), slot: 'Lunch', title: 'Riz sauté aux légumes', kcal: 560 },
+      { id: '10', date: d(2), slot: 'Dinner', title: 'Soupe maison', kcal: 280 },
+      { id: '11', date: d(3), slot: 'Breakfast', title: 'Smoothie bol', kcal: 340 },
+      { id: '12', date: d(3), slot: 'Lunch', title: 'Bowl quinoa et avocat', kcal: 480 },
+      { id: '13', date: d(3), slot: 'Snack', title: 'Pomme et beurre de cacahuète', kcal: 220 },
+      { id: '14', date: d(3), slot: 'Dinner', title: 'Gratin de courgettes', kcal: 410 },
+      { id: '15', date: d(4), slot: 'Lunch', title: 'Burger maison et salade', kcal: 720 },
+      { id: '16', date: d(4), slot: 'Snack', title: 'Yaourt et granola', kcal: 210 },
+      { id: '17', date: d(4), slot: 'Dinner', title: 'Soupe et toast', kcal: 360 },
+      { id: '18', date: d(5), slot: 'Breakfast', title: 'Pancakes maison', kcal: 540 },
+      { id: '19', date: d(5), slot: 'Snack', title: 'Salade de fruits', kcal: 150 },
+      { id: '20', date: d(5), slot: 'Dinner', title: 'Pizza maison', kcal: 780 },
+      { id: '21', date: d(6), slot: 'Lunch', title: 'Brunch maison', kcal: 650 },
+      { id: '22', date: d(6), slot: 'Dinner', title: 'Poulet rôti et pommes de terre', kcal: 690 }
     ];
   }
 

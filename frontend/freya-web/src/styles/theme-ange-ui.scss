@@ -1,0 +1,189 @@
+/* UI kit Ange — encadrés verre + or champagne (réf. céleste) */
+
+:root[data-theme='ange'] {
+  --ange-glass: rgba(255, 255, 255, 0.48);
+  --ange-glass-strong: rgba(255, 255, 255, 0.72);
+  --ange-gold: #d8b981;
+  --ange-gold-bright: #e8d4a8;
+  --ange-gold-deep: #c4a56a;
+  --ange-border: linear-gradient(135deg, #f0e0b8, #d8b981 45%, #c9a96a 100%);
+}
+
+:root[data-theme='ange'] .panel,
+:root[data-theme='ange'] .modal,
+:root[data-theme='ange'] .hero {
+  background: var(--ange-glass);
+  backdrop-filter: blur(18px) saturate(1.15);
+  -webkit-backdrop-filter: blur(18px) saturate(1.15);
+  border: 1.5px solid color-mix(in srgb, var(--ange-gold) 70%, white);
+  box-shadow:
+    0 10px 32px rgba(74, 63, 53, 0.07),
+    0 0 0 1px rgba(255, 255, 255, 0.45) inset,
+    0 1px 0 rgba(255, 255, 255, 0.75) inset,
+    0 0 18px rgba(216, 185, 129, 0.12);
+}
+
+:root[data-theme='ange'] .panel::before {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.75),
+    inset 0 0 0 1px rgba(216, 185, 129, 0.12);
+}
+
+:root[data-theme='ange'] .hero {
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(220, 238, 255, 0.55), transparent 55%),
+    var(--ange-glass);
+  border-bottom: 0;
+  margin-bottom: 1rem;
+}
+
+:root[data-theme='ange'] .seg button,
+:root[data-theme='ange'] .chip,
+:root[data-theme='ange'] .btn,
+:root[data-theme='ange'] .meta-pill,
+:root[data-theme='ange'] .field input,
+:root[data-theme='ange'] .field select,
+:root[data-theme='ange'] .field textarea,
+:root[data-theme='ange'] .search input {
+  background: var(--ange-glass-strong);
+  border: 1.5px solid color-mix(in srgb, var(--ange-gold) 65%, white);
+  box-shadow:
+    0 4px 14px rgba(74, 63, 53, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  color: #4a3f35;
+}
+
+:root[data-theme='ange'] .seg button.active,
+:root[data-theme='ange'] .chip.active,
+:root[data-theme='ange'] .btn.primary {
+  background: linear-gradient(180deg, #f0dfb8 0%, #d8b981 52%, #c4a56a 100%);
+  border-color: var(--ange-gold-deep);
+  color: #4a3f35;
+  box-shadow:
+    0 0 16px rgba(216, 185, 129, 0.45),
+    inset 0 1px 0 rgba(255, 253, 248, 0.85);
+}
+
+:root[data-theme='ange'] .btn.ghost,
+:root[data-theme='ange'] .ghost-link {
+  background: transparent;
+  border: 1.5px solid color-mix(in srgb, var(--ange-gold) 55%, white);
+  color: var(--ange-gold-deep);
+  box-shadow: none;
+}
+
+:root[data-theme='ange'] .btn.ghost:hover,
+:root[data-theme='ange'] .ghost-link:hover {
+  background: var(--ange-glass);
+  border-color: var(--ange-gold);
+}
+
+:root[data-theme='ange'] .field input:focus,
+:root[data-theme='ange'] .field select:focus,
+:root[data-theme='ange'] .field textarea:focus,
+:root[data-theme='ange'] .search input:focus {
+  border-color: var(--ange-gold);
+  box-shadow:
+    0 0 0 2px rgba(216, 185, 129, 0.28),
+    0 0 14px rgba(220, 238, 255, 0.35);
+}
+
+:root[data-theme='ange'] .meta-pill {
+  color: var(--ange-gold-deep);
+}
+
+:root[data-theme='ange'] .progress-track {
+  background: color-mix(in srgb, var(--ange-gold) 22%, white);
+}
+
+:root[data-theme='ange'] .progress-fill {
+  background: linear-gradient(90deg, var(--ange-gold-bright), var(--ange-gold-deep));
+  box-shadow: 0 0 10px rgba(216, 185, 129, 0.35);
+}
+
+:root[data-theme='ange'] input[type='checkbox'],
+:root[data-theme='ange'] input[type='radio'] {
+  accent-color: var(--ange-gold);
+}
+
+:root[data-theme='ange'] a {
+  color: var(--ange-gold-deep);
+}
+
+:root[data-theme='ange'] .modal {
+  background: rgba(255, 253, 248, 0.78);
+}
+
+:root[data-theme='ange'] .modal-close {
+  background: var(--ange-glass-strong);
+  border-color: color-mix(in srgb, var(--ange-gold) 65%, white);
+  color: #4a3f35;
+}
+
+/* Nav bas — barre verre dorée */
+:root[data-theme='ange'] .bottom-nav-rail {
+  background: rgba(255, 255, 255, 0.55);
+  border: 1.5px solid color-mix(in srgb, var(--ange-gold) 70%, white);
+  box-shadow:
+    0 10px 28px rgba(74, 63, 53, 0.1),
+    0 0 0 1px rgba(255, 255, 255, 0.55) inset,
+    0 0 20px rgba(216, 185, 129, 0.18);
+  backdrop-filter: blur(18px) saturate(1.2);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+}
+
+:root[data-theme='ange'] .bottom-link,
+:root[data-theme='ange'] .nav-label {
+  color: var(--ange-gold-deep);
+}
+
+:root[data-theme='ange'] .bottom-link.active .nav-label {
+  color: #4a3f35;
+  text-shadow: 0 0 8px rgba(216, 185, 129, 0.35);
+}
+
+:root[data-theme='ange'] .bottom-link.active .active-ring {
+  border-color: var(--ange-gold);
+  box-shadow:
+    0 0 12px rgba(216, 185, 129, 0.4),
+    inset 0 0 10px rgba(240, 223, 184, 0.35);
+}
+
+:root[data-theme='ange'] .bottom-link.active .active-ring::before,
+:root[data-theme='ange'] .bottom-link.active .active-ring::after {
+  background: #fffdf8;
+  box-shadow: 0 0 10px 2px rgba(216, 185, 129, 0.75);
+}
+
+:root[data-theme='ange'] .ico-wrap {
+  filter: drop-shadow(0 0 6px rgba(216, 185, 129, 0.35));
+}
+
+:root[data-theme='ange'] .nav-divider {
+  background: linear-gradient(
+    180deg,
+    transparent,
+    color-mix(in srgb, var(--ange-gold) 45%, transparent),
+    transparent
+  );
+}
+
+:root[data-theme='ange'] .dot-badge,
+:root[data-theme='ange'] .nav-badge {
+  background: linear-gradient(180deg, #f0dfb8, #d8b981);
+  color: #4a3f35;
+}
+
+@media (min-width: 1024px) {
+  :root[data-theme='ange'] .side-nav {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.7) 0%, rgba(245, 233, 214, 0.65) 100%);
+    border-right: 1.5px solid color-mix(in srgb, var(--ange-gold) 55%, white);
+    backdrop-filter: blur(14px);
+  }
+
+  :root[data-theme='ange'] .side-nav a.active {
+    color: #4a3f35;
+    background: linear-gradient(180deg, #f0dfb8 0%, #d8b981 55%, #c4a56a 100%);
+    border-color: var(--ange-gold-deep);
+  }
+}

@@ -1,0 +1,263 @@
+/* Accueil Ange — fonds décoratifs (fond accueil) + texte HTML au-dessus */
+
+@mixin ange-fond($file, $veil: 0.28) {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background-color: #fffdf8;
+  background-image: url('/assets/themes/ange/fonds/#{$file}');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border: 1.5px solid color-mix(in srgb, #d8b981 70%, white);
+  box-shadow:
+    0 10px 28px rgba(74, 63, 53, 0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 0.75);
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    background: rgba(255, 253, 248, $veil);
+  }
+
+  > *:not(.family-scope) {
+    position: relative;
+    z-index: 1;
+  }
+}
+
+/* Stylo idée discret (évite le doublon visuel trop fort) */
+:root[data-theme='ange'] .idea-fab {
+  border-color: color-mix(in srgb, #d8b981 70%, white);
+  background: linear-gradient(180deg, #f0dfb8, #d8b981);
+  color: #4a3f35;
+  box-shadow: 0 0 14px rgba(216, 185, 129, 0.35);
+}
+
+/* Hero Accueil */
+:root[data-theme='ange'] .page.accueil > .hero {
+  border-radius: var(--radius);
+  text-shadow: none;
+  min-height: 9.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  @include ange-fond('accueil.png', 0.22);
+
+  &::after {
+    display: none;
+  }
+
+  > .icon {
+    margin: 0 auto 0.15rem;
+  }
+
+  > h1 {
+    margin: 0.15rem 0 0;
+    color: #4a3f35;
+    text-align: center;
+  }
+
+  > .sub {
+    margin: 0.45rem auto 0;
+    color: #4a3f35;
+    text-align: center;
+  }
+
+  > .family-scope {
+    /* ange-fond met tous les enfants en relative → on force l’absolu à gauche */
+    position: absolute;
+    top: 0.7rem;
+    left: 0.75rem;
+    right: auto;
+    bottom: auto;
+    align-self: flex-start;
+    margin: 0;
+    background: rgba(255, 253, 248, 0.88);
+    border-color: color-mix(in srgb, #d8b981 65%, white);
+    color: #4a3f35;
+    box-shadow: 0 4px 14px rgba(74, 63, 53, 0.08);
+  }
+}
+
+/* Voyage — fond jusqu’aux bords de l’encadré */
+:root[data-theme='ange'] .page.accueil > .trip-banner {
+  position: relative;
+  min-height: 3.8rem;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  isolation: isolate;
+  color: #4a3f35;
+  border: 1.5px solid color-mix(in srgb, #d8b981 70%, white);
+  background-color: #fffdf8;
+  background-image: url('/assets/themes/ange/voyage.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-clip: border-box;
+  box-shadow:
+    0 8px 22px rgba(74, 63, 53, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55);
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    background: linear-gradient(
+      90deg,
+      rgba(255, 253, 248, 0.55) 0%,
+      rgba(255, 253, 248, 0.28) 45%,
+      rgba(255, 253, 248, 0.5) 100%
+    );
+  }
+
+  > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .trip-label,
+  strong,
+  .trip-count {
+    color: #4a3f35;
+    text-shadow: 0 1px 0 rgba(255, 253, 248, 0.65);
+  }
+}
+
+/* Date du jour */
+:root[data-theme='ange'] .page.accueil > .top-meta .meta-pill {
+  min-height: 2.6rem;
+  color: #4a3f35;
+  @include ange-fond('accueil.png', 0.35);
+  background-position: center 40%;
+}
+
+/* Événement */
+:root[data-theme='ange'] .page.accueil > .composer {
+  @include ange-fond('evenement.png', 0.3);
+
+  > .field {
+    font-size: 0;
+  }
+
+  > .field-title input {
+    font-size: 1.12rem;
+    font-weight: 600;
+    color: #4a3f35;
+    background: rgba(255, 253, 248, 0.88);
+  }
+
+  > .field-time input,
+  > .field-date app-date-picker .trigger,
+  > .btn.add {
+    background: rgba(255, 253, 248, 0.88);
+    color: #4a3f35;
+  }
+
+  > .error {
+    grid-column: 1 / -1;
+    color: #4a3f35;
+  }
+}
+
+/* Tâches du jour — texte au-dessus du fond */
+:root[data-theme='ange'] .page.accueil > .tasks {
+  @include ange-fond('taches.png', 0.32);
+
+  > .section-head h2,
+  h3,
+  .task-card,
+  .time {
+    color: #4a3f35;
+  }
+
+  > .section-head > a {
+    color: #c4a56a;
+  }
+}
+
+/* Repas du jour */
+:root[data-theme='ange'] .page.accueil > .meals {
+  @include ange-fond('repas.png', 0.32);
+
+  > .section-head h2,
+  .kcal-total {
+    color: #4a3f35;
+  }
+
+  > .section-head > a {
+    color: #c4a56a;
+  }
+
+  .meal-edit {
+    border-color: color-mix(in srgb, #d8b981 55%, white);
+    background: rgba(255, 253, 248, 0.85);
+    color: #c4a56a;
+  }
+
+  .kcal-badge {
+    border-color: color-mix(in srgb, #d8b981 45%, white);
+    background: rgba(255, 253, 248, 0.88);
+    color: #4a3f35;
+  }
+}
+
+/* Planning de la semaine */
+:root[data-theme='ange'] .page.accueil > .week {
+  @include ange-fond('planning.png', 0.22);
+
+  > .section-head h2 {
+    color: #4a3f35;
+  }
+
+  > .section-head > a {
+    color: #c4a56a;
+  }
+
+  .week-row article {
+    background: rgba(255, 253, 248, 0.42);
+    border-color: color-mix(in srgb, #d8b981 45%, white);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+  }
+
+  .week-row article.today {
+    background: rgba(255, 253, 248, 0.62);
+    border-color: color-mix(in srgb, #d8b981 75%, white);
+  }
+
+  .week-row h3 {
+    color: #3d342c;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0;
+    text-shadow: 0 1px 0 rgba(255, 253, 248, 0.95);
+  }
+
+  .week-row article:first-child h3 {
+    color: #2f2822;
+  }
+
+  .day-num {
+    color: #5a4d40;
+    text-shadow: 0 1px 0 rgba(255, 253, 248, 0.75);
+  }
+
+  .day-weather-temp {
+    color: #6b5d4d;
+  }
+
+  .week-row li {
+    color: #4a3f35;
+    background: rgba(255, 253, 248, 0.55);
+  }
+}

@@ -1,38 +1,18 @@
-/* Freya — charte typographique & couleurs (noir / bordeaux) */
-:root,
-:root[data-theme='freya'] {
-  /* Couleurs charte */
-  --ivory: #fff1e8;
-  --cream: #f3dfd2;
-  --champagne: #efc78e;
-  --powder: #d9b7b8;
-  --rose-muted: #b68c91;
-  --rose-bright: #ff9caf;
+@use './styles/theme-palettes';
+@use './styles/theme-decorations';
+@use './styles/theme-ange-ui';
+@use './styles/theme-category-bgs';
+@use './styles/theme-ange-headers';
 
-  --bg: #030203;
-  --bg-elevated: #14090c;
-  --surface: rgba(32, 12, 18, 0.72);
-  --surface-strong: rgba(42, 14, 20, 0.92);
-  --text: var(--ivory);
-  --muted: var(--powder);
-  --muted-soft: var(--rose-muted);
-  --border: rgba(255, 156, 175, 0.42);
-  --border-soft: rgba(255, 156, 175, 0.22);
-  --accent: #c44558;
-  --accent-deep: #7a1d2c;
-  --accent-mid: #a33445;
-  --accent-glow: rgba(255, 156, 175, 0.45);
-  --accent-soft: var(--rose-bright);
-  --gold: var(--champagne);
-  --gold-bright: var(--cream);
-  --title: var(--ivory);
+/* Tokens structurels partagés (typo, rayons) — couleurs via theme-palettes */
+:root {
   --ok: #7eaa78;
   --work: #c49a4a;
   --run: #5a8ac4;
   --project: #8a6ab0;
   --danger: #e07878;
-  --radius: 1.15rem;
-  --radius-sm: 0.9rem;
+  --radius: 22px;
+  --radius-sm: 14px;
   --radius-pill: 999px;
   --font-display: 'Playfair Display', Georgia, 'Times New Roman', serif;
   --font-body: 'Poppins', 'Segoe UI', sans-serif;
@@ -47,16 +27,6 @@
   --fs-secondary: 12px;
   --fs-btn: 14px;
   --nav-h: 5.1rem;
-  --shadow-glow: 0 0 22px var(--accent-glow);
-  --shadow-card:
-    0 0 0 1px rgba(255, 190, 190, 0.06) inset,
-    0 0 18px rgba(255, 156, 175, 0.2),
-    0 14px 34px rgba(0, 0, 0, 0.45);
-  --grad-panel: linear-gradient(165deg, rgba(58, 18, 26, 0.88), rgba(16, 6, 10, 0.94));
-  --grad-btn: linear-gradient(180deg, #d25568 0%, var(--accent-deep) 100%);
-  --grad-hero:
-    radial-gradient(ellipse at 50% -10%, rgba(196, 69, 88, 0.38), transparent 55%),
-    linear-gradient(180deg, #2a1016 0%, #0a0406 100%);
 }
 
 * { box-sizing: border-box; }
@@ -75,10 +45,8 @@ html, body {
 }
 
 body {
-  background:
-    radial-gradient(ellipse at 50% -8%, rgba(180, 50, 70, 0.28), transparent 42%),
-    radial-gradient(ellipse at 100% 40%, rgba(120, 30, 45, 0.12), transparent 35%),
-    var(--bg);
+  background: var(--grad-page);
+  background-attachment: fixed;
 }
 
 button, input, select, textarea {
@@ -95,6 +63,11 @@ a {
   color: var(--rose-bright);
   text-decoration: none;
   font-weight: 400;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--accent) 35%, transparent);
+  color: var(--ivory);
 }
 
 img {
@@ -154,7 +127,7 @@ h3 {
   inset: auto 12% -40%;
   height: 70%;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(214, 70, 95, 0.28), transparent 68%);
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent) 28%, transparent), transparent 68%);
   pointer-events: none;
 }
 
@@ -166,7 +139,7 @@ h3 {
   font-weight: 600;
   line-height: 1.05;
   color: var(--title);
-  text-shadow: 0 0 24px rgba(255, 156, 175, 0.22);
+  text-shadow: 0 0 18px color-mix(in srgb, var(--accent) 25%, transparent);
 }
 
 .hero .sub {
@@ -228,8 +201,8 @@ h3 {
 .chip,
 .btn {
   border: 1px solid var(--border-soft);
-  background: rgba(18, 8, 12, 0.88);
-  color: var(--text);
+  background: var(--field-bg);
+  color: var(--ivory);
   border-radius: var(--radius-pill);
   padding: 0.7rem 1rem;
   font-family: var(--font-body);
@@ -248,9 +221,27 @@ h3 {
 .chip.active,
 .btn.primary {
   background: var(--grad-btn);
-  border-color: rgba(255, 170, 180, 0.45);
-  box-shadow: var(--shadow-glow);
-  color: #fff7f2;
+  border-color: var(--red-glow);
+  box-shadow: var(--shadow-btn);
+  color: var(--btn-primary-text);
+}
+
+:root[data-theme='electricite'] .seg button.active,
+:root[data-theme='electricite'] .chip.active,
+:root[data-theme='electricite'] .btn.primary {
+  box-shadow:
+    var(--shadow-btn),
+    0 0 14px color-mix(in srgb, var(--red-glow) 55%, transparent),
+    0 0 28px color-mix(in srgb, #48e8ff 28%, transparent);
+}
+
+/* Démon — halo braise sobre (pas de néon) */
+:root[data-theme='demon'] .seg button.active,
+:root[data-theme='demon'] .chip.active,
+:root[data-theme='demon'] .btn.primary {
+  box-shadow:
+    var(--shadow-btn),
+    0 0 12px color-mix(in srgb, var(--red-bright) 35%, transparent);
 }
 
 .btn.wide {
@@ -270,15 +261,16 @@ h3 {
   font-weight: 400;
 }
 
-/* —— Cartes glass rose-gold —— */
+/* —— Cartes thématiques —— */
 .panel {
   position: relative;
   background: var(--grad-panel);
-  border: 1px solid var(--border);
+  border: 1px solid var(--contour);
   border-radius: var(--radius);
   padding: 0.95rem;
-  backdrop-filter: blur(14px);
+  backdrop-filter: blur(10px);
   box-shadow: var(--shadow-card);
+  color: var(--text-card);
 }
 
 .panel::before {
@@ -287,11 +279,18 @@ h3 {
   inset: 0;
   border-radius: inherit;
   pointer-events: none;
-  box-shadow: inset 0 0 22px rgba(214, 70, 95, 0.08);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--cream) 22%, transparent);
 }
 
 .panel > * {
   position: relative;
+}
+
+.panel h2,
+.panel h3,
+.panel .card-head h2,
+.panel .section-head h2 {
+  color: var(--text-card);
 }
 
 .meta-pill {
@@ -299,14 +298,14 @@ h3 {
   align-items: center;
   gap: 0.45rem;
   border-radius: var(--radius-pill);
-  border: 1px solid var(--border);
-  background: rgba(16, 6, 10, 0.9);
+  border: 1px solid var(--border-soft);
+  background: var(--field-bg);
   padding: 0.55rem 0.9rem;
   color: var(--champagne);
   font-family: var(--font-body);
   font-size: var(--fs-datetime);
   font-weight: 500;
-  box-shadow: 0 0 12px rgba(255, 156, 175, 0.12);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--cream) 12%, transparent);
 }
 
 .field {
@@ -315,7 +314,7 @@ h3 {
   gap: 0.3rem;
   font-size: var(--fs-secondary);
   font-weight: 400;
-  color: var(--powder);
+  color: var(--rose-muted);
 }
 
 .field input,
@@ -326,10 +325,10 @@ h3 {
   min-width: 0;
   max-width: 100%;
   border: 1px solid var(--border-soft);
-  background: rgba(8, 3, 5, 0.92);
+  background: var(--field-bg);
   border-radius: var(--radius-pill);
   padding: 0.7rem 0.95rem;
-  color: var(--text);
+  color: var(--ivory);
 }
 
 .field textarea {
@@ -337,13 +336,21 @@ h3 {
   resize: vertical;
 }
 
+.field input::placeholder,
+.field textarea::placeholder,
+.search input::placeholder {
+  color: var(--rose-muted);
+}
+
 .field input:focus,
 .field select:focus,
 .field textarea:focus,
 .search input:focus {
   outline: none;
-  border-color: var(--border);
-  box-shadow: 0 0 0 2px rgba(214, 70, 95, 0.18);
+  border-color: var(--contour);
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--accent) 28%, transparent),
+    0 0 12px color-mix(in srgb, var(--accent) 16%, transparent);
 }
 
 .field input[type='date'],
@@ -412,8 +419,11 @@ h3 {
   overflow: auto;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: linear-gradient(180deg, rgba(42, 14, 20, 0.98), rgba(10, 4, 7, 0.98));
-  box-shadow: 0 22px 55px rgba(0, 0, 0, 0.6), var(--shadow-glow);
+  background: var(--grad-panel);
+  box-shadow:
+    0 22px 55px rgba(0, 0, 0, 0.6),
+    0 0 18px color-mix(in srgb, var(--accent) 14%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--cream) 12%, transparent);
   padding: 1rem 1rem 1.1rem;
 }
 
@@ -438,8 +448,8 @@ h3 {
   height: 2.2rem;
   border-radius: 50%;
   border: 1px solid var(--border-soft);
-  background: rgba(18, 8, 11, 0.9);
-  color: var(--text);
+  background: var(--field-bg);
+  color: var(--ivory);
   font-size: 1.35rem;
   line-height: 1;
   padding: 0;
@@ -472,7 +482,7 @@ h3 {
 }
 
 .item-row-clickable:hover {
-  border-color: rgba(214, 88, 108, 0.75);
+  border-color: var(--red-glow);
 }
 
 .block.clickable {
@@ -491,8 +501,13 @@ h3 {
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, var(--accent-deep), var(--rose-bright));
-  box-shadow: 0 0 10px rgba(255, 156, 175, 0.4);
+  background: linear-gradient(90deg, var(--bordeaux-lit), var(--red-glow));
+  box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
+input[type='checkbox'],
+input[type='radio'] {
+  accent-color: var(--accent);
 }
 
 @media (min-width: 768px) {
@@ -515,10 +530,8 @@ h3 {
 
 @media (min-width: 1024px) {
   body {
-    background:
-      radial-gradient(ellipse at 20% -5%, rgba(214, 70, 95, 0.22), transparent 40%),
-      radial-gradient(ellipse at 90% 20%, rgba(120, 30, 45, 0.14), transparent 38%),
-      var(--bg);
+    background: var(--grad-page);
+    background-attachment: fixed;
   }
 
   .page {

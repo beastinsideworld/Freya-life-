@@ -59,7 +59,7 @@ h2 {
   border: 1px solid var(--border);
   border-radius: 1rem;
   overflow: hidden;
-  background: rgba(14, 6, 9, 0.92);
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
 }
 
 .trip-card {
@@ -71,14 +71,14 @@ h2 {
 .cover {
   min-height: 100%;
   background:
-    linear-gradient(145deg, rgba(143, 45, 59, 0.45), rgba(10, 4, 7, 0.92)),
+    linear-gradient(145deg, color-mix(in srgb, var(--accent) 45%, transparent), color-mix(in srgb, var(--bg) 92%, transparent)),
     radial-gradient(circle at 30% 20%, rgba(216, 195, 165, 0.25), transparent 55%);
   background-size: cover;
   background-position: center;
 }
 
 .cover.has-photo {
-  background-color: rgba(10, 4, 7, 0.35);
+  background-color: color-mix(in srgb, var(--bg) 35%, transparent);
 }
 
 .cover.tall {
@@ -87,7 +87,7 @@ h2 {
 
 .cover.portugal {
   background:
-    linear-gradient(160deg, rgba(120, 40, 30, 0.45), rgba(10, 4, 7, 0.85)),
+    linear-gradient(160deg, rgba(120, 40, 30, 0.45), color-mix(in srgb, var(--bg) 85%, transparent)),
     radial-gradient(circle at 70% 30%, rgba(255, 170, 90, 0.28), transparent 50%);
 }
 
@@ -118,7 +118,7 @@ h2 {
   top: 0.65rem;
   right: 0.65rem;
   border-radius: var(--radius-pill);
-  background: rgba(143, 45, 59, 0.85);
+  background: color-mix(in srgb, var(--accent) 85%, transparent);
   padding: 0.2rem 0.55rem;
   font-size: 0.72rem;
 }
@@ -147,7 +147,7 @@ h2 {
   min-width: 1.2rem;
   height: 1.2rem;
   border-radius: 999px;
-  background: rgba(143, 45, 59, 0.9);
+  background: color-mix(in srgb, var(--accent) 90%, transparent);
   color: #fff;
   font-size: 0.68rem;
   font-style: normal;
@@ -196,7 +196,7 @@ h2 {
   position: relative;
   padding: 1rem;
   background:
-    linear-gradient(160deg, rgba(120, 40, 30, 0.55), rgba(10, 4, 7, 0.92)),
+    linear-gradient(160deg, rgba(120, 40, 30, 0.55), color-mix(in srgb, var(--bg) 92%, transparent)),
     radial-gradient(circle at 70% 20%, rgba(255, 170, 90, 0.22), transparent 50%);
 }
 
@@ -225,7 +225,7 @@ h2 {
   gap: 0.55rem;
   align-items: center;
   padding: 0.45rem 0;
-  border-top: 1px solid rgba(143, 45, 59, 0.2);
+  border-top: 1px solid color-mix(in srgb, var(--accent) 20%, transparent);
   color: var(--text);
 }
 
@@ -273,7 +273,7 @@ h2 {
   justify-content: space-between;
   gap: 0.5rem;
   padding: 0.25rem 0;
-  border-top: 1px solid rgba(143, 45, 59, 0.2);
+  border-top: 1px solid color-mix(in srgb, var(--accent) 20%, transparent);
 }
 
 .budget li.total,
@@ -403,7 +403,7 @@ h2 {
   overflow: auto;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: linear-gradient(180deg, rgba(28, 12, 16, 0.98), rgba(10, 4, 7, 0.98));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bg-card) 98%, transparent), color-mix(in srgb, var(--bg) 98%, transparent));
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55), var(--shadow-glow);
   padding: 1rem 1rem 1.1rem;
 }
@@ -426,7 +426,7 @@ h2 {
   height: 2.2rem;
   border-radius: 50%;
   border: 1px solid var(--border);
-  background: rgba(18, 8, 11, 0.9);
+  background: color-mix(in srgb, var(--bg-secondary) 90%, transparent);
   color: var(--text);
   font-size: 1.35rem;
   line-height: 1;
@@ -447,7 +447,7 @@ h2 {
 
 .modal-form .error {
   margin: 0;
-  color: #f3c1c1;
+  color: var(--powder);
   text-align: center;
   font-size: 0.85rem;
 }
@@ -533,7 +533,7 @@ h2 {
   max-width: 100%;
   resize: vertical;
   border: 1px solid var(--border);
-  background: rgba(10, 5, 7, 0.9);
+  background: color-mix(in srgb, var(--bg) 90%, transparent);
   border-radius: 1rem;
   padding: 0.75rem 0.95rem;
   color: var(--text);
@@ -552,7 +552,7 @@ h2 {
   min-width: 0;
   resize: vertical;
   border: 1px solid var(--border);
-  background: rgba(10, 5, 7, 0.9);
+  background: color-mix(in srgb, var(--bg) 90%, transparent);
   border-radius: 1rem;
   padding: 0.75rem 0.95rem;
   color: var(--text);
@@ -574,7 +574,7 @@ h2 {
   gap: 0.35rem;
   align-items: center;
   padding: 0.35rem 0;
-  border-top: 1px solid rgba(143, 45, 59, 0.2);
+  border-top: 1px solid color-mix(in srgb, var(--accent) 20%, transparent);
   color: var(--text);
   font-size: 0.85rem;
 }
@@ -585,7 +585,7 @@ h2 {
   height: 1.5rem;
   border-radius: 50%;
   border: 1px solid var(--border);
-  background: rgba(18, 8, 11, 0.9);
+  background: color-mix(in srgb, var(--bg-secondary) 90%, transparent);
   color: var(--muted);
   padding: 0;
   line-height: 1;
@@ -611,7 +611,7 @@ h2 {
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 0.55rem;
   padding: 0.55rem 0;
-  border-top: 1px solid rgba(143, 45, 59, 0.2);
+  border-top: 1px solid color-mix(in srgb, var(--accent) 20%, transparent);
 }
 
 .prep-list strong {
@@ -655,7 +655,7 @@ h2 {
   gap: 0.35rem;
   border: 1px solid var(--border);
   border-radius: var(--radius-pill);
-  background: rgba(18, 8, 11, 0.9);
+  background: color-mix(in srgb, var(--bg-secondary) 90%, transparent);
   padding: 0.35rem 0.7rem;
   color: var(--muted);
   font-size: 0.8rem;
@@ -663,8 +663,8 @@ h2 {
 }
 
 .choice-chip.active {
-  border-color: rgba(143, 45, 59, 0.85);
-  background: rgba(143, 45, 59, 0.28);
+  border-color: color-mix(in srgb, var(--accent) 85%, transparent);
+  background: color-mix(in srgb, var(--accent) 28%, transparent);
   color: var(--text);
 }
 
@@ -690,7 +690,7 @@ h2 {
   overflow: hidden;
   padding: 0;
   background:
-    linear-gradient(145deg, rgba(143, 45, 59, 0.35), rgba(10, 4, 7, 0.92)),
+    linear-gradient(145deg, color-mix(in srgb, var(--accent) 35%, transparent), color-mix(in srgb, var(--bg) 92%, transparent)),
     radial-gradient(circle at 30% 20%, rgba(216, 195, 165, 0.2), transparent 55%);
   color: var(--muted);
   font-size: 0.72rem;
@@ -743,7 +743,7 @@ h2 {
   width: min(720px, calc(100vw - 1.5rem));
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: linear-gradient(180deg, rgba(28, 12, 16, 0.98), rgba(10, 4, 7, 0.98));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bg-card) 98%, transparent), color-mix(in srgb, var(--bg) 98%, transparent));
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55), var(--shadow-glow);
   padding: 1rem;
 }
@@ -770,7 +770,7 @@ h2 {
   border-radius: 1rem;
   overflow: hidden;
   border: 1px solid var(--border);
-  background: rgba(10, 5, 7, 0.9);
+  background: color-mix(in srgb, var(--bg) 90%, transparent);
 }
 
 .route-map iframe {
@@ -828,23 +828,23 @@ h2 {
   display: grid;
   grid-template-columns: 96px minmax(0, 1fr);
   gap: 0.7rem;
-  border: 1px solid rgba(143, 45, 59, 0.28);
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
   border-radius: 1rem;
   overflow: hidden;
-  background: rgba(10, 4, 7, 0.55);
+  background: color-mix(in srgb, var(--bg) 55%, transparent);
 }
 
 .place-photo {
   min-height: 96px;
   background:
-    linear-gradient(145deg, rgba(143, 45, 59, 0.45), rgba(10, 4, 7, 0.92)),
+    linear-gradient(145deg, color-mix(in srgb, var(--accent) 45%, transparent), color-mix(in srgb, var(--bg) 92%, transparent)),
     radial-gradient(circle at 30% 20%, rgba(216, 195, 165, 0.25), transparent 55%);
   background-size: cover;
   background-position: center;
 }
 
 .place-photo.has-photo {
-  background-color: rgba(10, 4, 7, 0.35);
+  background-color: color-mix(in srgb, var(--bg) 35%, transparent);
 }
 
 .place-body {
@@ -902,7 +902,7 @@ h2 {
   border-radius: 0.85rem;
   overflow: hidden;
   border: 1px solid var(--border);
-  background: rgba(10, 5, 7, 0.9);
+  background: color-mix(in srgb, var(--bg) 90%, transparent);
 }
 
 .map-frame iframe {

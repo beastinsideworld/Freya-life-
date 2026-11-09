@@ -2,9 +2,10 @@ export type ThemeId =
   | 'freya'
   | 'feu'
   | 'eau'
-  | 'vent'
   | 'glace'
   | 'electricite'
+  | 'pierre'
+  | 'vent' // alias historique → pierre
   | 'ange'
   | 'demon'
   | 'rouge'
@@ -34,43 +35,45 @@ export interface ThemeCategory {
 export const THEME_CATEGORIES: ThemeCategory[] = [
   {
     id: 'classique',
-    label: 'Classique',
-    description: 'Thème Freya noir/bordeaux — Playfair & Poppins.',
-    themes: [{ id: 'freya', label: 'Freya Rose-gold', swatch: '#ff9caf' }]
+    label: 'Apparence',
+    description: 'Thèmes dark / rouge validés.',
+    themes: [
+      { id: 'noir', label: 'Noir Velours', swatch: '#81233a' },
+      { id: 'rouge', label: 'Rouge Glossy', swatch: '#e33055' },
+      { id: 'freya', label: 'Freya (Glossy)', swatch: '#e43b5c' }
+    ]
   },
   {
     id: 'elements',
     label: 'Éléments',
-    description: 'Feu, eau, vent, glace et électricité.',
+    description: 'Univers graphiques distincts — sans rouge résiduel.',
     themes: [
-      { id: 'feu', label: 'Feu', swatch: '#d4452f' },
-      { id: 'eau', label: 'Eau', swatch: '#2f7fd4' },
-      { id: 'vent', label: 'Vent', swatch: '#7ec8a3' },
-      { id: 'glace', label: 'Glace', swatch: '#9fd4ef' },
-      { id: 'electricite', label: 'Électricité', swatch: '#f0d23c' }
+      { id: 'feu', label: 'Feu', swatch: '#E87518' },
+      { id: 'eau', label: 'Eau', swatch: '#17AFC7' },
+      { id: 'glace', label: 'Glace', swatch: '#89DDF4' },
+      { id: 'electricite', label: 'Électricité', swatch: '#C2F52C' },
+      { id: 'pierre', label: 'Pierre', swatch: '#B8AC96' }
     ]
   },
   {
     id: 'celeste',
     label: 'Céleste',
-    description: 'Anges et démons.',
+    description: 'Univers ange (clair) et démon (obsidienne).',
     themes: [
-      { id: 'ange', label: 'Ange', swatch: '#f3e6c8' },
-      { id: 'demon', label: 'Démon', swatch: '#6b1020' }
+      { id: 'ange', label: 'Ange', swatch: '#D8B981' },
+      { id: 'demon', label: 'Démon', swatch: '#D61C2A' }
     ]
   },
   {
     id: 'couleurs',
     label: 'Couleurs',
-    description: 'Choix simple par couleur dominante.',
+    description: 'Autres teintes.',
     themes: [
-      { id: 'rouge', label: 'Rouge', swatch: '#c0392b' },
-      { id: 'or', label: 'Or', swatch: '#d4af37' },
-      { id: 'violet', label: 'Violet', swatch: '#7d3c98' },
-      { id: 'bleu', label: 'Bleu', swatch: '#2980b9' },
-      { id: 'vert', label: 'Vert', swatch: '#27ae60' },
-      { id: 'rose', label: 'Rose', swatch: '#e091b3' },
-      { id: 'noir', label: 'Noir', swatch: '#1a1a1a' }
+      { id: 'or', label: 'Or', swatch: '#e0b820' },
+      { id: 'violet', label: 'Violet', swatch: '#a84de0' },
+      { id: 'bleu', label: 'Bleu', swatch: '#2f95d4' },
+      { id: 'vert', label: 'Vert', swatch: '#3fbf62' },
+      { id: 'rose', label: 'Rose', swatch: '#e04d96' }
     ]
   },
   {
@@ -79,25 +82,31 @@ export const THEME_CATEGORIES: ThemeCategory[] = [
     description: 'Été, automne et hiver.',
     themes: [
       { id: 'ete', label: 'Été', swatch: '#f0a830' },
-      { id: 'automne', label: 'Automne', swatch: '#c45c26' },
-      { id: 'hiver', label: 'Hiver', swatch: '#6b8cae' }
+      { id: 'automne', label: 'Automne', swatch: '#e07030' },
+      { id: 'hiver', label: 'Hiver', swatch: '#8aabd0' }
     ]
   }
 ];
 
 const ALL_THEME_IDS = new Set(THEME_CATEGORIES.flatMap((cat) => cat.themes.map((t) => t.id)));
+ALL_THEME_IDS.add('vent');
 
 export function isThemeId(value: unknown): value is ThemeId {
   return typeof value === 'string' && ALL_THEME_IDS.has(value as ThemeId);
 }
 
+export function normalizeThemeId(themeId: ThemeId): ThemeId {
+  return themeId === 'vent' ? 'pierre' : themeId;
+}
+
 export function themeLabel(id: ThemeId): string {
-  return findTheme(id)?.label ?? 'Freya';
+  return findTheme(normalizeThemeId(id))?.label ?? 'Freya';
 }
 
 export function findTheme(id: ThemeId): (ThemeOption & { categoryLabel: string }) | null {
+  const normalized = normalizeThemeId(id);
   for (const category of THEME_CATEGORIES) {
-    const found = category.themes.find((theme) => theme.id === id);
+    const found = category.themes.find((theme) => theme.id === normalized);
     if (found) {
       return { ...found, categoryLabel: category.label };
     }
@@ -105,9 +114,10 @@ export function findTheme(id: ThemeId): (ThemeOption & { categoryLabel: string }
   return null;
 }
 
-/** Applique le thème courant sur <html> pour les styles futurs. */
+/** Applique le thème courant sur <html>. */
 export function applyTheme(themeId: ThemeId): void {
   const root = document.documentElement;
-  root.dataset['theme'] = themeId;
-  root.setAttribute('data-theme', themeId);
+  const id = normalizeThemeId(themeId);
+  root.dataset['theme'] = id;
+  root.setAttribute('data-theme', id);
 }

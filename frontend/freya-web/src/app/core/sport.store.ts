@@ -794,6 +794,23 @@ export class SportStore {
   }
 }
 
+/** Icônes Ange muscu (Design theme / Ange / muscu). */
+export const MUSCU_ICON = {
+  haltere: '/assets/themes/ange/muscu/haltere.png',
+  kettlebell: '/assets/themes/ange/muscu/kettlebell.png',
+  banc: '/assets/themes/ange/muscu/banc.png',
+  disques: '/assets/themes/ange/muscu/disques.png',
+  shaker: '/assets/themes/ange/muscu/shaker.png',
+  programme: '/assets/themes/ange/muscu/programme.png',
+  trophee: '/assets/themes/ange/muscu/trophee.png'
+} as const;
+
+export type MuscuIconKey = keyof typeof MUSCU_ICON;
+
+export function muscuIcon(key: MuscuIconKey): string {
+  return MUSCU_ICON[key];
+}
+
 export function kindIcon(kind: SportKind | null | undefined): string {
   switch (kind) {
     case 'musculation':
@@ -808,6 +825,47 @@ export function kindIcon(kind: SportKind | null | undefined): string {
       return '🧘';
     default:
       return '⏸';
+  }
+}
+
+/** Icône PNG muscu pour le type de séance. */
+export function kindIconSrc(kind: SportKind | null | undefined): string {
+  switch (kind) {
+    case 'musculation':
+      return MUSCU_ICON.haltere;
+    case 'course':
+      return MUSCU_ICON.programme;
+    case 'velo':
+      return MUSCU_ICON.kettlebell;
+    case 'natation':
+      return MUSCU_ICON.disques;
+    case 'mobilite':
+      return MUSCU_ICON.shaker;
+    default:
+      return MUSCU_ICON.programme;
+  }
+}
+
+/** Mappe un emoji d’exercice / record vers une icône muscu. */
+export function exerciseIconSrc(emoji: string | null | undefined): string {
+  switch (emoji) {
+    case '🏋️':
+      return MUSCU_ICON.haltere;
+    case '💪':
+      return MUSCU_ICON.kettlebell;
+    case '🦾':
+      return MUSCU_ICON.disques;
+    case '🤸':
+      return MUSCU_ICON.banc;
+    case '🏃':
+      return MUSCU_ICON.programme;
+    case '🥣':
+    case '🍗':
+    case '🥛':
+    case '🐟':
+      return MUSCU_ICON.shaker;
+    default:
+      return MUSCU_ICON.haltere;
   }
 }
 

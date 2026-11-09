@@ -1,0 +1,582 @@
+/* Palettes par thème — chaque univers est autonome (pas de rouge résiduel hors thèmes rouge) */
+
+@mixin theme-base {
+  --bg-elevated: var(--bg-secondary);
+  --surface: color-mix(in srgb, var(--bg-card) 92%, transparent);
+  --surface-strong: var(--bg-card);
+  --text: var(--ivory);
+  --text-card: var(--text-on-card, var(--ivory));
+  --muted: var(--powder);
+  --muted-soft: var(--rose-muted);
+  --border: var(--contour);
+  --border-soft: color-mix(in srgb, var(--contour) 55%, var(--bg));
+  --accent: var(--red-bright);
+  --accent-deep: var(--bordeaux-lit);
+  --accent-mid: var(--contour);
+  --accent-glow: color-mix(in srgb, var(--red-glow) 28%, transparent);
+  --accent-soft: var(--red-glow);
+  --gold: var(--champagne);
+  --gold-bright: var(--cream);
+  --title: var(--ivory);
+  --field-bg: var(--bg-secondary);
+  --btn-primary-text: var(--btn-text, var(--ivory));
+  --check-on: var(--accent);
+  --chart-1: var(--accent);
+  --chart-2: var(--champagne);
+  --chart-3: var(--red-glow);
+}
+
+/* —— Rouge Glossy / Freya —— */
+:root,
+:root[data-theme='freya'],
+:root[data-theme='rouge'] {
+  --bg: #0a0003;
+  --bg-secondary: #200006;
+  --bg-card: #360410;
+  --bordeaux: #360410;
+  --bordeaux-lit: #650b20;
+  --contour: #e33055;
+  --red-bright: #e43b5c;
+  --red-glow: #e33055;
+  --champagne: #f0be88;
+  --ivory: #fff5ec;
+  --cream: #fff5ec;
+  --powder: #e0b7be;
+  --rose-muted: #c9a6ad;
+  --rose-bright: #e43b5c;
+  --text-on-card: #fff5ec;
+  --btn-text: #fff5ec;
+  --shadow-glow: 0 0 10px rgba(230, 40, 80, 0.35), 0 0 22px rgba(230, 40, 80, 0.18);
+  --shadow-card: 0 0 18px rgba(230, 40, 80, 0.22), inset 0 1px 0 rgba(255, 190, 205, 0.28);
+  --shadow-btn: 0 0 16px rgba(228, 59, 92, 0.32), inset 0 1px 0 rgba(255, 210, 220, 0.28);
+  --grad-page: radial-gradient(ellipse at 50% 8%, #200006 0%, transparent 42%), #0a0003;
+  --grad-panel: linear-gradient(145deg, #650b20 0%, #360410 50%, #170105 100%);
+  --grad-btn: linear-gradient(180deg, #e43b5c 0%, #970f32 45%, #54091b 100%);
+  --grad-hero: radial-gradient(ellipse at 50% 0%, #200006 0%, transparent 55%),
+    linear-gradient(180deg, #360410 0%, #200006 55%, #0a0003 100%);
+  --grad-nav: linear-gradient(180deg, #360410 0%, #200006 50%, #0a0003 100%),
+    radial-gradient(ellipse at 30% 120%, rgba(228, 59, 92, 0.18), transparent 58%);
+  @include theme-base;
+}
+
+/* —— Noir Velours —— */
+:root[data-theme='noir'] {
+  --bg: #080204;
+  --bg-secondary: #110408;
+  --bg-card: #1c060c;
+  --bordeaux: #1c060c;
+  --bordeaux-lit: #330914;
+  --contour: #81233a;
+  --red-bright: #a42a46;
+  --red-glow: #a42a46;
+  --champagne: #e5b989;
+  --ivory: #f9eee7;
+  --cream: #f9eee7;
+  --powder: #c9a6ad;
+  --rose-muted: #c9a6ad;
+  --rose-bright: #a42a46;
+  --text-on-card: #f9eee7;
+  --btn-text: #f9eee7;
+  --shadow-glow: 0 0 8px rgba(164, 42, 70, 0.28), 0 0 16px rgba(164, 42, 70, 0.12);
+  --shadow-card: 0 6px 20px rgba(0, 0, 0, 0.4);
+  --shadow-btn: 0 0 12px rgba(164, 42, 70, 0.22), inset 0 1px 0 rgba(255, 200, 210, 0.12);
+  --grad-page: radial-gradient(ellipse at 50% 10%, #110408 0%, transparent 40%), #080204;
+  --grad-panel: linear-gradient(160deg, #330914 0%, #1c060c 60%, #100307 100%);
+  --grad-btn: linear-gradient(180deg, #a42a46 0%, #541025 100%);
+  --grad-hero: radial-gradient(ellipse at 50% 0%, #110408 0%, transparent 55%),
+    linear-gradient(180deg, #1c060c 0%, #110408 55%, #080204 100%);
+  --grad-nav: linear-gradient(180deg, #1c060c 0%, #110408 50%, #080204 100%),
+    radial-gradient(ellipse at 30% 120%, rgba(164, 42, 70, 0.12), transparent 58%);
+  @include theme-base;
+}
+
+/* 👿 DÉMON — obsidienne, cramoisi, braise (distinct du Feu et du Rouge Glossy) */
+:root[data-theme='demon'] {
+  --bg: #0b0b0e;
+  --bg-secondary: #141015;
+  --bg-card: #230c12;
+  --bordeaux: #4a0d15;
+  --bordeaux-lit: #4a0d15;
+  --contour: #7a0e17;
+  --red-bright: #d61c2a;
+  --red-glow: #ff6a3d;
+  --champagne: #b08a5a;
+  --ivory: #f2e9e7;
+  --cream: #f2e9e7;
+  --powder: #c4a8a0;
+  --rose-muted: #8a6a6a;
+  --rose-bright: #ff6a3d;
+  --text-on-card: #f2e9e7;
+  --btn-text: #f2e9e7;
+  --shadow-glow: 0 0 10px rgba(214, 28, 42, 0.32), 0 0 22px rgba(255, 106, 61, 0.14);
+  --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.55), 0 0 12px rgba(122, 14, 23, 0.28),
+    inset 0 1px 0 rgba(255, 106, 61, 0.12);
+  --shadow-btn: 0 0 16px rgba(214, 28, 42, 0.4), inset 0 1px 0 rgba(255, 180, 150, 0.22);
+  --grad-page: radial-gradient(ellipse at 50% 0%, #2a0a12 0%, transparent 42%),
+    radial-gradient(ellipse at 80% 100%, #141015 0%, transparent 50%), #0b0b0e;
+  --grad-panel: linear-gradient(160deg, #4a0d15 0%, #230c12 48%, #141015 100%);
+  --grad-btn: linear-gradient(180deg, #ff6a3d 0%, #d61c2a 48%, #7a0e17 100%);
+  --grad-hero: radial-gradient(ellipse at 50% 0%, #4a0d15 0%, transparent 55%),
+    linear-gradient(180deg, #230c12 0%, #141015 55%, #0b0b0e 100%);
+  --grad-nav: linear-gradient(180deg, #230c12 0%, #141015 50%, #0b0b0e 100%),
+    radial-gradient(ellipse at 30% 120%, rgba(214, 28, 42, 0.2), transparent 58%);
+  @include theme-base;
+  --chart-1: #d61c2a;
+  --chart-2: #ff6a3d;
+  --chart-3: #b08a5a;
+}
+
+/* =========================
+   ÉLÉMENTS — univers distincts
+   ========================= */
+
+/* 🔥 FEU */
+:root[data-theme='feu'] {
+  --bg: #100c08;
+  --bg-secondary: #231509;
+  --bg-card: #38200d;
+  --bordeaux: #38200d;
+  --bordeaux-lit: #5a3012;
+  --contour: #b86719;
+  --red-bright: #e87518;
+  --red-glow: #ff9c24;
+  --champagne: #ffb52e;
+  --ivory: #fff4dd;
+  --cream: #ffe6ab;
+  --powder: #e8c9a0;
+  --rose-muted: #c4a078;
+  --rose-bright: #ff9c24;
+  --text-on-card: #fff4dd;
+  --btn-text: #1a1008;
+  --shadow-glow: 0 0 10px rgba(255, 156, 36, 0.35), 0 0 22px rgba(232, 117, 24, 0.2);
+  --shadow-card: 0 6px 20px rgba(0, 0, 0, 0.45), 0 0 14px rgba(232, 117, 24, 0.12),
+    inset 0 1px 0 rgba(255, 230, 171, 0.18);
+  --shadow-btn: 0 0 16px rgba(255, 156, 36, 0.4), inset 0 1px 0 rgba(255, 230, 171, 0.35);
+  --grad-page: radial-gradient(ellipse at 50% 0%, #3a1c08 0%, transparent 45%),
+    radial-gradient(ellipse at 80% 80%, #231509 0%, transparent 50%), #100c08;
+  --grad-panel: linear-gradient(160deg, #4a2a10 0%, #38200d 45%, #1c1008 100%);
+  --grad-btn: linear-gradient(180deg, #ff9c24 0%, #e87518 50%, #9a4a10 100%);
+  --grad-hero: radial-gradient(ellipse at 50% 0%, #5a3012 0%, transparent 55%),
+    linear-gradient(180deg, #38200d 0%, #231509 55%, #100c08 100%);
+  --grad-nav: linear-gradient(180deg, #38200d 0%, #231509 50%, #100c08 100%),
+    radial-gradient(ellipse at 30% 120%, rgba(255, 156, 36, 0.2), transparent 58%);
+  @include theme-base;
+  --chart-1: #e87518;
+  --chart-2: #ffb52e;
+  --chart-3: #ffe6ab;
+}
+
+/* 💧 EAU */
+:root[data-theme='eau'] {
+  --bg: #031322;
+  --bg-secondary: #062a40;
+  --bg-card: #083e57;
+  --bordeaux: #083e57;
+  --bordeaux-lit: #0a5470;
+  --contour: #269fba;
+  --red-bright: #087e9b;
+  --red-glow: #17afc7;
+  --champagne: #73dfe7;
+  --ivory: #edf9ff;
+  --cream: #c8f6fb;
+  --powder: #a8d4e0;
+  --rose-muted: #7aafc0;
+  --rose-bright: #17afc7;
+  --text-on-card: #edf9ff;
+  --btn-text: #031322;
+  --shadow-glow: 0 0 10px rgba(23, 175, 199, 0.35), 0 0 22px rgba(8, 126, 155, 0.2);
+  --shadow-card: 0 6px 22px rgba(0, 20, 40, 0.45), 0 0 14px rgba(38, 159, 186, 0.15),
+    inset 0 1px 0 rgba(200, 246, 251, 0.2);
+  --shadow-btn: 0 0 16px rgba(23, 175, 199, 0.4), inset 0 1px 0 rgba(200, 246, 251, 0.35);
+  --grad-page: radial-gradient(ellipse at 50% 0%, #0a3e57 0%, transparent 45%),
+    radial-gradient(ellipse at 20% 90%, #062a40 0%, transparent 50%), #031322;
+  --grad-panel: linear-gradient(160deg, #0a5470 0%, #083e57 50%, #042433 100%);
+  --grad-btn: linear-gradient(180deg, #17afc7 0%, #087e9b 55%, #045566 100%);
+  --grad-hero: radial-gradient(ellipse at 50% 0%, #0a5470 0%, transparent 55%),
+    linear-gradient(180deg, #083e57 0%, #062a40 55%, #031322 100%);
+  --grad-nav: linear-gradient(180deg, #083e57 0%, #062a40 50%, #031322 100%),
+    radial-gradient(ellipse at 30% 120%, rgba(23, 175, 199, 0.22), transparent 58%);
+  @include theme-base;
+  --chart-1: #087e9b;
+  --chart-2: #73dfe7;
+  --chart-3: #17afc7;
+}
+
+/* ❄️ GLACE — plus clair, cartes givrées */
+:root[data-theme='glace'] {
+  --bg: #10283d;
+  --bg-secondary: #568eac;
+  --bg-card: #e7f7ff;
+  --bordeaux: #d5eef8;
+  --bordeaux-lit: #b2e8fc;
+  --contour: #b2e8fc;
+  --red-bright: #5ba9cf;
+  --red-glow: #89ddf4;
+  --champagne: #25779d;
+  --ivory: #ffffff;
+  --cream: #ffffff;
+  --powder: #d8eef8;
+  --rose-muted: #6a9bb4;
+  --rose-bright: #89ddf4;
+  --text-on-card: #153b54;
+  --btn-text: #10283d;
+  --shadow-glow: 0 0 10px rgba(137, 221, 244, 0.45), 0 0 20px rgba(91, 169, 207, 0.2);
+  --shadow-card: 0 8px 24px rgba(16, 40, 61, 0.25), 0 0 12px rgba(178, 232, 252, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  --shadow-btn: 0 0 16px rgba(137, 221, 244, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  --grad-page: radial-gradient(ellipse at 50% 0%, #568eac 0%, transparent 48%),
+    linear-gradient(180deg, #1a3a52 0%, #10283d 100%);
+  --grad-panel: linear-gradient(160deg, #ffffff 0%, #e7f7ff 55%, #d5eef8 100%);
+  --grad-btn: linear-gradient(180deg, #89ddf4 0%, #5ba9cf 55%, #3a88b0 100%);
+  --grad-hero: radial-gradient(ellipse at 50% 0%, #568eac 0%, transparent 55%),
+    linear-gradient(180deg, #2a4a62 0%, #10283d 100%);
+  --grad-nav: linear-gradient(180deg, #2a4a62 0%, #1a3a52 50%, #10283d 100%),
+    radial-gradient(ellipse at 30% 120%, rgba(137, 221, 244, 0.2), transparent 58%);
+  @include theme-base;
+  --title: #ffffff;
+  --gold: #25779d;
+  --gold-bright: #153b54;
+  --muted: #c5e2f0;
+  --chart-1: #5ba9cf;
+  --chart-2: #89ddf4;
+  --chart-3: #25779d;
+}
+
+/* ⚡ ÉLECTRICITÉ */
+:root[data-theme='electricite'] {
+  --bg: #0e0925;
+  --bg-secondary: #20134a;
+  --bg-card: #302071;
+  --bordeaux: #302071;
+  --bordeaux-lit: #402890;
+  --contour: #7757e4;
+  --red-bright: #7040e8;
+  --red-glow: #c2f52c;
+  --champagne: #d7ff37;
+  --ivory: #f7f4ff;
+  --cream: #f7f4ff;
+  --powder: #c8b8f0;
+  --rose-muted: #8a7ab8;
+  --rose-bright: #48e8ff;
+  --text-on-card: #f7f4ff;
+  --btn-text: #141329;
+  --shadow-glow: 0 0 10px rgba(194, 245, 44, 0.4), 0 0 22px rgba(112, 64, 232, 0.3);
+  --shadow-card: 0 6px 22px rgba(0, 0, 0, 0.45), 0 0 14px rgba(119, 87, 228, 0.25),
+    inset 0 1px 0 rgba(72, 232, 255, 0.2);
+  --shadow-btn: 0 0 18px rgba(194, 245, 44, 0.45), inset 0 1px 0 rgba(255, 255, 200, 0.35);
+  --grad-page: radial-gradient(ellipse at 50% 0%, #302071 0%, transparent 45%),
+    radial-gradient(ellipse at 90% 70%, #20134a 0%, transparent 50%), #0e0925;
+  --grad-panel: linear-gradient(160deg, #402890 0%, #302071 50%, #1a0e45 100%);
+  --grad-btn: linear-gradient(180deg, #d7ff37 0%, #c2f52c 45%, #8fbc1a 100%);
+  --grad-hero: radial-gradient(ellipse at 50% 0%, #402890 0%, transparent 55%),
+    linear-gradient(180deg, #302071 0%, #20134a 55%, #0e0925 100%);
+  --grad-nav: linear-gradient(180deg, #302071 0%, #20134a 50%, #0e0925 100%),
+    radial-gradient(ellipse at 30% 120%, rgba(194, 245, 44, 0.15), transparent 58%);
+  @include theme-base;
+  --chart-1: #7040e8;
+  --chart-2: #c2f52c;
+  --chart-3: #48e8ff;
+}
+
+/* 🪨 PIERRE */
+:root[data-theme='pierre'],
+:root[data-theme='vent'] {
+  --bg: #171a1b;
+  --bg-secondary: #282e30;
+  --bg-card: #343b3d;
+  --bordeaux: #343b3d;
+  --bordeaux-lit: #454d50;
+  --contour: #737c79;
+  --red-bright: #747d7c;
+  --red-glow: #b8ac96;
+  --champagne: #d2be9e;
+  --ivory: #f4f0e8;
+  --cream: #e8dfcf;
+  --powder: #c8c0b4;
+  --rose-muted: #8a8580;
+  --rose-bright: #b8ac96;
+  --text-on-card: #f4f0e8;
+  --btn-text: #242626;
+  --shadow-glow: 0 0 8px rgba(184, 172, 150, 0.25), 0 0 16px rgba(0, 0, 0, 0.2);
+  --shadow-card: 0 6px 20px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(232, 223, 207, 0.12);
+  --shadow-btn: 0 0 12px rgba(184, 172, 150, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  --grad-page: radial-gradient(ellipse at 50% 0%, #282e30 0%, transparent 42%), #171a1b;
+  --grad-panel: linear-gradient(160deg, #3e4648 0%, #343b3d 50%, #242a2c 100%);
+  --grad-btn: linear-gradient(180deg, #d2be9e 0%, #b8ac96 55%, #8a8070 100%);
+  --grad-hero: radial-gradient(ellipse at 50% 0%, #343b3d 0%, transparent 55%),
+    linear-gradient(180deg, #282e30 0%, #171a1b 100%);
+  --grad-nav: linear-gradient(180deg, #343b3d 0%, #282e30 50%, #171a1b 100%),
+    radial-gradient(ellipse at 30% 120%, rgba(184, 172, 150, 0.12), transparent 58%);
+  @include theme-base;
+  --chart-1: #747d7c;
+  --chart-2: #d2be9e;
+  --chart-3: #b8ac96;
+}
+
+/* 😇 ANGE — ivoire, champagne, ciel (encadrés verre doré) */
+:root[data-theme='ange'] {
+  --bg: #fffdf8;
+  --bg-secondary: #f5e9d6;
+  --bg-card: rgba(255, 255, 255, 0.72);
+  --bordeaux: #f8f2e9;
+  --bordeaux-lit: #f5e9d6;
+  --contour: #d8b981;
+  --red-bright: #d8b981;
+  --red-glow: #e8d4a8;
+  --champagne: #d8b981;
+  --ivory: #4a3f35;
+  --cream: #4a3f35;
+  --powder: #8a7a68;
+  --rose-muted: #a89888;
+  --rose-bright: #c4a56a;
+  --text-on-card: #4a3f35;
+  --btn-text: #4a3f35;
+  --shadow-glow: 0 0 12px rgba(216, 185, 129, 0.4), 0 0 22px rgba(220, 238, 255, 0.28);
+  --shadow-card: 0 10px 32px rgba(74, 63, 53, 0.07), 0 0 0 1px rgba(216, 185, 129, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  --shadow-btn: 0 0 14px rgba(216, 185, 129, 0.45), inset 0 1px 0 rgba(255, 253, 248, 0.8);
+  --grad-page: radial-gradient(ellipse at 50% 0%, #dceeff 0%, transparent 48%),
+    radial-gradient(ellipse at 15% 80%, rgba(255, 255, 255, 0.8) 0%, transparent 42%),
+    linear-gradient(180deg, #eef6ff 0%, #fffdf8 40%, #f5e9d6 100%);
+  --grad-panel: linear-gradient(160deg, rgba(255, 255, 255, 0.55) 0%, rgba(248, 242, 233, 0.42) 100%);
+  --grad-btn: linear-gradient(180deg, #f0dfb8 0%, #d8b981 55%, #c4a56a 100%);
+  --grad-hero: radial-gradient(ellipse at 50% 0%, #dceeff 0%, transparent 55%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.5) 0%, rgba(245, 233, 214, 0.4) 100%);
+  --grad-nav: linear-gradient(180deg, rgba(255, 255, 255, 0.65) 0%, rgba(245, 233, 214, 0.55) 100%);
+  @include theme-base;
+  --title: #4a3f35;
+  --muted: #8a7a68;
+  --accent-soft: #dceeff;
+  --border: #d8b981;
+  --border-soft: color-mix(in srgb, #d8b981 45%, white);
+  --surface: rgba(255, 255, 255, 0.48);
+  --surface-strong: rgba(255, 255, 255, 0.72);
+  --field-bg: rgba(255, 255, 255, 0.72);
+  --chart-1: #d8b981;
+  --chart-2: #cfe2f3;
+  --chart-3: #b08a5a;
+}
+
+:root[data-theme='or'] {
+  --bg: #0b0800;
+  --bg-secondary: #161100;
+  --bg-card: #241c01;
+  --bordeaux: #241c01;
+  --bordeaux-lit: #3a2e02;
+  --contour: #c9a012;
+  --red-bright: #e0b820;
+  --red-glow: #f0cb3a;
+  --champagne: #f0cb3a;
+  --ivory: #faf5f2;
+  --cream: #f0cb3a;
+  --powder: #d8d0b0;
+  --rose-muted: #a69870;
+  --rose-bright: #f0cb3a;
+  --text-on-card: #faf5f2;
+  --btn-text: #1a1400;
+  --shadow-glow: 0 0 10px rgba(240, 203, 58, 0.3);
+  --shadow-card: 0 6px 20px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(240, 203, 58, 0.15);
+  --shadow-btn: 0 0 14px rgba(240, 203, 58, 0.35);
+  --grad-page: radial-gradient(ellipse at 50% 0%, #3a2e02 0%, transparent 45%), #0b0800;
+  --grad-panel: linear-gradient(160deg, #3a2e02 0%, #241c01 50%, #161100 100%);
+  --grad-btn: linear-gradient(180deg, #f0cb3a 0%, #e0b820 55%, #8a680c 100%);
+  --grad-hero: linear-gradient(180deg, #241c01 0%, #0b0800 100%);
+  --grad-nav: linear-gradient(180deg, #241c01 0%, #0b0800 100%);
+  @include theme-base;
+}
+
+:root[data-theme='violet'] {
+  --bg: #07000b;
+  --bg-secondary: #100018;
+  --bg-card: #1a0125;
+  --bordeaux: #1a0125;
+  --bordeaux-lit: #2a033d;
+  --contour: #8a2ebd;
+  --red-bright: #a84de0;
+  --red-glow: #c06bf5;
+  --champagne: #e0b8f5;
+  --ivory: #faf5f2;
+  --cream: #e0b8f5;
+  --powder: #d0b8d8;
+  --rose-muted: #9a7fa6;
+  --rose-bright: #c06bf5;
+  --text-on-card: #faf5f2;
+  --btn-text: #faf5f2;
+  --shadow-glow: 0 0 10px rgba(192, 107, 245, 0.3);
+  --shadow-card: 0 6px 20px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(192, 107, 245, 0.15);
+  --shadow-btn: 0 0 14px rgba(192, 107, 245, 0.35);
+  --grad-page: radial-gradient(ellipse at 50% 0%, #2a033d 0%, transparent 45%), #07000b;
+  --grad-panel: linear-gradient(160deg, #2a033d 0%, #1a0125 50%, #100018 100%);
+  --grad-btn: linear-gradient(180deg, #c06bf5 0%, #a84de0 55%, #571b82 100%);
+  --grad-hero: linear-gradient(180deg, #1a0125 0%, #07000b 100%);
+  --grad-nav: linear-gradient(180deg, #1a0125 0%, #07000b 100%);
+  @include theme-base;
+}
+
+:root[data-theme='bleu'] {
+  --bg: #00060b;
+  --bg-secondary: #000f18;
+  --bg-card: #011825;
+  --bordeaux: #011825;
+  --bordeaux-lit: #02283d;
+  --contour: #1a7aad;
+  --red-bright: #2f95d4;
+  --red-glow: #45adf0;
+  --champagne: #9fd4ef;
+  --ivory: #edf9ff;
+  --cream: #9fd4ef;
+  --powder: #b7c9d8;
+  --rose-muted: #7f93a6;
+  --rose-bright: #45adf0;
+  --text-on-card: #edf9ff;
+  --btn-text: #00060b;
+  --shadow-glow: 0 0 10px rgba(69, 173, 240, 0.3);
+  --shadow-card: 0 6px 20px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(69, 173, 240, 0.15);
+  --shadow-btn: 0 0 14px rgba(69, 173, 240, 0.35);
+  --grad-page: radial-gradient(ellipse at 50% 0%, #02283d 0%, transparent 45%), #00060b;
+  --grad-panel: linear-gradient(160deg, #02283d 0%, #011825 50%, #000f18 100%);
+  --grad-btn: linear-gradient(180deg, #45adf0 0%, #2f95d4 55%, #0f527a 100%);
+  --grad-hero: linear-gradient(180deg, #011825 0%, #00060b 100%);
+  --grad-nav: linear-gradient(180deg, #011825 0%, #00060b 100%);
+  @include theme-base;
+}
+
+:root[data-theme='vert'] {
+  --bg: #010b04;
+  --bg-secondary: #031808;
+  --bg-card: #05240e;
+  --bordeaux: #05240e;
+  --bordeaux-lit: #083918;
+  --contour: #2a9a4a;
+  --red-bright: #3fbf62;
+  --red-glow: #55d878;
+  --champagne: #a8e6b8;
+  --ivory: #f0fff4;
+  --cream: #a8e6b8;
+  --powder: #b8d4c0;
+  --rose-muted: #7fa688;
+  --rose-bright: #55d878;
+  --text-on-card: #f0fff4;
+  --btn-text: #010b04;
+  --shadow-glow: 0 0 10px rgba(85, 216, 120, 0.3);
+  --shadow-card: 0 6px 20px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(85, 216, 120, 0.15);
+  --shadow-btn: 0 0 14px rgba(85, 216, 120, 0.35);
+  --grad-page: radial-gradient(ellipse at 50% 0%, #083918 0%, transparent 45%), #010b04;
+  --grad-panel: linear-gradient(160deg, #083918 0%, #05240e 50%, #031808 100%);
+  --grad-btn: linear-gradient(180deg, #55d878 0%, #3fbf62 55%, #176b34 100%);
+  --grad-hero: linear-gradient(180deg, #05240e 0%, #010b04 100%);
+  --grad-nav: linear-gradient(180deg, #05240e 0%, #010b04 100%);
+  @include theme-base;
+}
+
+:root[data-theme='rose'] {
+  --bg: #0b0006;
+  --bg-secondary: #18000d;
+  --bg-card: #250114;
+  --bordeaux: #250114;
+  --bordeaux-lit: #3d0222;
+  --contour: #c22a72;
+  --red-bright: #e04d96;
+  --red-glow: #f06aad;
+  --champagne: #f0b8d4;
+  --ivory: #fff5f9;
+  --cream: #f0b8d4;
+  --powder: #d8b8c8;
+  --rose-muted: #a67f94;
+  --rose-bright: #f06aad;
+  --text-on-card: #fff5f9;
+  --btn-text: #fff5f9;
+  --shadow-glow: 0 0 10px rgba(240, 106, 173, 0.3);
+  --shadow-card: 0 6px 20px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(240, 106, 173, 0.15);
+  --shadow-btn: 0 0 14px rgba(240, 106, 173, 0.35);
+  --grad-page: radial-gradient(ellipse at 50% 0%, #3d0222 0%, transparent 45%), #0b0006;
+  --grad-panel: linear-gradient(160deg, #3d0222 0%, #250114 50%, #18000d 100%);
+  --grad-btn: linear-gradient(180deg, #f06aad 0%, #e04d96 55%, #7a184a 100%);
+  --grad-hero: linear-gradient(180deg, #250114 0%, #0b0006 100%);
+  --grad-nav: linear-gradient(180deg, #250114 0%, #0b0006 100%);
+  @include theme-base;
+}
+
+:root[data-theme='ete'] {
+  --bg: #0b0600;
+  --bg-secondary: #181000;
+  --bg-card: #251a01;
+  --bordeaux: #251a01;
+  --bordeaux-lit: #3d2a02;
+  --contour: #d48a12;
+  --red-bright: #f0a830;
+  --red-glow: #ffbb45;
+  --champagne: #ffd48a;
+  --ivory: #fff8e8;
+  --cream: #ffd48a;
+  --powder: #d8ccb0;
+  --rose-muted: #a69870;
+  --rose-bright: #ffbb45;
+  --text-on-card: #fff8e8;
+  --btn-text: #1a1000;
+  --shadow-glow: 0 0 10px rgba(255, 187, 69, 0.3);
+  --shadow-card: 0 6px 20px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 187, 69, 0.15);
+  --shadow-btn: 0 0 14px rgba(255, 187, 69, 0.35);
+  --grad-page: radial-gradient(ellipse at 50% 0%, #3d2a02 0%, transparent 45%), #0b0600;
+  --grad-panel: linear-gradient(160deg, #3d2a02 0%, #251a01 50%, #181000 100%);
+  --grad-btn: linear-gradient(180deg, #ffbb45 0%, #f0a830 55%, #85560c 100%);
+  --grad-hero: linear-gradient(180deg, #251a01 0%, #0b0600 100%);
+  --grad-nav: linear-gradient(180deg, #251a01 0%, #0b0600 100%);
+  @include theme-base;
+}
+
+:root[data-theme='automne'] {
+  --bg: #0b0400;
+  --bg-secondary: #180a00;
+  --bg-card: #251201;
+  --bordeaux: #251201;
+  --bordeaux-lit: #3d1e02;
+  --contour: #c45c1a;
+  --red-bright: #e07030;
+  --red-glow: #f08445;
+  --champagne: #e7b671;
+  --ivory: #fff5ec;
+  --cream: #e7b671;
+  --powder: #d8c4b0;
+  --rose-muted: #a68870;
+  --rose-bright: #f08445;
+  --text-on-card: #fff5ec;
+  --btn-text: #1a0a00;
+  --shadow-glow: 0 0 10px rgba(240, 132, 69, 0.3);
+  --shadow-card: 0 6px 20px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(240, 132, 69, 0.15);
+  --shadow-btn: 0 0 14px rgba(240, 132, 69, 0.35);
+  --grad-page: radial-gradient(ellipse at 50% 0%, #3d1e02 0%, transparent 45%), #0b0400;
+  --grad-panel: linear-gradient(160deg, #3d1e02 0%, #251201 50%, #180a00 100%);
+  --grad-btn: linear-gradient(180deg, #f08445 0%, #e07030 55%, #7a380c 100%);
+  --grad-hero: linear-gradient(180deg, #251201 0%, #0b0400 100%);
+  --grad-nav: linear-gradient(180deg, #251201 0%, #0b0400 100%);
+  @include theme-base;
+}
+
+:root[data-theme='hiver'] {
+  --bg: #04070b;
+  --bg-secondary: #0a1018;
+  --bg-card: #111824;
+  --bordeaux: #111824;
+  --bordeaux-lit: #1c2a3d;
+  --contour: #6b8cae;
+  --red-bright: #8aabd0;
+  --red-glow: #a8c4e0;
+  --champagne: #c9d8e8;
+  --ivory: #f0f4f8;
+  --cream: #c9d8e8;
+  --powder: #c2ccd8;
+  --rose-muted: #8793a6;
+  --rose-bright: #a8c4e0;
+  --text-on-card: #f0f4f8;
+  --btn-text: #04070b;
+  --shadow-glow: 0 0 10px rgba(168, 196, 224, 0.3);
+  --shadow-card: 0 6px 20px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(168, 196, 224, 0.15);
+  --shadow-btn: 0 0 14px rgba(168, 196, 224, 0.35);
+  --grad-page: radial-gradient(ellipse at 50% 0%, #1c2a3d 0%, transparent 45%), #04070b;
+  --grad-panel: linear-gradient(160deg, #1c2a3d 0%, #111824 50%, #0a1018 100%);
+  --grad-btn: linear-gradient(180deg, #a8c4e0 0%, #8aabd0 55%, #364d68 100%);
+  --grad-hero: linear-gradient(180deg, #111824 0%, #04070b 100%);
+  --grad-nav: linear-gradient(180deg, #111824 0%, #04070b 100%);
+  @include theme-base;
+}

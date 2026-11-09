@@ -1,25 +1,32 @@
 <section class="page sport-page">
   <header class="hero sport-hero">
-    <div class="icon" aria-hidden="true"><app-nav-icon name="sport" /></div>
+    <div class="icon" aria-hidden="true">
+      <img class="sport-ico" [src]="icons.banc" alt="" draggable="false" />
+    </div>
     <h1>Sport</h1>
     <p class="sub">Entraînement • Nutrition • Suivi</p>
   </header>
 
   <div class="seg sport-tabs" role="tablist" aria-label="Sections sport">
     <button type="button" role="tab" [class.active]="tab() === 'suivi'" (click)="setTab('suivi')">
-      <span aria-hidden="true">🎯</span> Objectif &amp; suivi
+      <img class="tab-ico sport-ico" [src]="icons.trophee" alt="" aria-hidden="true" draggable="false" />
+      Objectif &amp; suivi
     </button>
     <button type="button" role="tab" [class.active]="tab() === 'entrainement'" (click)="setTab('entrainement')">
-      <span class="tab-ico" aria-hidden="true"><app-nav-icon name="sport" /></span> Entraînement
+      <img class="tab-ico sport-ico" [src]="icons.haltere" alt="" aria-hidden="true" draggable="false" />
+      Entraînement
     </button>
     <button type="button" role="tab" [class.active]="tab() === 'progression'" (click)="setTab('progression')">
-      <span aria-hidden="true">📊</span> Progression
+      <img class="tab-ico sport-ico" [src]="icons.disques" alt="" aria-hidden="true" draggable="false" />
+      Progression
     </button>
   </div>
 
   @if (tab() === 'suivi') {
     <section class="panel goal-card">
-      <div class="goal-media" aria-hidden="true"><app-nav-icon name="sport" /></div>
+      <div class="goal-media" aria-hidden="true">
+        <img class="sport-ico sport-ico--lg" [src]="icons.trophee" alt="" draggable="false" />
+      </div>
       <div class="goal-body">
         <header class="card-head">
           <h2>Mon objectif</h2>
@@ -53,7 +60,7 @@
       <div class="nutrition-row">
         <div class="ring" [style.background]="ringStyle(kcalRing())" aria-hidden="true">
           <div class="ring-hole">
-            <span class="flame">🔥</span>
+            <img class="sport-ico sport-ico--sm" [src]="icons.shaker" alt="" aria-hidden="true" draggable="false" />
             <strong>{{ numberFr(store.current().kcal) }}</strong>
             <em>/ {{ numberFr(store.targets().kcal) }} kcal</em>
           </div>
@@ -83,7 +90,9 @@
       <ul class="meal-list">
         @for (meal of store.meals(); track meal.id) {
           <li>
-            <span class="meal-emoji" aria-hidden="true">{{ meal.emoji }}</span>
+            <span class="meal-emoji" aria-hidden="true">
+              <img class="sport-ico" [src]="exerciseIconSrc(meal.emoji)" alt="" draggable="false" />
+            </span>
             <div class="meal-main">
               <strong>{{ meal.slot }}</strong>
               <span>{{ meal.title }}</span>
@@ -158,9 +167,18 @@
     <section class="panel">
       <h2 class="quick-title">Accès rapides</h2>
       <div class="quick-grid">
-        <button type="button"><span aria-hidden="true">🍎</span> Ajouter un repas</button>
-        <button type="button" (click)="setTab('entrainement')"><span aria-hidden="true">＋</span> Nouvelle séance</button>
-        <button type="button"><span aria-hidden="true">📅</span> Modifier le programme</button>
+        <button type="button">
+          <img class="sport-ico sport-ico--sm" [src]="icons.shaker" alt="" aria-hidden="true" draggable="false" />
+          Ajouter un repas
+        </button>
+        <button type="button" (click)="setTab('entrainement')">
+          <img class="sport-ico sport-ico--sm" [src]="icons.banc" alt="" aria-hidden="true" draggable="false" />
+          Nouvelle séance
+        </button>
+        <button type="button">
+          <img class="sport-ico sport-ico--sm" [src]="icons.programme" alt="" aria-hidden="true" draggable="false" />
+          Modifier le programme
+        </button>
       </div>
     </section>
   }
@@ -184,7 +202,9 @@
               <span class="day-check" aria-hidden="true">✓</span>
             }
             <strong>{{ day.label }}</strong>
-            <span class="day-ico" aria-hidden="true">{{ kindIcon(day.kind) }}</span>
+            <span class="day-ico" aria-hidden="true">
+              <img class="sport-ico" [src]="kindIconSrc(day.kind)" alt="" draggable="false" />
+            </span>
             <span class="day-title">{{ day.title }}</span>
             <em>{{ day.detail }}</em>
           </button>
@@ -225,7 +245,9 @@
         <ul class="exercise-list">
           @for (ex of session.exercises; track ex.id) {
             <li [class.done]="ex.done">
-              <span class="ex-emoji" aria-hidden="true">{{ ex.emoji }}</span>
+              <span class="ex-emoji" aria-hidden="true">
+                <img class="sport-ico" [src]="exerciseIconSrc(ex.emoji)" alt="" draggable="false" />
+              </span>
               <div class="ex-main">
                 <strong>{{ ex.name }}</strong>
                 <span class="muscle">{{ ex.muscle }}</span>
@@ -318,7 +340,9 @@
       <ul class="records-list">
         @for (rec of store.records(); track rec.id) {
           <li>
-            <span class="rec-emoji" aria-hidden="true">{{ rec.emoji }}</span>
+            <span class="rec-emoji" aria-hidden="true">
+              <img class="sport-ico" [src]="exerciseIconSrc(rec.emoji)" alt="" draggable="false" />
+            </span>
             <div>
               <strong>{{ rec.name }}</strong>
               <span>{{ rec.value }}</span>

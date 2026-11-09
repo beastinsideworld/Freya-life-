@@ -5,8 +5,8 @@
   border: 1px solid var(--border);
   border-radius: 1.1rem;
   background:
-    radial-gradient(circle at top, rgba(143, 45, 59, 0.25), transparent 50%),
-    rgba(14, 6, 9, 0.95);
+    radial-gradient(circle at top, color-mix(in srgb, var(--accent) 25%, transparent), transparent 50%),
+    color-mix(in srgb, var(--bg) 95%, transparent);
   box-shadow: var(--shadow-glow);
 }
 
@@ -49,14 +49,14 @@ button {
 
 button {
   background: var(--grad-btn);
-  border-color: #b04555;
+  border-color: var(--contour);
   box-shadow: var(--shadow-glow);
-  color: #fff7f2;
+  color: var(--ivory);
   cursor: pointer;
 }
 
 .error {
-  color: #f3c1c1;
+  color: var(--powder);
 }
 
 .hint {

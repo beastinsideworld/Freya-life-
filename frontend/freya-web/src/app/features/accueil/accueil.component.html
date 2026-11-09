@@ -1,14 +1,15 @@
 <section class="page accueil">
   <header class="hero">
-    <label class="family-scope">
-      <span class="sr-only">Vue</span>
+    <label class="family-scope" [attr.data-short]="familyScopeShort()">
+      <img class="family-scope-ico" src="/assets/themes/ange/icone-famille.png" alt="" aria-hidden="true" />
+      <span class="family-scope-label">{{ familyScopeShort() }}</span>
       <select
         [ngModel]="selectedFamilyId()"
         (ngModelChange)="selectFamilyScope($event)"
         name="familyScope"
         aria-label="Choisir la vue personnelle ou une famille"
       >
-        <option value="me">Moi</option>
+        <option value="me">Personnel</option>
         @for (family of families(); track family.id) {
           <option [value]="family.id">{{ family.name }}</option>
         }
@@ -31,14 +32,41 @@
     <p class="meta-pill">{{ dateLabel() }} · {{ time() }}</p>
   </div>
 
+  <nav class="theme-modules" aria-label="Raccourcis">
+    <a class="theme-module theme-module--planning" routerLink="/planning">
+      <span class="theme-module__ico" aria-hidden="true"><app-nav-icon name="planning" /></span>
+      <h2 class="theme-module__label">Planning</h2>
+    </a>
+    <a class="theme-module theme-module--repas" routerLink="/repas">
+      <span class="theme-module__ico" aria-hidden="true"><app-nav-icon name="repas" /></span>
+      <h2 class="theme-module__label">Repas</h2>
+    </a>
+    <a class="theme-module theme-module--voyage" routerLink="/voyages">
+      <span class="theme-module__ico" aria-hidden="true"><app-nav-icon name="voyages" /></span>
+      <h2 class="theme-module__label">Voyage</h2>
+    </a>
+    <a class="theme-module theme-module--sport" routerLink="/sport">
+      <span class="theme-module__ico" aria-hidden="true"><app-nav-icon name="sport" /></span>
+      <h2 class="theme-module__label">Sport</h2>
+    </a>
+    <a class="theme-module theme-module--finances" routerLink="/budget">
+      <span class="theme-module__ico" aria-hidden="true"><app-nav-icon name="budget" /></span>
+      <h2 class="theme-module__label">Finances</h2>
+    </a>
+    <a class="theme-module theme-module--animaux" routerLink="/animaux">
+      <span class="theme-module__ico" aria-hidden="true"><app-nav-icon name="animaux" /></span>
+      <h2 class="theme-module__label">Animaux</h2>
+    </a>
+  </nav>
+
   <section class="panel composer" aria-label="Nouvel événement">
-    <label class="field">Événement
+    <label class="field field-title">Événement
       <input type="text" [(ngModel)]="newTitle" placeholder="Musculation" autocomplete="off">
     </label>
-    <label class="field">Date
-      <app-date-picker [(ngModel)]="newDate" name="newDate"></app-date-picker>
+    <label class="field field-date">Date
+      <app-date-picker class="icon-only" [(ngModel)]="newDate" name="newDate"></app-date-picker>
     </label>
-    <label class="field">Heure
+    <label class="field field-time">Heure
       <input type="time" [(ngModel)]="newTime">
     </label>
     <button type="button" class="btn primary add" (click)="addEvent()" aria-label="Ajouter">+</button>
@@ -50,7 +78,7 @@
   @if (events().length || todayObjectives().length || todayTasks().length || todayHabits().length) {
     <section class="panel tasks">
       <div class="section-head">
-        <h2>✓ Tâches du jour</h2>
+        <h2>Tâches du jour</h2>
         <a routerLink="/planning">Voir le planning →</a>
       </div>
 
@@ -167,7 +195,7 @@
         Repas du jour
         <span class="kcal-total">≈ {{ totalMealsKcal() }} kcal</span>
       </h2>
-      <a routerLink="/repas">Voir les recettes →</a>
+      <a class="section-link" routerLink="/repas">Voir les recettes →</a>
     </div>
     <div class="meal-row">
       @for (meal of meals(); track meal.key) {
@@ -187,7 +215,7 @@
             [attr.aria-label]="meal.done ? 'Marquer non pris' : 'Marquer pris'"
           >✎</button>
           <div class="meal-ico" aria-hidden="true">
-            <img [src]="meal.iconSrc" [alt]="''" draggable="false" />
+            <img [src]="meal.iconSrc" alt="" draggable="false" />
           </div>
           <h3>{{ meal.slot }}</h3>
           <p>{{ meal.title }}</p>
@@ -211,7 +239,11 @@
           <h3>{{ day.label }}</h3>
           <p class="day-num">{{ day.dayNum }}</p>
           <div class="day-weather" [attr.title]="wx?.summary || 'Météo'">
-            <span class="day-weather-ico" aria-hidden="true">{{ wx?.icon || (weatherLoading() ? '…' : '☀') }}</span>
+            @if (weatherIconSrc(wx?.iconKey); as icoSrc) {
+              <img class="day-weather-ico-img" [src]="icoSrc" alt="" draggable="false" />
+            } @else {
+              <span class="day-weather-ico" aria-hidden="true">{{ wx?.icon || (weatherLoading() ? '…' : '☀') }}</span>
+            }
             <span class="day-weather-temp">
               @if (wx) {
                 {{ wx.tempMax }}° | {{ wx.tempMin }}°

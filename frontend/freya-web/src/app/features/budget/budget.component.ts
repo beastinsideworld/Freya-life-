@@ -16,7 +16,7 @@ import {
 import { Friend, SocialService } from '../../core/social.service';
 import { createId } from '../../core/id';
 import { environment } from '../../../environments/environment';
-import { NavIconComponent } from '../../shared/nav-icon/nav-icon.component';
+import { FINANCE_ICON, financeEmojiIconSrc } from '../../core/theme-ange-icons';
 
 type FinanceTab = 'synthese' | 'mouvements' | 'projets';
 type MoveFilter = 'all' | 'income' | 'expense';
@@ -53,11 +53,13 @@ const CATEGORY_ICONS: Record<string, string> = {
 @Component({
   selector: 'app-budget',
   standalone: true,
-  imports: [FormsModule, NavIconComponent],
+  imports: [FormsModule],
   templateUrl: './budget.component.html',
   styleUrl: './budget.component.scss'
 })
 export class BudgetComponent implements OnInit {
+  readonly icons = FINANCE_ICON;
+  readonly financeEmojiIconSrc = financeEmojiIconSrc;
   readonly loading = signal(false);
   readonly saving = signal(false);
   readonly error = signal('');
@@ -161,8 +163,17 @@ export class BudgetComponent implements OnInit {
 
   readonly donutGradient = computed(() => {
     const slices = this.expenseBreakdown();
-    if (!slices.length) return 'conic-gradient(#3a1a22 0 100%)';
-    const colors = ['#c44d5f', '#8f3d4a', '#b87333', '#6b8f71', '#4a6fa5', '#9b6b9e', '#5c6bc0', '#6d4c41'];
+    if (!slices.length) return 'conic-gradient(var(--bg-card) 0 100%)';
+    const colors = [
+      'var(--chart-1)',
+      'var(--chart-2)',
+      'var(--chart-3)',
+      'var(--champagne)',
+      'var(--accent-deep)',
+      'var(--contour)',
+      'var(--rose-bright)',
+      'var(--powder)'
+    ];
     let cursor = 0;
     const parts: string[] = [];
     slices.forEach((slice, i) => {
@@ -170,7 +181,7 @@ export class BudgetComponent implements OnInit {
       parts.push(`${colors[i % colors.length]} ${cursor}% ${next}%`);
       cursor = next;
     });
-    if (cursor < 100) parts.push(`#3a1a22 ${cursor}% 100%`);
+    if (cursor < 100) parts.push(`var(--bg-card) ${cursor}% 100%`);
     return `conic-gradient(${parts.join(', ')})`;
   });
 

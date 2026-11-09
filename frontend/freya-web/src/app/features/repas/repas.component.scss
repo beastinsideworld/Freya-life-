@@ -49,10 +49,10 @@
   width: 2.6rem;
   height: 2.6rem;
   border-radius: 50%;
-  border: 1px solid #b04555;
+  border: 1px solid var(--contour);
   background: var(--grad-btn);
   box-shadow: var(--shadow-glow);
-  color: #fff7f2;
+  color: var(--ivory);
   font-size: 1.4rem;
   line-height: 1;
   padding: 0;
@@ -70,7 +70,7 @@
   list-style: none;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  background: rgba(18, 8, 11, 0.98);
+  background: color-mix(in srgb, var(--bg-secondary) 98%, transparent);
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
   max-height: 220px;
   overflow: auto;
@@ -92,7 +92,7 @@
 
 .suggestions button:hover,
 .suggestions button:focus-visible {
-  background: rgba(143, 45, 59, 0.28);
+  background: color-mix(in srgb, var(--accent) 28%, transparent);
 }
 
 .suggestions strong {
@@ -133,7 +133,7 @@
   max-width: 10rem;
   border: 1px solid var(--border);
   border-radius: 0.9rem;
-  background: rgba(14, 6, 9, 0.92);
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
   color: var(--text);
   padding: 0.55rem 0.7rem;
   text-align: left;
@@ -141,7 +141,7 @@
 
 .suggest-chip:hover,
 .suggest-chip:focus-visible {
-  border-color: rgba(179, 69, 85, 0.85);
+  border-color: color-mix(in srgb, var(--contour) 85%, transparent);
   box-shadow: var(--shadow-glow);
 }
 
@@ -186,8 +186,33 @@
 }
 
 .colhead {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
   text-align: center;
-  padding: 0.35rem;
+  padding: 0.35rem 0.2rem;
+  font-family: var(--font-body);
+  font-size: var(--fs-secondary);
+  font-weight: 500;
+  line-height: 1.15;
+  color: var(--cream);
+}
+
+.slot-ico {
+  width: 1.55rem;
+  height: 1.55rem;
+  object-fit: contain;
+  filter: drop-shadow(0 0 6px rgba(231, 182, 113, 0.35));
+  pointer-events: none;
+  user-select: none;
+}
+
+.slot-ico.ghost {
+  opacity: 0.55;
+  width: 1.35rem;
+  height: 1.35rem;
 }
 
 .day {
@@ -220,7 +245,7 @@
   min-height: 5.2rem;
   border-radius: 0.85rem;
   border: 1px solid var(--border);
-  background: rgba(14, 6, 9, 0.9);
+  background: color-mix(in srgb, var(--bg) 90%, transparent);
   padding: 0.4rem;
 }
 
@@ -235,23 +260,33 @@ button.cell.filled {
 
 button.cell.filled:hover,
 button.cell.filled:focus-visible {
-  border-color: rgba(179, 69, 85, 0.75);
+  border-color: color-mix(in srgb, var(--contour) 75%, transparent);
   box-shadow: var(--shadow-glow);
 }
 
 .cell.filled .thumb {
+  display: grid;
+  place-items: center;
   height: 2.4rem;
   border-radius: 0.55rem;
   margin-bottom: 0.35rem;
   background:
-    linear-gradient(135deg, rgba(143, 45, 59, 0.5), rgba(20, 8, 10, 0.95)),
-    radial-gradient(circle at 40% 30%, rgba(216, 195, 165, 0.25), transparent 60%);
+    radial-gradient(circle at 50% 40%, rgba(231, 182, 113, 0.12), transparent 60%),
+    linear-gradient(135deg, color-mix(in srgb, var(--accent-deep) 45%, transparent), color-mix(in srgb, var(--bg-secondary) 95%, transparent));
+}
+
+.cell.filled .thumb img {
+  width: 1.7rem;
+  height: 1.7rem;
+  object-fit: contain;
+  filter: drop-shadow(0 0 6px rgba(231, 182, 113, 0.35));
 }
 
 .cell.filled p {
   margin: 0;
   font-size: 0.72rem;
   line-height: 1.25;
+  text-align: center;
 }
 
 .meal-kcal {
@@ -264,9 +299,13 @@ button.cell.filled:focus-visible {
 .cell.slot {
   border-style: dashed;
   color: var(--accent-soft);
-  display: grid;
-  place-items: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
   text-align: center;
+  font-size: var(--fs-secondary);
   font-size: 0.72rem;
   background: transparent;
 }
@@ -305,7 +344,7 @@ button.cell.filled:focus-visible {
   height: 1.9rem;
   border-radius: 50%;
   border: 1px solid var(--border);
-  background: rgba(18, 8, 11, 0.9);
+  background: color-mix(in srgb, var(--bg-secondary) 90%, transparent);
   color: var(--text);
   display: grid;
   place-items: center;
@@ -320,7 +359,7 @@ button.cell.filled:focus-visible {
 }
 
 .trash-btn:not(:disabled):hover {
-  border-color: #b04555;
+  border-color: var(--contour);
   box-shadow: var(--shadow-glow);
 }
 
@@ -393,7 +432,7 @@ button.cell.filled:focus-visible {
   flex: 0 0 auto;
   border-radius: var(--radius-pill);
   border: 1px solid var(--border);
-  background: rgba(14, 6, 9, 0.9);
+  background: color-mix(in srgb, var(--bg) 90%, transparent);
   padding: 0.55rem 0.85rem;
   color: var(--muted);
 }
@@ -425,7 +464,7 @@ button.cell.filled:focus-visible {
   border: 1px solid var(--border);
   border-radius: 1rem;
   overflow: hidden;
-  background: rgba(14, 6, 9, 0.92);
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
   cursor: pointer;
   padding: 0;
   text-align: left;
@@ -434,21 +473,21 @@ button.cell.filled:focus-visible {
 
 .recipe-card:hover,
 .recipe-card:focus-visible {
-  border-color: rgba(179, 69, 85, 0.85);
+  border-color: color-mix(in srgb, var(--contour) 85%, transparent);
   box-shadow: var(--shadow-glow);
 }
 
 .recipes .cover {
   height: 110px;
   background:
-    linear-gradient(160deg, rgba(143, 45, 59, 0.45), rgba(10, 4, 7, 0.9)),
+    linear-gradient(160deg, color-mix(in srgb, var(--accent) 45%, transparent), color-mix(in srgb, var(--bg) 90%, transparent)),
     radial-gradient(circle at 30% 25%, rgba(216, 195, 165, 0.28), transparent 55%);
   background-size: cover;
   background-position: center;
 }
 
 .recipes .cover.has-photo {
-  background-color: rgba(10, 4, 7, 0.35);
+  background-color: color-mix(in srgb, var(--bg) 35%, transparent);
 }
 
 .photo-field {
@@ -512,10 +551,10 @@ button.cell.filled:focus-visible {
   width: 2.5rem;
   height: 2.5rem;
   border-radius: 50%;
-  border: 1px solid #b04555;
+  border: 1px solid var(--contour);
   background: var(--grad-btn);
   box-shadow: var(--shadow-glow);
-  color: #fff7f2;
+  color: var(--ivory);
   font-size: 1.3rem;
   line-height: 1;
   padding: 0;
@@ -538,7 +577,7 @@ button.cell.filled:focus-visible {
   padding: 0.55rem 0.65rem;
   border: 1px solid var(--border);
   border-radius: 0.8rem;
-  background: rgba(10, 4, 7, 0.75);
+  background: color-mix(in srgb, var(--bg) 75%, transparent);
 }
 
 .ingredient-list.readonly li {
@@ -636,7 +675,7 @@ button.cell.filled:focus-visible {
   overflow: auto;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: linear-gradient(180deg, rgba(28, 12, 16, 0.98), rgba(10, 4, 7, 0.98));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bg-card) 98%, transparent), color-mix(in srgb, var(--bg) 98%, transparent));
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55), var(--shadow-glow);
   padding: 1rem 1rem 1.1rem;
 }
@@ -659,7 +698,7 @@ button.cell.filled:focus-visible {
   height: 2.2rem;
   border-radius: 50%;
   border: 1px solid var(--border);
-  background: rgba(18, 8, 11, 0.9);
+  background: color-mix(in srgb, var(--bg-secondary) 90%, transparent);
   color: var(--text);
   font-size: 1.35rem;
   line-height: 1;
@@ -684,7 +723,7 @@ button.cell.filled:focus-visible {
   max-width: 100%;
   resize: vertical;
   border: 1px solid var(--border);
-  background: rgba(10, 5, 7, 0.9);
+  background: color-mix(in srgb, var(--bg) 90%, transparent);
   border-radius: 1rem;
   padding: 0.75rem 0.95rem;
   color: var(--text);
@@ -693,7 +732,7 @@ button.cell.filled:focus-visible {
 
 .modal-form .error {
   margin: 0;
-  color: #f3c1c1;
+  color: var(--powder);
   text-align: center;
   font-size: 0.85rem;
 }

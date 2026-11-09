@@ -83,7 +83,7 @@ import { Pet, PetsStore } from '../../core/pets.store';
     h2 { margin: 0; font-size: 1.6rem; }
     h3 { margin: 0 0 0.45rem; font-size: 1rem; color: var(--gold); }
     .muted, .empty { color: var(--muted); }
-    .error { color: #ff9aa8; }
+    .error { color: var(--accent); }
     .panel p { margin: 0.25rem 0; }
     .btn.wide { text-align: center; }
   `
