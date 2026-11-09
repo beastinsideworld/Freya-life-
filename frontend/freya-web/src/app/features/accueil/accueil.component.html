@@ -1,12 +1,26 @@
 <section class="page accueil">
   <header class="hero">
+    <label class="family-scope">
+      <span class="sr-only">Vue</span>
+      <select
+        [ngModel]="selectedFamilyId()"
+        (ngModelChange)="selectFamilyScope($event)"
+        name="familyScope"
+        aria-label="Choisir la vue personnelle ou une famille"
+      >
+        <option value="me">Moi</option>
+        @for (family of families(); track family.id) {
+          <option [value]="family.id">{{ family.name }}</option>
+        }
+      </select>
+    </label>
     <div class="icon" aria-hidden="true">⌂</div>
     <h1>Accueil</h1>
     <p class="sub">Ta journée en un coup d’œil</p>
   </header>
 
   @if (nextTrip(); as trip) {
-    <a class="trip-banner" routerLink="/voyages">
+    <a class="trip-banner" [routerLink]="['/voyages']" [queryParams]="{ trip: trip.id }">
       <span class="trip-label">Voyage</span>
       <strong>{{ trip.title }}</strong>
       <span class="trip-count">{{ countdown(trip.daysUntil) }}</span>
@@ -15,7 +29,9 @@
 
   <div class="top-meta">
     <p class="meta-pill">{{ dateLabel() }} · {{ time() }}</p>
-    <p class="meta-pill weather">☀ {{ temperature() }}°C</p>
+    <button type="button" class="meta-pill weather" (click)="openWeatherPopup()" aria-label="Météo de la semaine">
+      ☀ {{ temperature() }}°C
+    </button>
   </div>
 
   <section class="panel composer" aria-label="Nouvel événement">
@@ -34,82 +50,129 @@
     }
   </section>
 
-  <section class="panel tasks">
-    <div class="section-head">
-      <h2>✓ Tâches du jour</h2>
-      <a routerLink="/planning">Voir le planning →</a>
-    </div>
+  @if (events().length || todayObjectives().length || todayTasks().length || todayHabits().length) {
+    <section class="panel tasks">
+      <div class="section-head">
+        <h2>✓ Tâches du jour</h2>
+        <a routerLink="/planning">Voir le planning →</a>
+      </div>
 
-    <div class="task-group">
-      <h3>Événements</h3>
-      @if (events().length === 0) {
-        <p class="empty-group">Aucun événement aujourd’hui.</p>
-      } @else {
-        <ol>
-          @for (event of events(); track event.title + event.startTime; let i = $index) {
-            <li [class.current]="i === 0 && !event.done">
-              <span class="time">{{ event.startTime }}@if (event.endTime) { – {{ event.endTime }} }</span>
-              <div class="task-card">
-                <span class="task-ico" aria-hidden="true">{{ event.icon }}</span>
-                <span>{{ event.title }}</span>
-              </div>
-              <span class="check" [class.on]="event.done" aria-hidden="true">{{ event.done ? '✓' : '' }}</span>
-            </li>
-          }
-        </ol>
+      @if (events().length) {
+        <div class="task-group">
+          <h3>Événements</h3>
+          <ol>
+            @for (event of events(); track event.id; let i = $index) {
+              <li [class.current]="i === 0 && !event.done" [class.done]="event.done" (click)="openWeekEvent(event)">
+                <span class="time">{{ event.startTime }}@if (event.endTime) { – {{ event.endTime }} }</span>
+                <div class="task-card">
+                  <span class="task-ico" aria-hidden="true">{{ event.icon }}</span>
+                  <span>
+                    {{ event.title }}
+                    @if (selectedFamilyId() !== 'me' && event.ownerName) {
+                      <small class="owner">{{ event.ownerName }}</small>
+                    }
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  class="check"
+                  [class.on]="event.done"
+                  (click)="toggleEventDone(event.id, $event)"
+                  aria-label="Marquer comme fait"
+                >{{ event.done ? '✓' : '' }}</button>
+              </li>
+            }
+          </ol>
+        </div>
       }
-    </div>
 
-    <div class="task-group">
-      <h3>Objectifs</h3>
-      @if (todayObjectives().length === 0) {
-        <p class="empty-group">Aucun objectif aujourd’hui.</p>
-      } @else {
-        <ol>
-          @for (item of todayObjectives(); track item.id) {
-            <li>
-              <span class="time">{{ item.meta }}</span>
-              <div class="task-card">
-                <span class="task-ico" aria-hidden="true">🎯</span>
-                <span>{{ item.title }}</span>
-              </div>
-              <span class="check" [class.on]="item.done" aria-hidden="true">{{ item.done ? '✓' : '' }}</span>
-            </li>
-          }
-        </ol>
+      @if (todayObjectives().length) {
+        <div class="task-group">
+          <h3>Objectifs</h3>
+          <ol>
+            @for (item of todayObjectives(); track item.id) {
+              <li [class.done]="item.done" [class.readonly]="item.mine === false">
+                <span class="time">{{ item.meta }}</span>
+                <div class="task-card">
+                  <span class="task-ico" aria-hidden="true">🎯</span>
+                  <span>{{ item.title }}</span>
+                </div>
+                <button
+                  type="button"
+                  class="check"
+                  [class.on]="item.done"
+                  [disabled]="item.mine === false"
+                  (click)="toggleListItem(item)"
+                  aria-label="Marquer comme fait"
+                >{{ item.done ? '✓' : '' }}</button>
+              </li>
+            }
+          </ol>
+        </div>
       }
-    </div>
 
-    <div class="task-group">
-      <h3>Habitudes</h3>
-      @if (todayHabits().length === 0) {
-        <p class="empty-group">Aucune habitude aujourd’hui.</p>
-      } @else {
-        <ol>
-          @for (item of todayHabits(); track item.id) {
-            <li>
-              <span class="time">{{ item.meta }}</span>
-              <div class="task-card">
-                <span class="task-ico" aria-hidden="true">🏠</span>
-                <span>{{ item.title }}</span>
-              </div>
-              <span class="check" [class.on]="item.done" aria-hidden="true">{{ item.done ? '✓' : '' }}</span>
-            </li>
-          }
-        </ol>
+      @if (todayTasks().length) {
+        <div class="task-group">
+          <h3>Tâches</h3>
+          <ol>
+            @for (item of todayTasks(); track item.id) {
+              <li [class.done]="item.done" [class.readonly]="item.mine === false">
+                <span class="time">{{ item.meta }}</span>
+                <div class="task-card">
+                  <span class="task-ico" aria-hidden="true">☑</span>
+                  <span>{{ item.title }}</span>
+                </div>
+                <button
+                  type="button"
+                  class="check"
+                  [class.on]="item.done"
+                  [disabled]="item.mine === false"
+                  (click)="toggleListItem(item)"
+                  aria-label="Marquer comme fait"
+                >{{ item.done ? '✓' : '' }}</button>
+              </li>
+            }
+          </ol>
+        </div>
       }
-    </div>
-  </section>
+
+      @if (todayHabits().length) {
+        <div class="task-group">
+          <h3>Habitudes</h3>
+          <ol>
+            @for (item of todayHabits(); track item.id) {
+              <li [class.done]="item.done" [class.readonly]="item.mine === false">
+                <span class="time">{{ item.meta }}</span>
+                <div class="task-card">
+                  <span class="task-ico" aria-hidden="true">🏠</span>
+                  <span>{{ item.title }}</span>
+                </div>
+                <button
+                  type="button"
+                  class="check"
+                  [class.on]="item.done"
+                  [disabled]="item.mine === false"
+                  (click)="toggleListItem(item)"
+                  aria-label="Marquer comme fait"
+                >{{ item.done ? '✓' : '' }}</button>
+              </li>
+            }
+          </ol>
+        </div>
+      }
+    </section>
+  }
 
   <section class="panel meals">
     <div class="section-head">
-      <h2>🍴 Repas du jour</h2>
+      <h2>🍴 Repas du jour <span class="kcal-total">{{ totalMealsKcal() }} kcal</span></h2>
       <a routerLink="/repas">Voir les recettes →</a>
     </div>
     <div class="meal-row">
-      @for (meal of meals(); track meal.slot) {
-        <article>
+      @for (meal of meals(); track meal.id) {
+        <article class="meal-card" [class.done]="meal.done" (click)="toggleMeal(meal)" role="button" tabindex="0">
           <div class="ph" aria-hidden="true"></div>
+          <span class="kcal-badge">{{ meal.kcal }} kcal</span>
           <span class="status" [class.on]="meal.done">{{ meal.done ? '✓' : '' }}</span>
           <h3>{{ meal.slot }}</h3>
           <p>{{ meal.title }}</p>
@@ -132,8 +195,12 @@
             <p class="empty-day">Libre</p>
           } @else {
             <ul>
-              @for (item of day.events; track item) {
-                <li>{{ item }}</li>
+              @for (item of day.events; track item.id) {
+                <li>
+                  <button type="button" class="week-event" (click)="openWeekEvent(item)">
+                    {{ item.startTime }} {{ item.title }}
+                  </button>
+                </li>
               }
             </ul>
           }
@@ -142,3 +209,117 @@
     </div>
   </section>
 </section>
+
+@if (editingEvent(); as event) {
+  <div class="modal-backdrop" (click)="closeEventEditor()" role="presentation"></div>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="edit-event-title">
+    <header class="modal-head">
+      <h2 id="edit-event-title">Modifier l’événement</h2>
+      <button type="button" class="modal-close" (click)="closeEventEditor()" aria-label="Fermer">×</button>
+    </header>
+    <form class="modal-form" (ngSubmit)="saveEventEdit()">
+      <label class="field">Événement
+        <input type="text" name="editEventTitle" [(ngModel)]="editEventTitle" required autocomplete="off">
+      </label>
+      <div class="composer-row">
+        <label class="field">Début
+          <app-date-picker name="editEventDate" [(ngModel)]="editEventDate"></app-date-picker>
+        </label>
+        <label class="field">Fin
+          <app-date-picker name="editEventEndDate" [(ngModel)]="editEventEndDate"></app-date-picker>
+        </label>
+      </div>
+      <button type="button" class="btn all-day" [class.active]="editEventAllDay" (click)="toggleEditAllDay()">
+        {{ editEventAllDay ? '✓ Journée entière' : 'Journée entière' }}
+      </button>
+      @if (!editEventAllDay) {
+        <div class="composer-row">
+          <label class="field">Heure début
+            <input type="time" name="editEventTime" [(ngModel)]="editEventTime">
+          </label>
+          <label class="field">Heure fin
+            <input type="time" name="editEventEndTime" [(ngModel)]="editEventEndTime">
+          </label>
+        </div>
+      }
+      <div class="modal-actions">
+        <button type="button" class="btn" (click)="closeEventEditor()">Annuler</button>
+        <button type="submit" class="btn primary">Enregistrer</button>
+      </div>
+    </form>
+  </div>
+}
+
+@if (weatherOpen()) {
+  <div class="modal-backdrop" (click)="closeWeatherPopup()" role="presentation"></div>
+  <div class="modal weather-modal" role="dialog" aria-modal="true" aria-labelledby="weather-title">
+    <header class="modal-head">
+      <h2 id="weather-title">Météo de la semaine</h2>
+      <button type="button" class="modal-close" (click)="closeWeatherPopup()" aria-label="Fermer">×</button>
+    </header>
+    <p class="weather-place">{{ weatherPlace() }}</p>
+    @if (weatherLoading()) {
+      <p class="empty">Chargement…</p>
+    } @else {
+      <ul class="weather-week">
+        @for (day of weatherDays(); track day.date) {
+          <li>
+            <span class="w-day">{{ day.label }}</span>
+            <span class="w-icon" aria-hidden="true">{{ day.icon }}</span>
+            <span class="w-sum">{{ day.summary }}</span>
+            <span class="w-temp">{{ day.tempMax }}° / {{ day.tempMin }}°</span>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+}
+
+@if (reminderOpen()) {
+  <div class="modal-backdrop" (click)="closeReminderPopup()" role="presentation"></div>
+  <div class="modal reminder-modal" role="dialog" aria-modal="true" aria-labelledby="reminder-title">
+    <header class="modal-head">
+      <h2 id="reminder-title">Tâches non faites</h2>
+      <button type="button" class="modal-close" (click)="closeReminderPopup()" aria-label="Fermer">×</button>
+    </header>
+    <p class="reminder-hint">Ces éléments du jour ne sont pas encore cochés.</p>
+
+    @if (!reminderItems().length) {
+      <p class="empty">Tout est à jour.</p>
+    } @else {
+      <ul class="reminder-list">
+        @for (item of reminderItems(); track item.id) {
+          <li>
+            <div class="reminder-body">
+              <strong>{{ item.title }}</strong>
+              <span>{{ item.meta }}</span>
+            </div>
+            <div class="reminder-actions">
+              <button type="button" class="btn" (click)="postponeTomorrow(item)">Demain</button>
+              <button type="button" class="btn" (click)="openPostpone(item)">Date…</button>
+              <button type="button" class="btn primary" (click)="completeReminderItem(item)">Cocher</button>
+            </div>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+}
+
+@if (postponeTarget(); as item) {
+  <div class="modal-backdrop" (click)="cancelPostpone()" role="presentation"></div>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="postpone-title">
+    <header class="modal-head">
+      <h2 id="postpone-title">Reporter</h2>
+      <button type="button" class="modal-close" (click)="cancelPostpone()" aria-label="Fermer">×</button>
+    </header>
+    <p class="reminder-hint">{{ item.title }}</p>
+    <label class="field">Nouvelle date
+      <app-date-picker name="postponeDate" [(ngModel)]="postponeDate"></app-date-picker>
+    </label>
+    <div class="modal-actions">
+      <button type="button" class="btn" (click)="cancelPostpone()">Annuler</button>
+      <button type="button" class="btn primary" (click)="confirmPostpone()">Reporter</button>
+    </div>
+  </div>
+}

@@ -1,0 +1,91 @@
+<button
+  type="button"
+  class="idea-fab"
+  (click)="openModal()"
+  aria-label="Capturer une idée"
+  title="Nouvelle idée"
+>
+  ✎
+</button>
+
+@if (open()) {
+  <div class="modal-backdrop" (click)="closeModal()" role="presentation"></div>
+  <div
+    class="modal idea-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="idea-capture-title"
+    (click)="$event.stopPropagation()"
+  >
+    <header class="modal-head">
+      <h2 id="idea-capture-title">Nouvelle idée</h2>
+      <button type="button" class="modal-close" (click)="closeModal()" aria-label="Fermer">×</button>
+    </header>
+
+    <form class="modal-form" (ngSubmit)="submit()">
+      <label class="field">Idée
+        <input
+          type="text"
+          name="ideaTitle"
+          [(ngModel)]="title"
+          placeholder="Ex. Restaurant à Tokyo, film à voir…"
+          required
+          autocomplete="off"
+        >
+      </label>
+
+      <label class="field">Note (optionnel)
+        <input type="text" name="ideaNote" [(ngModel)]="note" placeholder="Détail rapide…" autocomplete="off">
+      </label>
+
+      <label class="field">Envoyer vers
+        <select name="destination" [(ngModel)]="destination" (ngModelChange)="onDestinationChange()">
+          <option value="">Choisir… (sinon → Tâche)</option>
+          @for (opt of destinations; track opt.id) {
+            <option [value]="opt.id">{{ opt.label }}</option>
+          }
+        </select>
+      </label>
+
+      @if (destination === 'voyage') {
+        <label class="field">Type voyage
+          <select name="voyageKind" [(ngModel)]="voyageKind" required>
+            <option value="">Choisir…</option>
+            @for (opt of voyageKinds; track opt.id) {
+              <option [value]="opt.id">{{ opt.label }}</option>
+            }
+          </select>
+        </label>
+
+        <label class="field">Pays
+          <input
+            type="text"
+            name="country"
+            list="idea-countries"
+            [(ngModel)]="country"
+            placeholder="Écrire ou choisir un pays…"
+            required
+            autocomplete="off"
+          >
+          <datalist id="idea-countries">
+            @for (name of countries(); track name) {
+              <option [value]="name"></option>
+            }
+          </datalist>
+        </label>
+      }
+
+      @if (error()) {
+        <p class="error">{{ error() }}</p>
+      }
+      @if (success()) {
+        <p class="ok">{{ success() }}</p>
+      }
+
+      <div class="modal-actions">
+        <button type="button" class="btn" (click)="closeModal()">Annuler</button>
+        <button type="submit" class="btn primary">Envoyer</button>
+      </div>
+    </form>
+  </div>
+}

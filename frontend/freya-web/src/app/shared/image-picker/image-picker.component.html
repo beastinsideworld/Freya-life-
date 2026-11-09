@@ -1,0 +1,45 @@
+<div class="photo-field">
+  <span class="photo-label">{{ label() }}</span>
+
+  @if (imageUrl()) {
+    <div class="photo-preview" [style.background-image]="'url(' + imageUrl() + ')'"></div>
+    <div class="photo-actions">
+      <div class="chooser-wrap">
+        <button type="button" class="btn" (click)="openChooser()">Changer</button>
+        @if (chooserOpen()) {
+          <div class="chooser" role="menu" aria-label="Source de l’image">
+            <button type="button" role="menuitem" (click)="pickGallery()">Galerie</button>
+            <button type="button" role="menuitem" (click)="pickCamera()">Appareil photo</button>
+          </div>
+        }
+      </div>
+      <button type="button" class="btn" (click)="clear()">Retirer</button>
+    </div>
+  } @else {
+    <div class="chooser-wrap upload">
+      <button type="button" class="photo-upload btn" (click)="openChooser()">{{ addLabel() }}</button>
+      @if (chooserOpen()) {
+        <div class="chooser" role="menu" aria-label="Source de l’image">
+          <button type="button" role="menuitem" (click)="pickGallery()">Galerie</button>
+          <button type="button" role="menuitem" (click)="pickCamera()">Appareil photo</button>
+        </div>
+      }
+    </div>
+  }
+
+  <input
+    #galleryInput
+    type="file"
+    accept="image/*"
+    (change)="onFileSelected($event)"
+    hidden
+  >
+  <input
+    #cameraInput
+    type="file"
+    accept="image/*"
+    capture="environment"
+    (change)="onFileSelected($event)"
+    hidden
+  >
+</div>

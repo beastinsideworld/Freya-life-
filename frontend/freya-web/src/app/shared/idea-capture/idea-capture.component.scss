@@ -1,0 +1,48 @@
+.idea-fab {
+  position: fixed;
+  top: calc(0.75rem + env(safe-area-inset-top));
+  right: 0.85rem;
+  z-index: 46;
+  width: 2.85rem;
+  height: 2.85rem;
+  border-radius: 50%;
+  border: 1px solid #b04555;
+  background: linear-gradient(180deg, #a33445, var(--accent-deep));
+  box-shadow: var(--shadow-glow);
+  color: #fff7f2;
+  font-size: 1.15rem;
+  line-height: 1;
+  padding: 0;
+  display: grid;
+  place-items: center;
+}
+
+.idea-fab:hover,
+.idea-fab:focus-visible {
+  transform: translateY(-1px);
+}
+
+.idea-modal {
+  width: min(440px, calc(100vw - 1.5rem));
+}
+
+.modal-form .error {
+  margin: 0;
+  color: #f3c1c1;
+  text-align: center;
+  font-size: 0.85rem;
+}
+
+.modal-form .ok {
+  margin: 0;
+  color: var(--gold);
+  text-align: center;
+  font-size: 0.85rem;
+}
+
+@media (min-width: 1024px) {
+  .idea-fab {
+    right: 1.25rem;
+    top: 1rem;
+  }
+}

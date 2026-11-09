@@ -46,6 +46,22 @@
           </fieldset>
         }
 
+        <fieldset class="type-field">
+          <legend>Liste</legend>
+          <div class="seg">
+            @for (opt of statusDefsFor(category()); track opt.id) {
+              <button
+                type="button"
+                class="chip"
+                [class.active]="status === opt.id"
+                (click)="status = opt.id"
+              >
+                {{ opt.label }}
+              </button>
+            }
+          </div>
+        </fieldset>
+
         <label class="field">Note
           <input type="text" name="note" [(ngModel)]="note" placeholder="Où tu l’as vu, pourquoi…" autocomplete="off">
         </label>
@@ -60,23 +76,49 @@
     @if (filteredItems().length === 0) {
       <p class="empty">Rien noté dans cette catégorie pour le moment.</p>
     } @else {
-      <ul class="item-list">
-        @for (item of filteredItems(); track item.id) {
-          <li class="item-row-clickable" [class.done]="item.done" (click)="openEditor(item)">
-            <button type="button" class="check" [class.on]="item.done" (click)="toggleDone(item.id); $event.stopPropagation()" aria-label="Marquer comme fait">
-              {{ item.done ? '✓' : '' }}
-            </button>
-            <div class="item-body">
-              <strong>{{ item.title }}</strong>
-              <span>
-                @if (item.mediaType) { {{ mediaLabel(item.mediaType) }} · }
-                {{ item.note || 'Sans note' }}
-              </span>
-            </div>
-            <button type="button" class="ghost" (click)="removeItem(item.id); $event.stopPropagation()" aria-label="Supprimer">×</button>
-          </li>
-        }
-      </ul>
+      @for (section of statusSections(); track section.id) {
+        <section class="status-block">
+          <h3>
+            {{ section.label }}
+            <span>{{ section.items.length }}</span>
+          </h3>
+
+          @if (section.items.length === 0) {
+            <p class="empty-section">Aucun élément.</p>
+          } @else {
+            <ul class="item-list">
+              @for (item of section.items; track item.id) {
+                <li
+                  class="item-row-clickable"
+                  [class.done]="item.status === 'done'"
+                  (click)="openEditor(item)"
+                >
+                  <button
+                    type="button"
+                    class="check"
+                    [class.on]="item.status === 'done'"
+                    [class.progress]="item.status === 'progress'"
+                    (click)="cycleStatus(item, $event)"
+                    [attr.aria-label]="'Statut : ' + statusLabel(item.status, item.category)"
+                    [title]="statusLabel(item.status, item.category) + ' — cliquer pour changer'"
+                  >
+                    @if (item.status === 'done') { ✓ }
+                    @else if (item.status === 'progress') { ◐ }
+                  </button>
+                  <div class="item-body">
+                    <strong>{{ item.title }}</strong>
+                    <span>
+                      @if (item.mediaType) { {{ mediaLabel(item.mediaType) }} · }
+                      {{ item.note || 'Sans note' }}
+                    </span>
+                  </div>
+                  <button type="button" class="ghost" (click)="removeItem(item.id); $event.stopPropagation()" aria-label="Supprimer">×</button>
+                </li>
+              }
+            </ul>
+          }
+        </section>
+      }
     }
   </section>
 
@@ -117,6 +159,22 @@
             </div>
           </fieldset>
         }
+
+        <fieldset class="type-field">
+          <legend>Liste</legend>
+          <div class="seg">
+            @for (opt of statusDefsFor(editCategory); track opt.id) {
+              <button
+                type="button"
+                class="chip"
+                [class.active]="editStatus === opt.id"
+                (click)="editStatus = opt.id"
+              >
+                {{ opt.label }}
+              </button>
+            }
+          </div>
+        </fieldset>
 
         <label class="field">Note
           <input type="text" name="editNote" [(ngModel)]="editNote" autocomplete="off">

@@ -9,6 +9,9 @@ import { RepasComponent } from './features/repas/repas.component';
 import { VoyagesComponent } from './features/voyages/voyages.component';
 import { TeleComponent } from './features/tele/tele.component';
 import { SimplePageComponent } from './features/placeholders/simple-page.component';
+import { ParametresComponent } from './features/parametres/parametres.component';
+import { ChatComponent } from './features/chat/chat.component';
+import { BudgetComponent } from './features/budget/budget.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -23,17 +26,14 @@ export const routes: Routes = [
       { path: 'repas', component: RepasComponent },
       { path: 'voyages', component: VoyagesComponent },
       { path: 'tele', component: TeleComponent },
-      { path: 'sport', redirectTo: 'tele', pathMatch: 'full' },
+      { path: 'chat', component: ChatComponent },
+      { path: 'budget', component: BudgetComponent },
       {
-        path: 'chat',
+        path: 'sport',
         component: SimplePageComponent,
-        data: { title: 'Chat', subtitle: 'Les échanges apparaîtront ici.' }
+        data: { title: 'Sport', subtitle: 'Séances, objectifs et suivi sportif à venir.' }
       },
-      {
-        path: 'parametres',
-        component: SimplePageComponent,
-        data: { title: 'Paramètres', subtitle: 'Compte, notifications et apparence.' }
-      }
+      { path: 'parametres', component: ParametresComponent }
     ]
   },
   { path: '**', redirectTo: '' }

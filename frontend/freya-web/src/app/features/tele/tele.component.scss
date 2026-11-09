@@ -57,6 +57,37 @@
   gap: 0.55rem;
 }
 
+.status-block {
+  margin-top: 0.95rem;
+}
+
+.status-block:first-of-type {
+  margin-top: 0.35rem;
+}
+
+.status-block h3 {
+  margin: 0 0 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  color: var(--gold);
+}
+
+.status-block h3 span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-family: var(--font-body);
+  font-weight: 400;
+}
+
+.empty-section {
+  margin: 0 0 0.35rem;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
 .item-list {
   list-style: none;
   margin: 0;
@@ -114,6 +145,11 @@
 .check.on {
   background: var(--accent);
   border-color: var(--accent);
+}
+
+.check.progress {
+  border-color: var(--gold);
+  color: var(--gold);
 }
 
 .ghost {

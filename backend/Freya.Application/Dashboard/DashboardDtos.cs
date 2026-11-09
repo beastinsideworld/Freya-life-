@@ -9,4 +9,4 @@ public record DashboardTodayDto(
     IReadOnlyList<EventDto> Events,
     IReadOnlyList<MealTodayDto> Meals);
 
-public record MealTodayDto(string Slot, string Title, bool Done, string? ImageUrl);
+public record MealTodayDto(Guid Id, string Slot, string Title, bool Done, string? ImageUrl, int? Kcal);

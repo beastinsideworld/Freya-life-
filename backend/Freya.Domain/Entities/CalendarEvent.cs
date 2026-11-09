@@ -8,8 +8,10 @@ public class CalendarEvent
     public string UserId { get; set; } = string.Empty;
     public string Title { get; set; } = string.Empty;
     public DateOnly Date { get; set; }
+    public DateOnly? EndDate { get; set; }
     public TimeOnly StartTime { get; set; }
     public TimeOnly? EndTime { get; set; }
+    public bool AllDay { get; set; }
     public EventKind Kind { get; set; }
     public EventCategory Category { get; set; } = EventCategory.Other;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

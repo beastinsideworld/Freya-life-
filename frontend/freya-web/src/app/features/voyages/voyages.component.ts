@@ -1,21 +1,36 @@
 import { Component, OnInit, computed, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { ActivatedRoute, Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { createId } from '../../core/id';
 import {
+  INSPIRATION_LIST_LABELS,
   InspirationItem,
+  InspirationListKey,
+  InspirationPlace,
+  PrepIdea,
+  PrepToolKey,
+  TransportMode,
+  TransportTripKind,
   TripBudgetLine,
   TripChecklistItem,
   inspirationMatchesTrip,
   loadInspirations,
   loadTripExtras,
+  itineraryRoutePoints,
+  mapsEmbedUrl,
+  mapsOpenUrl,
+  mapsRouteEmbedUrl,
+  mapsRouteOpenUrl,
   mergeUnique,
-  parseListInput,
   patchTripExtras,
+  placeLabels,
   saveInspirations
 } from '../../core/trip-local';
 import { DatePickerComponent } from '../../shared/date-picker/date-picker.component';
+import { ImagePickerComponent } from '../../shared/image-picker/image-picker.component';
 
 type TripTab = 'mes' | 'inspirations' | 'budget';
 type DetailSection = 'outils' | 'checklist' | 'budget' | 'infos';
@@ -36,18 +51,20 @@ interface TripDetail {
   transport: string[];
   checklist: TripChecklistItem[];
   budget: TripBudgetLine[];
+  prepTools: Partial<Record<PrepToolKey, PrepIdea[]>>;
 }
 
 @Component({
   selector: 'app-voyages',
   standalone: true,
-  imports: [FormsModule, DatePickerComponent],
+  imports: [FormsModule, DatePickerComponent, ImagePickerComponent],
   templateUrl: './voyages.component.html',
   styleUrl: './voyages.component.scss'
 })
 export class VoyagesComponent implements OnInit {
   readonly tab = signal<TripTab>('mes');
   readonly selectedTripId = signal<string | null>(null);
+  readonly selectedInspirationId = signal<string | null>(null);
   readonly detailSection = signal<DetailSection>('outils');
   readonly trips = signal<TripDetail[]>([]);
   readonly inspirations = signal<InspirationItem[]>([]);
@@ -57,9 +74,45 @@ export class VoyagesComponent implements OnInit {
   readonly inspirationModalOpen = signal(false);
   readonly inspirationFormError = signal('');
   readonly inspirationAppliedMsg = signal('');
+  readonly selectedTool = signal<{ key: PrepToolKey; title: string; sub: string } | null>(null);
+  readonly placeFormKey = signal<InspirationListKey | null>(null);
+  readonly placeFormError = signal('');
+  readonly prepFormError = signal('');
+  readonly prepMapQuery = signal('');
+  readonly prepMapExpanded = signal(false);
+  readonly listLabels = INSPIRATION_LIST_LABELS;
+  private prepMapTimer: ReturnType<typeof setTimeout> | null = null;
   checklistDraft = '';
   budgetLabelDraft = '';
   budgetAmountDraft = '';
+  prepLabelDraft = '';
+  prepPlaceDraft = '';
+  prepDepartureDraft = '';
+  prepArrivalDraft = '';
+  prepDurationDraft = '';
+  prepPriceDraft = '';
+  prepNoteDraft = '';
+  prepTripKind: TransportTripKind = 'aller-retour';
+  prepModes: Record<TransportMode, boolean> = {
+    voiture: false,
+    train: false,
+    avion: false,
+    taxi: false
+  };
+  inspirationNotesDraft = '';
+
+  readonly tripKindOptions: Array<{ value: TransportTripKind; label: string }> = [
+    { value: 'aller', label: 'Aller' },
+    { value: 'retour', label: 'Retour' },
+    { value: 'aller-retour', label: 'Aller-retour' }
+  ];
+
+  readonly modeOptions: Array<{ value: TransportMode; label: string }> = [
+    { value: 'voiture', label: 'Voiture' },
+    { value: 'train', label: 'Train' },
+    { value: 'avion', label: 'Avion' },
+    { value: 'taxi', label: 'Taxi' }
+  ];
 
   tripForm = {
     title: '',
@@ -72,24 +125,52 @@ export class VoyagesComponent implements OnInit {
   inspirationForm = {
     title: '',
     hint: '',
-    notes: '',
-    restos: '',
-    visits: '',
-    hikes: '',
-    hotels: '',
-    transport: ''
+    notes: ''
   };
 
-  readonly tools = [
-    { title: 'Transport', sub: 'Vols, trains, location' },
-    { title: 'Hébergement', sub: 'Hôtels, Airbnb' },
-    { title: 'Itinéraire', sub: 'Activités, visites' },
-    { title: 'À emporter', sub: 'Valise, documents' },
-    { title: 'Budget', sub: 'Dépenses, suivi' },
-    { title: 'Repas', sub: 'Adresses, idées' },
-    { title: 'Cartes', sub: 'Hors ligne, repères' },
-    { title: 'Documents', sub: 'Passeport, billets' }
+  placeForm = {
+    title: '',
+    photoUrl: '' as string,
+    amount: '',
+    link: '',
+    note: '',
+    address: ''
+  };
+
+  readonly tools: Array<{ key: PrepToolKey; title: string; sub: string }> = [
+    { key: 'transport', title: 'Transport', sub: 'Vols, trains, location' },
+    { key: 'hebergement', title: 'Hébergement', sub: 'Hôtels, Airbnb' },
+    { key: 'itineraire', title: 'Itinéraire', sub: 'Activités, visites' },
+    { key: 'emporter', title: 'À emporter', sub: 'Valise, documents' },
+    { key: 'budget', title: 'Budget', sub: 'Dépenses, suivi' },
+    { key: 'repas', title: 'Repas', sub: 'Adresses, idées' },
+    { key: 'cartes', title: 'Cartes', sub: 'Hors ligne, repères' },
+    { key: 'documents', title: 'Documents', sub: 'Passeport, billets' }
   ];
+
+  readonly selectedToolIdeas = computed(() => {
+    const trip = this.selectedTrip();
+    const tool = this.selectedTool();
+    if (!trip || !tool) return [] as PrepIdea[];
+    return trip.prepTools[tool.key] ?? [];
+  });
+
+  readonly selectedToolTotal = computed(() => {
+    const ideas = this.selectedToolIdeas();
+    return this.sumPrices(ideas.map((idea) => idea.price));
+  });
+
+  readonly itineraryPoints = computed(() => itineraryRoutePoints(this.selectedToolIdeas()));
+
+  readonly itineraryMapSrc = computed(() => {
+    const url = mapsRouteEmbedUrl(this.itineraryPoints());
+    return url ? this.sanitizer.bypassSecurityTrustResourceUrl(url) : null;
+  });
+
+  readonly selectedTripTotal = computed(() => {
+    const trip = this.selectedTrip();
+    return trip ? this.budgetTotal(trip.budget) : 0;
+  });
 
   readonly upcomingTrips = computed(() => {
     const today = this.toIso(new Date());
@@ -109,6 +190,10 @@ export class VoyagesComponent implements OnInit {
     () => this.trips().find((trip) => trip.id === this.selectedTripId()) ?? null
   );
 
+  readonly selectedInspiration = computed(
+    () => this.inspirations().find((item) => item.id === this.selectedInspirationId()) ?? null
+  );
+
   readonly matchedInspirations = computed(() => {
     const trip = this.selectedTrip();
     if (!trip) return [] as InspirationItem[];
@@ -125,47 +210,321 @@ export class VoyagesComponent implements OnInit {
           amount: line.amount
         });
       }
+      const total = this.budgetTotal(trip.budget);
+      if (total > 0) {
+        lines.push({
+          id: `${trip.id}-total`,
+          label: `${trip.title} · Total`,
+          amount: this.formatAmount(total)
+        });
+      }
     }
     return lines;
   });
 
-  constructor(private readonly http: HttpClient) {}
+  readonly globalBudgetTotal = computed(() =>
+    this.upcomingTrips().reduce((sum, trip) => sum + this.budgetTotal(trip.budget), 0)
+  );
+
+  private pendingTripId: string | null = null;
+
+  constructor(
+    private readonly http: HttpClient,
+    private readonly sanitizer: DomSanitizer,
+    private readonly route: ActivatedRoute,
+    private readonly router: Router
+  ) {}
 
   ngOnInit(): void {
     this.inspirations.set(loadInspirations());
+    this.pendingTripId = this.route.snapshot.queryParamMap.get('trip');
+    this.route.queryParamMap.subscribe((params) => {
+      const tripId = params.get('trip');
+      if (!tripId) return;
+      this.pendingTripId = tripId;
+      this.tryOpenPendingTrip();
+    });
     this.http.get<any[]>(`${environment.apiUrl}/trips`).subscribe({
       next: (items) => {
-        const mapped = (items ?? []).map((item) => this.mapApiTrip(item));
-        this.trips.set(mapped.length ? mapped : this.demoTrips());
+        const mapped = (items ?? []).map((item) => this.syncBudgetFromPrep(this.mapApiTrip(item)));
+        this.trips.set(mapped.length ? mapped : this.demoTrips().map((trip) => this.syncBudgetFromPrep(trip)));
+        this.tryOpenPendingTrip();
       },
-      error: () => this.trips.set(this.demoTrips())
+      error: () => {
+        this.trips.set(this.demoTrips().map((trip) => this.syncBudgetFromPrep(trip)));
+        this.tryOpenPendingTrip();
+      }
     });
+  }
+
+  private tryOpenPendingTrip(): void {
+    const tripId = this.pendingTripId;
+    if (!tripId) return;
+    const trip = this.trips().find((item) => item.id === tripId);
+    if (!trip) return;
+    this.openTrip(trip);
+    this.pendingTripId = null;
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { trip: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true
+    });
+  }
+
+  formatAmount(value: number): string {
+    return `${value.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €`;
+  }
+
+  toolTotal(trip: TripDetail, key: PrepToolKey): number {
+    return this.sumPrices((trip.prepTools[key] ?? []).map((idea) => idea.price));
   }
 
   setTab(tab: TripTab): void {
     this.tab.set(tab);
     this.selectedTripId.set(null);
+    this.selectedInspirationId.set(null);
     this.detailSection.set('outils');
     this.inspirationAppliedMsg.set('');
   }
 
   openTrip(trip: TripDetail): void {
+    this.selectedInspirationId.set(null);
     this.selectedTripId.set(trip.id);
     this.detailSection.set('outils');
+    this.selectedTool.set(null);
     this.inspirationAppliedMsg.set('');
     this.checklistDraft = '';
     this.budgetLabelDraft = '';
     this.budgetAmountDraft = '';
   }
 
+  openInspiration(item: InspirationItem): void {
+    this.selectedTripId.set(null);
+    this.selectedInspirationId.set(item.id);
+    this.inspirationNotesDraft = item.notes;
+    this.closePlaceForm();
+  }
+
   closeDetail(): void {
     this.selectedTripId.set(null);
+    this.selectedInspirationId.set(null);
+    this.selectedTool.set(null);
+    this.closePlaceForm();
     this.detailSection.set('outils');
     this.inspirationAppliedMsg.set('');
   }
 
+  openPlaceForm(key: InspirationListKey): void {
+    this.placeFormKey.set(key);
+    this.placeFormError.set('');
+    this.placeForm = {
+      title: '',
+      photoUrl: '',
+      amount: '',
+      link: '',
+      note: '',
+      address: ''
+    };
+  }
+
+  closePlaceForm(): void {
+    this.placeFormKey.set(null);
+    this.placeFormError.set('');
+  }
+
+  onPlacePhotoSelected(dataUrl: string): void {
+    this.placeForm.photoUrl = dataUrl;
+    this.placeFormError.set('');
+  }
+
+  clearPlacePhoto(): void {
+    this.placeForm.photoUrl = '';
+  }
+
+  mapsEmbed(address: string): SafeResourceUrl | null {
+    const url = mapsEmbedUrl(address);
+    return url ? this.sanitizer.bypassSecurityTrustResourceUrl(url) : null;
+  }
+
+  mapsLink(address: string): string {
+    return mapsOpenUrl(address);
+  }
+
+  itineraryMapsLink(): string {
+    return mapsRouteOpenUrl(this.itineraryPoints());
+  }
+
+  placeFormTitle(): string {
+    const key = this.placeFormKey();
+    return key ? `Ajouter · ${this.listLabels[key]}` : 'Ajouter';
+  }
+
   setDetailSection(section: DetailSection): void {
     this.detailSection.set(section);
+    this.selectedTool.set(null);
+  }
+
+  openTool(tool: { key: PrepToolKey; title: string; sub: string }): void {
+    this.selectedTool.set(tool);
+    this.prepFormError.set('');
+    this.prepMapExpanded.set(false);
+    this.resetPrepForm();
+  }
+
+  closeTool(): void {
+    this.selectedTool.set(null);
+    this.prepMapExpanded.set(false);
+    if (this.prepMapTimer) {
+      clearTimeout(this.prepMapTimer);
+      this.prepMapTimer = null;
+    }
+  }
+
+  onPrepPlaceTyped(value: string): void {
+    this.prepPlaceDraft = value;
+    if (this.prepMapTimer) clearTimeout(this.prepMapTimer);
+    this.prepMapTimer = setTimeout(() => {
+      this.prepMapQuery.set(value.trim());
+    }, 450);
+  }
+
+  expandPrepMap(): void {
+    if (!this.prepMapQuery().trim() && !this.prepPlaceDraft.trim()) return;
+    if (!this.prepMapQuery().trim()) this.prepMapQuery.set(this.prepPlaceDraft.trim());
+    this.prepMapExpanded.set(true);
+  }
+
+  closePrepMap(): void {
+    this.prepMapExpanded.set(false);
+  }
+
+  prepMapSrc(): SafeResourceUrl | null {
+    return this.mapsEmbed(this.prepMapQuery() || this.prepPlaceDraft.trim());
+  }
+
+  selectedModes(): TransportMode[] {
+    return this.modeOptions
+      .map((option) => option.value)
+      .filter((mode) => this.prepModes[mode]);
+  }
+
+  tripKindLabel(kind?: TransportTripKind | null): string {
+    return this.tripKindOptions.find((option) => option.value === kind)?.label ?? '';
+  }
+
+  modesLabel(modes?: TransportMode[]): string {
+    if (!modes?.length) return '';
+    return modes
+      .map((mode) => this.modeOptions.find((option) => option.value === mode)?.label ?? mode)
+      .join(' · ');
+  }
+
+  addPrepIdea(): void {
+    const trip = this.selectedTrip();
+    const tool = this.selectedTool();
+    if (!trip || !tool) return;
+
+    const modes = tool.key === 'transport' ? this.selectedModes() : [];
+    if (tool.key === 'transport' && modes.length === 0) {
+      this.prepFormError.set('Choisis au moins un moyen de transport.');
+      return;
+    }
+
+    const usesRoute = tool.key === 'transport' || tool.key === 'itineraire';
+    const departure = usesRoute ? this.prepDepartureDraft.trim() : '';
+    const arrival = usesRoute ? this.prepArrivalDraft.trim() : '';
+    const duration = tool.key === 'itineraire' ? this.prepDurationDraft.trim() : '';
+
+    if (tool.key === 'itineraire' && (!departure || !arrival)) {
+      this.prepFormError.set('Indique un départ et une arrivée.');
+      return;
+    }
+
+    let label = this.prepLabelDraft.trim();
+    if (!label && tool.key === 'itineraire') {
+      label = `${departure} → ${arrival}`;
+    }
+    if (!label) {
+      this.prepFormError.set('Indique une idée / option.');
+      return;
+    }
+    this.prepFormError.set('');
+
+    const place = usesRoute
+      ? [departure, arrival].filter(Boolean).join(' → ')
+      : this.prepPlaceDraft.trim();
+
+    const idea: PrepIdea = {
+      id: createId(),
+      label,
+      place,
+      departure,
+      arrival,
+      duration,
+      price: tool.key === 'itineraire' ? '' : this.prepPriceDraft.trim(),
+      note: this.prepNoteDraft.trim(),
+      tripKind: tool.key === 'transport' ? this.prepTripKind : null,
+      modes: tool.key === 'transport' ? modes : []
+    };
+
+    this.trips.update((list) =>
+      list.map((item) => {
+        if (item.id !== trip.id) return item;
+        const current = item.prepTools[tool.key] ?? [];
+        const next = this.syncBudgetFromPrep({
+          ...item,
+          prepTools: {
+            ...item.prepTools,
+            [tool.key]: [...current, idea]
+          }
+        });
+        this.persistExtras(next);
+        return next;
+      })
+    );
+
+    this.resetPrepForm();
+  }
+
+  private resetPrepForm(): void {
+    this.prepLabelDraft = '';
+    this.prepPlaceDraft = '';
+    this.prepDepartureDraft = '';
+    this.prepArrivalDraft = '';
+    this.prepDurationDraft = '';
+    this.prepPriceDraft = '';
+    this.prepNoteDraft = '';
+    this.prepTripKind = 'aller-retour';
+    this.prepModes = {
+      voiture: false,
+      train: false,
+      avion: false,
+      taxi: false
+    };
+    this.prepMapQuery.set('');
+    this.prepMapExpanded.set(false);
+  }
+
+  removePrepIdea(ideaId: string): void {
+    const trip = this.selectedTrip();
+    const tool = this.selectedTool();
+    if (!trip || !tool) return;
+
+    this.trips.update((list) =>
+      list.map((item) => {
+        if (item.id !== trip.id) return item;
+        const next = this.syncBudgetFromPrep({
+          ...item,
+          prepTools: {
+            ...item.prepTools,
+            [tool.key]: (item.prepTools[tool.key] ?? []).filter((idea) => idea.id !== ideaId)
+          }
+        });
+        this.persistExtras(next);
+        return next;
+      })
+    );
   }
 
   openTripModal(): void {
@@ -188,26 +547,9 @@ export class VoyagesComponent implements OnInit {
     this.tripFormError.set('');
   }
 
-  onTripPhotoSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      this.tripFormError.set('Choisis une image (jpg, png, webp…).');
-      return;
-    }
-    if (file.size > 2_500_000) {
-      this.tripFormError.set('Image trop lourde (max 2,5 Mo).');
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      this.tripForm.coverUrl = String(reader.result ?? '');
-      this.tripFormError.set('');
-    };
-    reader.onerror = () => this.tripFormError.set('Impossible de lire cette image.');
-    reader.readAsDataURL(file);
+  onTripPhotoSelected(dataUrl: string): void {
+    this.tripForm.coverUrl = dataUrl;
+    this.tripFormError.set('');
   }
 
   clearTripPhoto(): void {
@@ -246,14 +588,14 @@ export class VoyagesComponent implements OnInit {
 
     this.http.post<any>(`${environment.apiUrl}/trips`, payload).subscribe({
       next: (created) => {
-        const trip = this.mapApiTrip({ ...created, ...payload, id: created?.id });
+        const trip = this.syncBudgetFromPrep(this.mapApiTrip({ ...created, ...payload, id: created?.id }));
         this.trips.update((list) => [trip, ...list.filter((item) => item.id !== trip.id)]);
         this.persistExtras(trip);
         this.tripSaving.set(false);
         this.tripModalOpen.set(false);
       },
       error: () => {
-        const trip: TripDetail = {
+        const trip = this.syncBudgetFromPrep({
           id: createId(),
           title: payload.title,
           subtitle: places,
@@ -268,8 +610,9 @@ export class VoyagesComponent implements OnInit {
           hotels: [],
           transport: [],
           checklist: this.defaultChecklist(),
-          budget: this.defaultBudget()
-        };
+          budget: [],
+          prepTools: {}
+        });
         this.trips.update((list) => [trip, ...list]);
         this.persistExtras(trip);
         this.tripSaving.set(false);
@@ -282,12 +625,7 @@ export class VoyagesComponent implements OnInit {
     this.inspirationForm = {
       title: '',
       hint: '',
-      notes: '',
-      restos: '',
-      visits: '',
-      hikes: '',
-      hotels: '',
-      transport: ''
+      notes: ''
     };
     this.inspirationFormError.set('');
     this.inspirationModalOpen.set(true);
@@ -310,11 +648,11 @@ export class VoyagesComponent implements OnInit {
       title,
       hint: this.inspirationForm.hint.trim() || title,
       notes: this.inspirationForm.notes.trim(),
-      restos: parseListInput(this.inspirationForm.restos),
-      visits: parseListInput(this.inspirationForm.visits),
-      hikes: parseListInput(this.inspirationForm.hikes),
-      hotels: parseListInput(this.inspirationForm.hotels),
-      transport: parseListInput(this.inspirationForm.transport)
+      restos: [],
+      visits: [],
+      hikes: [],
+      hotels: [],
+      transport: []
     };
 
     this.inspirations.update((list) => {
@@ -323,6 +661,71 @@ export class VoyagesComponent implements OnInit {
       return next;
     });
     this.inspirationModalOpen.set(false);
+    this.openInspiration(item);
+  }
+
+  submitPlaceForm(): void {
+    const key = this.placeFormKey();
+    const inspirationId = this.selectedInspirationId();
+    const title = this.placeForm.title.trim();
+    if (!key || !inspirationId) return;
+    if (!title) {
+      this.placeFormError.set('Indique un nom.');
+      return;
+    }
+
+    const place: InspirationPlace = {
+      id: createId(),
+      title,
+      photoUrl: this.placeForm.photoUrl || null,
+      amount: this.placeForm.amount.trim(),
+      link: this.placeForm.link.trim(),
+      note: this.placeForm.note.trim(),
+      address: this.placeForm.address.trim()
+    };
+
+    this.inspirations.update((list) => {
+      const next = list.map((item) => {
+        if (item.id !== inspirationId) return item;
+        return {
+          ...item,
+          [key]: [place, ...item[key]]
+        };
+      });
+      saveInspirations(next);
+      return next;
+    });
+    this.closePlaceForm();
+  }
+
+  removeInspirationItem(key: InspirationListKey, placeId: string): void {
+    const inspirationId = this.selectedInspirationId();
+    if (!inspirationId) return;
+
+    this.inspirations.update((list) => {
+      const next = list.map((item) => {
+        if (item.id !== inspirationId) return item;
+        return {
+          ...item,
+          [key]: item[key].filter((entry) => entry.id !== placeId)
+        };
+      });
+      saveInspirations(next);
+      return next;
+    });
+  }
+
+  saveInspirationNotes(): void {
+    const inspirationId = this.selectedInspirationId();
+    if (!inspirationId) return;
+
+    this.inspirations.update((list) => {
+      const next = list.map((item) =>
+        item.id === inspirationId ? { ...item, notes: this.inspirationNotesDraft.trim() } : item
+      );
+      saveInspirations(next);
+      return next;
+    });
   }
 
   applyInspiration(inspiration: InspirationItem): void {
@@ -334,11 +737,11 @@ export class VoyagesComponent implements OnInit {
         if (item.id !== trip.id) return item;
         const next: TripDetail = {
           ...item,
-          restos: mergeUnique(item.restos, inspiration.restos),
-          hikes: mergeUnique(item.hikes, inspiration.hikes),
-          visits: mergeUnique(item.visits, inspiration.visits),
-          hotels: mergeUnique(item.hotels, inspiration.hotels),
-          transport: mergeUnique(item.transport, inspiration.transport)
+          restos: mergeUnique(item.restos, placeLabels(inspiration.restos)),
+          hikes: mergeUnique(item.hikes, placeLabels(inspiration.hikes)),
+          visits: mergeUnique(item.visits, placeLabels(inspiration.visits)),
+          hotels: mergeUnique(item.hotels, placeLabels(inspiration.hotels)),
+          transport: mergeUnique(item.transport, placeLabels(inspiration.transport))
         };
         this.persistExtras(next);
         return next;
@@ -403,6 +806,56 @@ export class VoyagesComponent implements OnInit {
     this.budgetAmountDraft = '';
   }
 
+  private syncBudgetFromPrep(trip: TripDetail): TripDetail {
+    const toolTitles = new Set(this.tools.map((tool) => this.normalizeLabel(tool.title)));
+    const manual = trip.budget.filter(
+      (line) => !line.id.startsWith('auto-') && !toolTitles.has(this.normalizeLabel(line.label))
+    );
+
+    const autoLines: TripBudgetLine[] = [];
+    for (const tool of this.tools) {
+      if (tool.key === 'budget' || tool.key === 'itineraire') continue;
+      const total = this.toolTotal(trip, tool.key);
+      if (total <= 0) continue;
+      autoLines.push({
+        id: `auto-${tool.key}`,
+        label: tool.title,
+        amount: this.formatAmount(total)
+      });
+    }
+
+    return {
+      ...trip,
+      budget: [...autoLines, ...manual]
+    };
+  }
+
+  private budgetTotal(lines: TripBudgetLine[]): number {
+    return this.sumPrices(lines.map((line) => line.amount));
+  }
+
+  private sumPrices(values: string[]): number {
+    return values.reduce((sum, value) => sum + this.parseAmount(value), 0);
+  }
+
+  private parseAmount(value: string): number {
+    const cleaned = String(value ?? '')
+      .replace(/\s/g, '')
+      .replace(/[^\d,.-]/g, '')
+      .replace(',', '.');
+    if (!cleaned) return 0;
+    const parsed = Number.parseFloat(cleaned);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  private normalizeLabel(value: string): string {
+    return value
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
+  }
+
   countdown(daysUntil: number): string {
     if (daysUntil > 0) return `J - ${daysUntil}`;
     if (daysUntil === 0) return 'Aujourd’hui';
@@ -430,7 +883,8 @@ export class VoyagesComponent implements OnInit {
       hikes: trip.hikes,
       visits: trip.visits,
       hotels: trip.hotels,
-      transport: trip.transport
+      transport: trip.transport,
+      prepTools: trip.prepTools
     });
   }
 
@@ -457,7 +911,8 @@ export class VoyagesComponent implements OnInit {
       hotels: extras?.hotels ?? demo?.hotels ?? [],
       transport: extras?.transport ?? demo?.transport ?? [],
       checklist: extras?.checklist ?? demo?.checklist ?? this.defaultChecklist(),
-      budget: extras?.budget ?? demo?.budget ?? this.defaultBudget()
+      budget: extras?.budget ?? demo?.budget ?? this.defaultBudget(),
+      prepTools: extras?.prepTools ?? demo?.prepTools ?? {}
     };
   }
 
@@ -483,7 +938,8 @@ export class VoyagesComponent implements OnInit {
           { id: createId(), label: 'Transport', amount: '180 €' },
           { id: createId(), label: 'Repas', amount: '260 €' },
           { id: createId(), label: 'Activités', amount: '140 €' }
-        ]
+        ],
+        prepTools: {}
       },
       {
         id: 'corse',
@@ -505,7 +961,8 @@ export class VoyagesComponent implements OnInit {
           { id: createId(), label: 'Transport', amount: '220 €' },
           { id: createId(), label: 'Repas', amount: '190 €' },
           { id: createId(), label: 'Activités', amount: '90 €' }
-        ]
+        ],
+        prepTools: {}
       },
       {
         id: 'barcelone-archive',
@@ -525,7 +982,8 @@ export class VoyagesComponent implements OnInit {
         budget: [
           { id: createId(), label: 'Hébergement', amount: '390 €' },
           { id: createId(), label: 'Transport', amount: '160 €' }
-        ]
+        ],
+        prepTools: {}
       }
     ].map((trip) => {
       const extras = loadTripExtras()[trip.id];
@@ -538,7 +996,8 @@ export class VoyagesComponent implements OnInit {
         hikes: extras.hikes ?? trip.hikes,
         visits: extras.visits ?? trip.visits,
         hotels: extras.hotels ?? trip.hotels,
-        transport: extras.transport ?? trip.transport
+        transport: extras.transport ?? trip.transport,
+        prepTools: extras.prepTools ?? trip.prepTools
       };
     });
   }

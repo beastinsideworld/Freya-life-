@@ -1,0 +1,111 @@
+<section class="page chat-page">
+  @if (view() === 'list') {
+    <header class="hero">
+      <div class="icon" aria-hidden="true">💬</div>
+      <h1>Chat</h1>
+      <p class="sub">Parle avec tes amis ajoutés via leur ID</p>
+    </header>
+
+    @if (error()) {
+      <p class="error">{{ error() }}</p>
+    }
+
+    <section class="panel">
+      <div class="section-head">
+        <h2>Conversations</h2>
+        <button type="button" class="btn" (click)="refreshLists()" [disabled]="loading()">Actualiser</button>
+      </div>
+
+      @if (loading() && conversations().length === 0) {
+        <p class="empty">Chargement…</p>
+      } @else if (conversations().length === 0) {
+        <p class="empty">Aucune conversation. Choisis un ami ci-dessous pour commencer.</p>
+      } @else {
+        <ul class="conversation-list">
+          @for (item of conversations(); track item.id) {
+            <li>
+              <button type="button" class="conversation-card" (click)="openConversation(item)">
+                <span
+                  class="avatar"
+                  [class.has-photo]="!!item.peerAvatarUrl"
+                  [style.background-image]="item.peerAvatarUrl ? 'url(' + item.peerAvatarUrl + ')' : null"
+                  aria-hidden="true"
+                >
+                  @if (!item.peerAvatarUrl) {
+                    {{ item.peerDisplayName.slice(0, 1).toUpperCase() }}
+                  }
+                </span>
+                <span class="meta">
+                  <strong>{{ item.peerDisplayName }}</strong>
+                  <span class="preview">{{ item.lastMessage || 'Nouvelle conversation' }}</span>
+                </span>
+                <span class="when">{{ formatTime(item.lastMessageAtUtc) }}</span>
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+
+    <section class="panel">
+      <h2>Démarrer avec un ami</h2>
+      @if (friends().length === 0) {
+        <p class="empty">Ajoute un ami dans Paramètres avec son ID pour pouvoir discuter.</p>
+      } @else {
+        <ul class="friend-start-list">
+          @for (friend of friends(); track friend.userId) {
+            <li>
+              <div>
+                <strong>{{ friend.displayName }}</strong>
+                <span>ID {{ friend.friendCode }}</span>
+              </div>
+              <button type="button" class="btn primary" (click)="startWithFriend(friend)">Écrire</button>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+  } @else {
+    @if (selected(); as current) {
+      <header class="thread-head">
+        <button type="button" class="btn back" (click)="backToList()" aria-label="Retour">←</button>
+        <div>
+          <h1>{{ current.peerDisplayName }}</h1>
+          <p class="sub">ID {{ current.peerFriendCode }}</p>
+        </div>
+      </header>
+
+      @if (error()) {
+        <p class="error">{{ error() }}</p>
+      }
+
+      <div class="thread panel">
+        @if (messages().length === 0) {
+          <p class="empty">Dis bonjour pour commencer la conversation.</p>
+        } @else {
+          <ul class="message-list">
+            @for (message of messages(); track message.id) {
+              <li [class.mine]="message.mine" [class.theirs]="!message.mine">
+                <p>{{ message.body }}</p>
+                <time>{{ formatTime(message.sentAtUtc) }}</time>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+
+      <form class="composer" (ngSubmit)="send()">
+        <label class="sr-only" for="chat-draft">Message</label>
+        <input
+          id="chat-draft"
+          name="draft"
+          [(ngModel)]="draft"
+          placeholder="Écrire un message…"
+          autocomplete="off"
+          maxlength="2000"
+        >
+        <button type="submit" class="btn primary" [disabled]="sending() || !draft.trim()">Envoyer</button>
+      </form>
+    }
+  }
+</section>

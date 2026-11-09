@@ -9,8 +9,10 @@ export interface CalendarEvent {
   id: string;
   title: string;
   date: string;
+  endDate?: string | null;
   startTime: string;
   endTime?: string | null;
+  allDay?: boolean;
   kind: EventKind;
   category: EventCategory;
 }
@@ -18,8 +20,10 @@ export interface CalendarEvent {
 export interface CreateEventPayload {
   title: string;
   date: string;
-  startTime: string;
+  endDate?: string | null;
+  startTime?: string | null;
   endTime?: string | null;
+  allDay: boolean;
   kind: number;
   category: number;
 }

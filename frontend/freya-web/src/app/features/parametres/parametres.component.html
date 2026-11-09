@@ -1,0 +1,245 @@
+<section class="page parametres">
+  <header class="hero">
+    <div class="icon" aria-hidden="true">⚙</div>
+    <h1>Paramètres</h1>
+    <p class="sub">Compte, amis, notifications et apparence</p>
+  </header>
+
+  <section class="panel profile-panel">
+    <h2>Profil</h2>
+    <div class="profile-card">
+      <div
+        class="avatar"
+        [class.has-photo]="!!profile()?.avatarUrl"
+        [style.background-image]="profile()?.avatarUrl ? 'url(' + profile()?.avatarUrl + ')' : null"
+        aria-hidden="true"
+      >
+        @if (!profile()?.avatarUrl) {
+          {{ (profile()?.displayName || '?').slice(0, 1).toUpperCase() }}
+        }
+      </div>
+      <div class="profile-info">
+        <strong>{{ profile()?.displayName || 'Profil' }}</strong>
+        <div class="id-row">
+          <span class="friend-code">ID {{ formattedCode(profile()?.friendCode) }}</span>
+          <button type="button" class="btn copy-btn" (click)="copyFriendCode()">
+            {{ codeCopied() ? 'Copié' : 'Copier' }}
+          </button>
+        </div>
+        <span class="email">{{ profile()?.email }}</span>
+      </div>
+    </div>
+
+    <app-image-picker
+      label="Photo de profil"
+      addLabel="+ Changer la photo"
+      [imageUrl]="profile()?.avatarUrl"
+      (imageSelected)="onAvatarSelected($event)"
+      (cleared)="clearAvatar()"
+      (error)="profileError.set($event)"
+    />
+
+    @if (avatarBusy()) {
+      <p class="hint">Enregistrement de la photo…</p>
+    }
+    @if (profileError()) {
+      <p class="error">{{ profileError() }}</p>
+    }
+
+    <p class="hint">Partage ton ID pour qu’on puisse t’ajouter en ami.</p>
+    <button type="button" class="btn danger" (click)="logout()">Se déconnecter</button>
+  </section>
+
+  <section class="panel">
+    <h2>Amis</h2>
+    <p class="hint">Ajoute un ami avec son numéro d’identifiant à 6 chiffres.</p>
+
+    <div class="add-friend">
+      <label class="field">
+        Code ami
+        <input
+          type="text"
+          name="friendCode"
+          [(ngModel)]="friendCodeInput"
+          inputmode="numeric"
+          maxlength="6"
+          placeholder="482917"
+          autocomplete="off"
+        >
+      </label>
+      <button type="button" class="btn primary" (click)="addFriend()" [disabled]="friendBusy()">
+        Ajouter un ami
+      </button>
+    </div>
+
+    @if (friendError()) {
+      <p class="error">{{ friendError() }}</p>
+    }
+    @if (friendSuccess()) {
+      <p class="ok">{{ friendSuccess() }}</p>
+    }
+
+    @if (friends().length === 0) {
+      <p class="empty">Aucun ami pour le moment.</p>
+    } @else {
+      <ul class="friend-list">
+        @for (friend of friends(); track friend.userId) {
+          <li>
+            <div class="friend-main">
+              <span
+                class="friend-avatar"
+                [class.has-photo]="!!friend.avatarUrl"
+                [style.background-image]="friend.avatarUrl ? 'url(' + friend.avatarUrl + ')' : null"
+                aria-hidden="true"
+              >
+                @if (!friend.avatarUrl) {
+                  {{ friend.displayName.slice(0, 1).toUpperCase() }}
+                }
+              </span>
+              <div>
+                <strong>{{ friend.displayName }}</strong>
+                <span>ID {{ formattedCode(friend.friendCode) }}</span>
+              </div>
+            </div>
+            <button type="button" class="btn" (click)="removeFriend(friend)">Retirer</button>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+
+  <section class="panel">
+    <h2>Familles</h2>
+    <p class="hint">
+      Crée une famille ou rejoins-en une avec un code. Les membres voient calendrier, tâches, objectifs et habitudes sur l’accueil.
+    </p>
+
+    <div class="add-friend">
+      <label class="field">
+        Nom de la famille
+        <input type="text" name="familyName" [(ngModel)]="familyNameInput" placeholder="Famille Martin" maxlength="120">
+      </label>
+      <button type="button" class="btn primary" (click)="createFamily()" [disabled]="familyBusy()">Créer</button>
+    </div>
+
+    <div class="add-friend">
+      <label class="field">
+        Code famille
+        <input
+          type="text"
+          name="familyCode"
+          [(ngModel)]="familyCodeInput"
+          inputmode="numeric"
+          maxlength="6"
+          placeholder="123456"
+          autocomplete="off"
+        >
+      </label>
+      <button type="button" class="btn" (click)="joinFamily()" [disabled]="familyBusy()">Rejoindre</button>
+    </div>
+
+    @if (familyError()) {
+      <p class="error">{{ familyError() }}</p>
+    }
+    @if (familySuccess()) {
+      <p class="ok">{{ familySuccess() }}</p>
+    }
+
+    @if (families().length === 0) {
+      <p class="empty">Aucune famille pour le moment.</p>
+    } @else {
+      <ul class="friend-list">
+        @for (family of families(); track family.id) {
+          <li>
+            <div>
+              <strong>{{ family.name }}</strong>
+              <span>
+                Code {{ formattedCode(family.inviteCode) }}
+                · {{ family.memberCount }} membre{{ family.memberCount > 1 ? 's' : '' }}
+              </span>
+            </div>
+            <div class="family-actions">
+              <button type="button" class="btn copy-btn" (click)="copyFamilyCode(family)">
+                {{ familyCodeCopied() === family.id ? 'Copié' : 'Copier' }}
+              </button>
+              <button type="button" class="btn" (click)="leaveFamily(family)">Quitter</button>
+            </div>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+
+  <section class="panel">
+    <h2>Apparence</h2>
+    <p class="hint">Le thème choisi change l’apparence de l’application. Les styles détaillés arriveront ensuite.</p>
+
+    <div class="current-appearance">
+      <span class="swatch large" [style.background]="currentTheme()?.swatch ?? '#8f2d3b'" aria-hidden="true"></span>
+      <div class="current-info">
+        <strong>{{ currentTheme()?.label ?? 'Freya' }}</strong>
+        <span>{{ currentTheme()?.categoryLabel ?? 'Classique' }}</span>
+      </div>
+      <button type="button" class="btn primary" (click)="openThemeModal()">Changer</button>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Rappel des tâches</h2>
+    <p class="hint">
+      Un popup apparaît à l’heure choisie avec les objectifs et tâches du jour non cochés.
+    </p>
+
+    <label class="toggle-row">
+      <input type="checkbox" [(ngModel)]="reminderEnabled" name="reminderEnabled">
+      <span>Activer le popup de rappel</span>
+    </label>
+
+    @if (reminderEnabled) {
+      <label class="field">Heure du rappel
+        <input type="time" name="reminderTime" [(ngModel)]="reminderTime">
+      </label>
+    } @else {
+      <p class="off-note">Aucun popup ne sera affiché.</p>
+    }
+  </section>
+
+  <div class="actions sticky-actions">
+    <button type="button" class="btn primary" (click)="save()">Enregistrer</button>
+    @if (saved()) {
+      <span class="saved">Enregistré</span>
+    }
+  </div>
+</section>
+
+@if (themeModalOpen()) {
+  <div class="modal-backdrop" (click)="closeThemeModal()" role="presentation"></div>
+  <div class="modal theme-modal" role="dialog" aria-modal="true" aria-labelledby="theme-modal-title">
+    <header class="modal-head">
+      <h2 id="theme-modal-title">Choisir une apparence</h2>
+      <button type="button" class="modal-close" (click)="closeThemeModal()" aria-label="Fermer">×</button>
+    </header>
+
+    <div class="theme-modal-body">
+      @for (category of themeCategories; track category.id) {
+        <section class="theme-category">
+          <h3>{{ category.label }}</h3>
+          <p class="cat-desc">{{ category.description }}</p>
+          <div class="theme-grid">
+            @for (theme of category.themes; track theme.id) {
+              <button
+                type="button"
+                class="theme-card"
+                [class.active]="selectedThemeId() === theme.id"
+                (click)="selectTheme(theme.id)"
+              >
+                <span class="swatch" [style.background]="theme.swatch" aria-hidden="true"></span>
+                <span class="theme-name">{{ theme.label }}</span>
+              </button>
+            }
+          </div>
+        </section>
+      }
+    </div>
+  </div>
+}

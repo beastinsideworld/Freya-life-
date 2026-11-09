@@ -1,0 +1,253 @@
+<section class="page budget-page">
+  <header class="hero">
+    <button type="button" class="share-btn" (click)="openShare()" aria-label="Partager mon budget">Partager</button>
+    <div class="icon" aria-hidden="true">💶</div>
+    <h1>Budget</h1>
+    <p class="sub">Salaire, enveloppes et mise de côté — privé par défaut</p>
+  </header>
+
+  <div class="toolbar panel">
+    <label class="field scope">
+      <span>Vue</span>
+      <select [ngModel]="ownerUserId() ?? 'me'" (ngModelChange)="selectOwner($event)" name="budgetOwner">
+        <option value="me">Mon budget</option>
+        @for (owner of sharedOwners(); track owner.userId) {
+          <option [value]="owner.userId">{{ owner.displayName }}</option>
+        }
+      </select>
+    </label>
+
+    <div class="month-nav">
+      <button type="button" class="btn" (click)="prevMonth()" aria-label="Mois précédent">‹</button>
+      <strong>{{ monthLabel() }}</strong>
+      <button type="button" class="btn" (click)="nextMonth()" aria-label="Mois suivant">›</button>
+    </div>
+  </div>
+
+  @if (error()) {
+    <p class="error">{{ error() }}</p>
+  }
+
+  @if (loading()) {
+    <p class="empty">Chargement…</p>
+  } @else {
+    <section class="panel summary">
+      <h2>{{ canEdit() ? 'Mon mois' : ('Budget de ' + ownerName()) }}</h2>
+      <div class="stats">
+        <article>
+          <span>Salaire</span>
+          <strong>{{ money(salary()) }}</strong>
+        </article>
+        <article>
+          <span>À dépenser</span>
+          <strong>{{ money(plannedSpend()) }}</strong>
+        </article>
+        <article>
+          <span>À épargner</span>
+          <strong>{{ money(plannedSave()) }}</strong>
+        </article>
+        <article [class.warn]="remaining() < 0">
+          <span>Reste à allouer</span>
+          <strong>{{ money(remaining()) }}</strong>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Salaire du mois</h2>
+      @if (canEdit()) {
+        <label class="field">
+          Montant net
+          <input
+            type="number"
+            min="0"
+            step="10"
+            [ngModel]="salary()"
+            (ngModelChange)="salary.set(+$event || 0)"
+            name="salary"
+          >
+        </label>
+        <label class="field">
+          Note
+          <input type="text" [ngModel]="note()" (ngModelChange)="note.set($event)" name="note" placeholder="Primes, 13e mois…">
+        </label>
+      } @else {
+        <p class="value-line">{{ money(salary()) }}</p>
+      }
+    </section>
+
+    <section class="panel">
+      <h2>Où va l’argent</h2>
+      <p class="hint">Répartis ton salaire : logement, courses, transports… et l’épargne.</p>
+
+      @if (allocations().length === 0) {
+        <p class="empty">Aucune enveloppe pour ce mois.</p>
+      } @else {
+        <ul class="list">
+          @for (item of allocations(); track item.id) {
+            <li>
+              <div>
+                <strong>{{ item.label }}</strong>
+                <span>{{ item.kind === 'save' ? 'Épargne' : 'Dépense prévue' }}</span>
+              </div>
+              <div class="row-end">
+                <em>{{ money(item.plannedAmount) }}</em>
+                @if (canEdit()) {
+                  <button type="button" class="btn" (click)="removeAllocation(item.id)">Retirer</button>
+                }
+              </div>
+            </li>
+          }
+        </ul>
+      }
+
+      @if (canEdit()) {
+        <div class="draft-grid">
+          <label class="field">
+            Enveloppe
+            <input type="text" [(ngModel)]="draftAllocLabel" name="allocLabel" placeholder="Loyer">
+          </label>
+          <label class="field">
+            Montant
+            <input type="number" min="0" [(ngModel)]="draftAllocAmount" name="allocAmount" placeholder="800">
+          </label>
+          <label class="field">
+            Type
+            <select [(ngModel)]="draftAllocKind" name="allocKind">
+              <option value="spend">Dépense</option>
+              <option value="save">Épargne</option>
+            </select>
+          </label>
+          <button type="button" class="btn primary" (click)="addAllocation()">Ajouter</button>
+        </div>
+      }
+    </section>
+
+    <section class="panel">
+      <h2>Mouvements</h2>
+      <p class="hint">Suivi réel : dépenses, mises de côté, rentrées.</p>
+      <div class="mini-stats">
+        <span>Dépensé {{ money(spent()) }}</span>
+        <span>Mis de côté {{ money(savedAmount()) }}</span>
+      </div>
+
+      @if (movements().length === 0) {
+        <p class="empty">Aucun mouvement ce mois-ci.</p>
+      } @else {
+        <ul class="list">
+          @for (item of movements(); track item.id) {
+            <li>
+              <div>
+                <strong>{{ item.label }}</strong>
+                <span>
+                  {{ item.kind === 'saving' ? 'Épargne' : item.kind === 'income' ? 'Rentrée' : 'Dépense' }}
+                  · {{ item.date }}
+                </span>
+              </div>
+              <div class="row-end">
+                <em>{{ money(item.amount) }}</em>
+                @if (canEdit()) {
+                  <button type="button" class="btn" (click)="removeMovement(item.id)">Retirer</button>
+                }
+              </div>
+            </li>
+          }
+        </ul>
+      }
+
+      @if (canEdit()) {
+        <div class="draft-grid">
+          <label class="field">
+            Libellé
+            <input type="text" [(ngModel)]="draftMoveLabel" name="moveLabel" placeholder="Courses">
+          </label>
+          <label class="field">
+            Montant
+            <input type="number" min="0" [(ngModel)]="draftMoveAmount" name="moveAmount" placeholder="45">
+          </label>
+          <label class="field">
+            Type
+            <select [(ngModel)]="draftMoveKind" name="moveKind">
+              <option value="expense">Dépense</option>
+              <option value="saving">Mise de côté</option>
+              <option value="income">Rentrée</option>
+            </select>
+          </label>
+          <label class="field">
+            Date
+            <input type="date" [(ngModel)]="draftMoveDate" name="moveDate">
+          </label>
+          <button type="button" class="btn primary" (click)="addMovement()">Ajouter</button>
+        </div>
+      }
+    </section>
+
+    @if (canEdit()) {
+      <div class="actions sticky-actions">
+        <button type="button" class="btn primary" (click)="save()" [disabled]="saving()">
+          {{ saving() ? 'Enregistrement…' : 'Enregistrer' }}
+        </button>
+        @if (saved()) {
+          <span class="ok">Enregistré</span>
+        }
+      </div>
+    }
+  }
+</section>
+
+@if (shareOpen()) {
+  <div class="modal-backdrop" (click)="closeShare()" role="presentation"></div>
+  <div class="modal share-modal" role="dialog" aria-modal="true" aria-labelledby="share-title">
+    <header class="modal-head">
+      <h2 id="share-title">Partager mon budget</h2>
+      <button type="button" class="modal-close" (click)="closeShare()" aria-label="Fermer">×</button>
+    </header>
+    <p class="hint">Privé par défaut. Choisis un ami et ce qu’il peut voir.</p>
+
+    @if (friends().length === 0) {
+      <p class="empty">Ajoute un ami dans Paramètres pour pouvoir partager.</p>
+    } @else {
+      <ul class="share-list">
+        @for (friend of friends(); track friend.userId) {
+          <li>
+            <strong>{{ friend.displayName }}</strong>
+            <div class="share-checks">
+              <label>
+                <input
+                  type="checkbox"
+                  [checked]="shareFor(friend).shareSalary"
+                  (change)="toggleShare(friend, 'shareSalary')"
+                >
+                Salaire
+              </label>
+              <label>
+                <input
+                  type="checkbox"
+                  [checked]="shareFor(friend).shareAllocations"
+                  (change)="toggleShare(friend, 'shareAllocations')"
+                >
+                Enveloppes
+              </label>
+              <label>
+                <input
+                  type="checkbox"
+                  [checked]="shareFor(friend).shareSavings"
+                  (change)="toggleShare(friend, 'shareSavings')"
+                >
+                Épargne
+              </label>
+              <label>
+                <input
+                  type="checkbox"
+                  [checked]="shareFor(friend).shareMovements"
+                  (change)="toggleShare(friend, 'shareMovements')"
+                >
+                Mouvements
+              </label>
+            </div>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+}

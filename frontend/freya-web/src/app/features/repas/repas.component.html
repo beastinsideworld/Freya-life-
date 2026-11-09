@@ -26,12 +26,18 @@
         <p class="colhead">{{ slotLabels[slot] }}</p>
       }
       @for (day of days; track day; let i = $index) {
-        <h3 class="day">{{ dayLabel(i) }}</h3>
+        <div class="day">
+          <h3>{{ dayLabel(i) }}</h3>
+          <p class="day-kcal">{{ formatKcal(dayKcal(i)) }}</p>
+        </div>
         @for (slot of slots; track slot) {
           @if (mealAt(i, slot); as meal) {
             <article class="cell filled">
               <div class="thumb" aria-hidden="true"></div>
               <p>{{ meal.title }}</p>
+              @if (meal.kcal) {
+                <span class="meal-kcal">{{ formatKcal(meal.kcal) }}</span>
+              }
             </article>
           } @else {
             <button type="button" class="cell slot" (click)="quickAdd(i, slot)">+ Ajouter un repas</button>
@@ -84,6 +90,24 @@
       <button type="submit" class="add-btn" aria-label="Ajouter l'article">+</button>
     </form>
 
+    <section class="catalog-browse" aria-label="Suggestions d’articles">
+      <div class="cats aisle-filters">
+        @for (aisle of aisleFilters; track aisle) {
+          <button type="button" [class.active]="browseAisle() === aisle" (click)="setBrowseAisle(aisle)">
+            {{ aisle }}
+          </button>
+        }
+      </div>
+      <div class="suggest-strip" role="list">
+        @for (item of categorySuggestions(); track item.name) {
+          <button type="button" class="suggest-chip" role="listitem" (click)="pickCatalogArticle(item)">
+            <strong>{{ item.name }}</strong>
+            <span>{{ item.unit }}</span>
+          </button>
+        }
+      </div>
+    </section>
+
     @for (aisle of aisles; track aisle) {
       @if (itemsForAisle(aisle).length) {
         <section class="panel aisle">
@@ -135,6 +159,11 @@
   }
 
   @if (tab() === 'recettes') {
+    <div class="recipes-head">
+      <h2>Mes recettes ({{ filteredRecipes().length }})</h2>
+      <button type="button" class="btn primary" (click)="openRecipeModal()">+ Ajouter une recette</button>
+    </div>
+
     <label class="search">
       <input
         type="search"
@@ -150,13 +179,10 @@
         </button>
       }
     </div>
-    <div class="recipes-head">
-      <h2>Mes recettes ({{ filteredRecipes().length }})</h2>
-      <span class="meta-pill">Plus récentes</span>
-    </div>
+
     <div class="recipes">
       @for (recipe of filteredRecipes(); track recipe.id) {
-        <article>
+        <article class="recipe-card" (click)="openRecipeDetail(recipe)" role="button" tabindex="0">
           <div
             class="cover"
             aria-hidden="true"
@@ -165,18 +191,17 @@
           ></div>
           <div class="info">
             <h3>{{ recipe.title }}</h3>
-            <p>{{ recipe.durationMin }} min · {{ recipe.difficulty }}</p>
+            <p>{{ recipe.durationMin }} min · {{ recipe.difficulty }} · {{ formatKcal(recipe.kcal) }}</p>
           </div>
         </article>
       }
     </div>
-    <button type="button" class="btn primary wide" (click)="openRecipeModal()">+ Ajouter une recette</button>
   }
 
   @if (recipeModalOpen()) {
     <div class="modal-backdrop" (click)="closeRecipeModal()" role="presentation"></div>
     <div
-      class="modal"
+      class="modal recipe-modal"
       role="dialog"
       aria-modal="true"
       aria-labelledby="recipe-modal-title"
@@ -205,39 +230,82 @@
           </label>
         </div>
 
-        <label class="field">Catégorie
-          <select name="category" [(ngModel)]="recipeForm.category">
-            @for (cat of recipeFormCats; track cat) {
-              <option [value]="cat">{{ cat }}</option>
-            }
-          </select>
-        </label>
-
-        <div class="photo-field">
-          <span class="photo-label">Photo</span>
-          @if (recipeForm.imageUrl) {
-            <div class="photo-preview" [style.background-image]="'url(' + recipeForm.imageUrl + ')'"></div>
-            <div class="photo-actions">
-              <label class="btn">
-                Changer
-                <input type="file" accept="image/*" (change)="onRecipePhotoSelected($event)" hidden>
-              </label>
-              <button type="button" class="btn" (click)="clearRecipePhoto()">Retirer</button>
-            </div>
-          } @else {
-            <label class="photo-upload btn">
-              + Ajouter une photo
-              <input type="file" accept="image/*" (change)="onRecipePhotoSelected($event)" hidden>
-            </label>
-          }
+        <div class="modal-row">
+          <label class="field">Catégorie
+            <select name="category" [(ngModel)]="recipeForm.category">
+              @for (cat of recipeFormCats; track cat) {
+                <option [value]="cat">{{ cat }}</option>
+              }
+            </select>
+          </label>
+          <label class="field">Calories (kcal)
+            <input type="number" name="kcal" [(ngModel)]="recipeForm.kcal" min="0" max="5000" placeholder="450">
+          </label>
         </div>
 
-        <label class="field">Instructions
+        <app-image-picker
+          [imageUrl]="recipeForm.imageUrl"
+          (imageSelected)="onRecipePhotoSelected($event)"
+          (cleared)="clearRecipePhoto()"
+          (error)="recipeFormError.set($event)"
+        />
+
+        <fieldset class="ingredients-field">
+          <legend>Ingrédients</legend>
+          <div class="ingredient-draft">
+            <label class="field name">
+              <span class="sr-only">Ingrédient</span>
+              <input
+                type="text"
+                name="draftIngredientName"
+                list="ingredient-suggestions"
+                [(ngModel)]="draftIngredient.name"
+                (ngModelChange)="onIngredientTyped($event)"
+                placeholder="Choisir ou écrire…"
+                autocomplete="off"
+              >
+              <datalist id="ingredient-suggestions">
+                @for (name of ingredientOptions; track name) {
+                  <option [value]="name"></option>
+                }
+              </datalist>
+            </label>
+            <label class="field qty">
+              <span class="sr-only">Quantité</span>
+              <input type="text" name="draftIngredientQty" [(ngModel)]="draftIngredient.quantity" placeholder="Qté" inputmode="decimal">
+            </label>
+            <label class="field unit">
+              <span class="sr-only">Unité</span>
+              <select name="draftIngredientUnit" [(ngModel)]="draftIngredient.unit">
+                @for (unit of units; track unit) {
+                  <option [value]="unit">{{ unit }}</option>
+                }
+              </select>
+            </label>
+            <button type="button" class="add-btn" (click)="addRecipeIngredient()" aria-label="Ajouter l’ingrédient">+</button>
+          </div>
+
+          @if (recipeForm.ingredients.length) {
+            <ul class="ingredient-list">
+              @for (item of recipeForm.ingredients; track item.id) {
+                <li>
+                  <span>{{ item.name }}</span>
+                  <span class="qty">{{ item.quantity }} {{ item.unit }}</span>
+                  <button type="button" class="ghost" (click)="removeRecipeIngredient(item.id)" aria-label="Retirer">×</button>
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="empty-ingredients">Ajoute les ingrédients un par un.</p>
+          }
+        </fieldset>
+
+        <label class="field">Instructions de préparation
           <textarea
             name="instructions"
             [(ngModel)]="recipeForm.instructions"
             rows="4"
-            placeholder="Étapes, conseils, quantités…"
+            placeholder="Étapes de préparation…"
           ></textarea>
         </label>
 
@@ -252,6 +320,53 @@
           </button>
         </div>
       </form>
+    </div>
+  }
+
+  @if (recipeDetail(); as recipe) {
+    <div class="modal-backdrop" (click)="closeRecipeDetail()" role="presentation"></div>
+    <div
+      class="modal recipe-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="recipe-detail-title"
+      (click)="$event.stopPropagation()"
+    >
+      <header class="modal-head">
+        <h2 id="recipe-detail-title">{{ recipe.title }}</h2>
+        <button type="button" class="modal-close" (click)="closeRecipeDetail()" aria-label="Fermer">×</button>
+      </header>
+
+      @if (recipe.imageUrl) {
+        <div class="detail-cover" [style.background-image]="'url(' + recipe.imageUrl + ')'"></div>
+      }
+
+      <p class="detail-meta">{{ recipe.durationMin }} min · {{ recipe.difficulty }} · {{ formatKcal(recipe.kcal) }} · {{ recipe.categories || 'Sans catégorie' }}</p>
+
+      <section class="detail-block">
+        <h3>Ingrédients</h3>
+        @if (recipe.ingredients?.length) {
+          <ul class="ingredient-list readonly">
+            @for (item of recipe.ingredients!; track item.id) {
+              <li>
+                <span>{{ item.name }}</span>
+                <span class="qty">{{ item.quantity }} {{ item.unit }}</span>
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="empty-ingredients">Aucun ingrédient renseigné.</p>
+        }
+      </section>
+
+      <section class="detail-block">
+        <h3>Préparation</h3>
+        <p class="detail-instructions">{{ recipe.instructions || 'Aucune instruction pour le moment.' }}</p>
+      </section>
+
+      <div class="modal-actions">
+        <button type="button" class="btn primary" (click)="closeRecipeDetail()">Fermer</button>
+      </div>
     </div>
   }
 </section>

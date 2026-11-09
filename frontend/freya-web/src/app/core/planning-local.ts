@@ -22,8 +22,15 @@ export interface HabitRoom {
   tasks: HabitTask[];
 }
 
+export interface PlanningTask {
+  id: string;
+  title: string;
+  done: boolean;
+}
+
 export const OBJECTIVES_KEY = 'freya.planning.objectives.v2';
 export const ROOMS_KEY = 'freya.planning.habitRooms.v2';
+export const TASKS_KEY = 'freya.planning.tasks.v1';
 
 export const REPEAT_OPTIONS: Array<{ value: RepeatMode; label: string }> = [
   { value: 'once', label: '1 fois' },
@@ -135,6 +142,29 @@ export function loadRooms(): HabitRoom[] {
 
 export function saveRooms(rooms: HabitRoom[]): void {
   localStorage.setItem(ROOMS_KEY, JSON.stringify(rooms));
+}
+
+export function loadTasks(): PlanningTask[] {
+  try {
+    const raw = localStorage.getItem(TASKS_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw) as PlanningTask[];
+      if (Array.isArray(parsed)) {
+        return parsed.map((item) => ({
+          id: item.id,
+          title: item.title,
+          done: !!item.done
+        }));
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+  return [];
+}
+
+export function saveTasks(items: PlanningTask[]): void {
+  localStorage.setItem(TASKS_KEY, JSON.stringify(items));
 }
 
 function parseIso(iso: string): Date | null {

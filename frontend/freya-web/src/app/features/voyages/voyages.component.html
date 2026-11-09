@@ -4,14 +4,16 @@
     <h1>Voyages</h1>
     <p class="sub">
       {{
-        selectedTrip()
-          ? 'Organise chaque destination en un seul endroit'
-          : 'Prépare, organise et suis tous tes voyages'
+        selectedInspiration()
+          ? 'Ajoute restos, visites et idées pour cette destination'
+          : selectedTrip()
+            ? 'Organise chaque destination en un seul endroit'
+            : 'Prépare, organise et suis tous tes voyages'
       }}
     </p>
   </header>
 
-  @if (!selectedTrip()) {
+  @if (!selectedTrip() && !selectedInspiration()) {
     <div class="seg tabs">
       <button type="button" [class.active]="tab() === 'mes'" (click)="setTab('mes')">Mes voyages</button>
       <button type="button" [class.active]="tab() === 'inspirations'" (click)="setTab('inspirations')">Inspirations</button>
@@ -19,7 +21,7 @@
     </div>
   }
 
-  @if (!selectedTrip() && tab() === 'mes') {
+  @if (!selectedTrip() && !selectedInspiration() && tab() === 'mes') {
     <div class="section-head">
       <h2>Mes prochains voyages</h2>
     </div>
@@ -76,14 +78,14 @@
     }
   }
 
-  @if (!selectedTrip() && tab() === 'inspirations') {
+  @if (!selectedTrip() && !selectedInspiration() && tab() === 'inspirations') {
     <div class="section-head">
       <h2>Idées de destinations</h2>
     </div>
 
     <div class="inspire-grid">
       @for (item of inspirations(); track item.id) {
-        <article>
+        <article class="inspire-card" (click)="openInspiration(item)">
           <div class="cover tall"></div>
           <h3>{{ item.title }}</h3>
           <p>{{ item.hint }}</p>
@@ -97,7 +99,7 @@
     <button type="button" class="btn primary wide" (click)="openInspirationModal()">+ Ajouter une inspiration</button>
   }
 
-  @if (!selectedTrip() && tab() === 'budget') {
+  @if (!selectedTrip() && !selectedInspiration() && tab() === 'budget') {
     <section class="panel">
       <h2>Budget des prochains voyages</h2>
       @if (globalBudget().length === 0) {
@@ -105,11 +107,263 @@
       } @else {
         <ul class="budget">
           @for (line of globalBudget(); track line.id) {
-            <li><span>{{ line.label }}</span><span>{{ line.amount }}</span></li>
+            <li [class.total]="line.id.endsWith('-total')"><span>{{ line.label }}</span><span>{{ line.amount }}</span></li>
           }
         </ul>
+        @if (globalBudgetTotal() > 0) {
+          <p class="budget-total">Total général · {{ formatAmount(globalBudgetTotal()) }}</p>
+        }
       }
     </section>
+  }
+
+  @if (selectedInspiration(); as inspiration) {
+    <button type="button" class="back-link" (click)="closeDetail()">← Retour aux inspirations</button>
+
+    <article class="hero-card">
+      <h2>{{ inspiration.title }}</h2>
+      <p>{{ inspiration.hint }}</p>
+    </article>
+
+    <section class="panel">
+      <h3>Notes</h3>
+      <textarea
+        class="notes-area"
+        name="inspirationNotes"
+        [(ngModel)]="inspirationNotesDraft"
+        rows="3"
+        placeholder="Ambiance, conseils, idées générales…"
+        (change)="saveInspirationNotes()"
+        (blur)="saveInspirationNotes()"
+      ></textarea>
+    </section>
+
+    <div class="place-sections">
+      <section class="panel place-section">
+        <div class="section-head">
+          <h3>Restaurants</h3>
+          <button type="button" class="btn primary" (click)="openPlaceForm('restos')">+</button>
+        </div>
+        @if (inspiration.restos.length === 0) {
+          <p class="empty">Aucun restaurant pour l’instant.</p>
+        } @else {
+          <div class="place-cards">
+            @for (place of inspiration.restos; track place.id) {
+              <article class="place-card">
+                <div
+                  class="place-photo"
+                  [class.has-photo]="!!place.photoUrl"
+                  [style.background-image]="place.photoUrl ? 'url(' + place.photoUrl + ')' : null"
+                ></div>
+                <div class="place-body">
+                  <div class="place-top">
+                    <h4>{{ place.title }}</h4>
+                    <button type="button" class="remove" (click)="removeInspirationItem('restos', place.id)" aria-label="Retirer">×</button>
+                  </div>
+                  @if (place.amount) { <p class="amount">{{ place.amount }}</p> }
+                  @if (place.address) { <p class="address">{{ place.address }}</p> }
+                  @if (place.note) { <p class="note">{{ place.note }}</p> }
+                  @if (place.link) {
+                    <a class="place-link" [href]="place.link" target="_blank" rel="noopener noreferrer">Ouvrir le lien</a>
+                  }
+                  @if (place.address) {
+                    <div class="map-frame">
+                      <iframe
+                        title="Carte {{ place.title }}"
+                        [src]="mapsEmbed(place.address)"
+                        loading="lazy"
+                        referrerpolicy="no-referrer-when-downgrade"
+                      ></iframe>
+                    </div>
+                    <a class="map-open" [href]="mapsLink(place.address)" target="_blank" rel="noopener noreferrer">Voir sur Maps</a>
+                  }
+                </div>
+              </article>
+            }
+          </div>
+        }
+      </section>
+
+      <section class="panel place-section">
+        <div class="section-head">
+          <h3>Endroits à visiter</h3>
+          <button type="button" class="btn primary" (click)="openPlaceForm('visits')">+</button>
+        </div>
+        @if (inspiration.visits.length === 0) {
+          <p class="empty">Aucune visite pour l’instant.</p>
+        } @else {
+          <div class="place-cards">
+            @for (place of inspiration.visits; track place.id) {
+              <article class="place-card">
+                <div
+                  class="place-photo"
+                  [class.has-photo]="!!place.photoUrl"
+                  [style.background-image]="place.photoUrl ? 'url(' + place.photoUrl + ')' : null"
+                ></div>
+                <div class="place-body">
+                  <div class="place-top">
+                    <h4>{{ place.title }}</h4>
+                    <button type="button" class="remove" (click)="removeInspirationItem('visits', place.id)" aria-label="Retirer">×</button>
+                  </div>
+                  @if (place.amount) { <p class="amount">{{ place.amount }}</p> }
+                  @if (place.address) { <p class="address">{{ place.address }}</p> }
+                  @if (place.note) { <p class="note">{{ place.note }}</p> }
+                  @if (place.link) {
+                    <a class="place-link" [href]="place.link" target="_blank" rel="noopener noreferrer">Ouvrir le lien</a>
+                  }
+                  @if (place.address) {
+                    <div class="map-frame">
+                      <iframe
+                        title="Carte {{ place.title }}"
+                        [src]="mapsEmbed(place.address)"
+                        loading="lazy"
+                        referrerpolicy="no-referrer-when-downgrade"
+                      ></iframe>
+                    </div>
+                    <a class="map-open" [href]="mapsLink(place.address)" target="_blank" rel="noopener noreferrer">Voir sur Maps</a>
+                  }
+                </div>
+              </article>
+            }
+          </div>
+        }
+      </section>
+
+      <section class="panel place-section">
+        <div class="section-head">
+          <h3>Randonnées</h3>
+          <button type="button" class="btn primary" (click)="openPlaceForm('hikes')">+</button>
+        </div>
+        @if (inspiration.hikes.length === 0) {
+          <p class="empty">Aucune randonnée pour l’instant.</p>
+        } @else {
+          <div class="place-cards">
+            @for (place of inspiration.hikes; track place.id) {
+              <article class="place-card">
+                <div
+                  class="place-photo"
+                  [class.has-photo]="!!place.photoUrl"
+                  [style.background-image]="place.photoUrl ? 'url(' + place.photoUrl + ')' : null"
+                ></div>
+                <div class="place-body">
+                  <div class="place-top">
+                    <h4>{{ place.title }}</h4>
+                    <button type="button" class="remove" (click)="removeInspirationItem('hikes', place.id)" aria-label="Retirer">×</button>
+                  </div>
+                  @if (place.amount) { <p class="amount">{{ place.amount }}</p> }
+                  @if (place.address) { <p class="address">{{ place.address }}</p> }
+                  @if (place.note) { <p class="note">{{ place.note }}</p> }
+                  @if (place.link) {
+                    <a class="place-link" [href]="place.link" target="_blank" rel="noopener noreferrer">Ouvrir le lien</a>
+                  }
+                  @if (place.address) {
+                    <div class="map-frame">
+                      <iframe
+                        title="Carte {{ place.title }}"
+                        [src]="mapsEmbed(place.address)"
+                        loading="lazy"
+                        referrerpolicy="no-referrer-when-downgrade"
+                      ></iframe>
+                    </div>
+                    <a class="map-open" [href]="mapsLink(place.address)" target="_blank" rel="noopener noreferrer">Voir sur Maps</a>
+                  }
+                </div>
+              </article>
+            }
+          </div>
+        }
+      </section>
+
+      <section class="panel place-section">
+        <div class="section-head">
+          <h3>Hôtels / où dormir</h3>
+          <button type="button" class="btn primary" (click)="openPlaceForm('hotels')">+</button>
+        </div>
+        @if (inspiration.hotels.length === 0) {
+          <p class="empty">Aucun hôtel pour l’instant.</p>
+        } @else {
+          <div class="place-cards">
+            @for (place of inspiration.hotels; track place.id) {
+              <article class="place-card">
+                <div
+                  class="place-photo"
+                  [class.has-photo]="!!place.photoUrl"
+                  [style.background-image]="place.photoUrl ? 'url(' + place.photoUrl + ')' : null"
+                ></div>
+                <div class="place-body">
+                  <div class="place-top">
+                    <h4>{{ place.title }}</h4>
+                    <button type="button" class="remove" (click)="removeInspirationItem('hotels', place.id)" aria-label="Retirer">×</button>
+                  </div>
+                  @if (place.amount) { <p class="amount">{{ place.amount }}</p> }
+                  @if (place.address) { <p class="address">{{ place.address }}</p> }
+                  @if (place.note) { <p class="note">{{ place.note }}</p> }
+                  @if (place.link) {
+                    <a class="place-link" [href]="place.link" target="_blank" rel="noopener noreferrer">Ouvrir le lien</a>
+                  }
+                  @if (place.address) {
+                    <div class="map-frame">
+                      <iframe
+                        title="Carte {{ place.title }}"
+                        [src]="mapsEmbed(place.address)"
+                        loading="lazy"
+                        referrerpolicy="no-referrer-when-downgrade"
+                      ></iframe>
+                    </div>
+                    <a class="map-open" [href]="mapsLink(place.address)" target="_blank" rel="noopener noreferrer">Voir sur Maps</a>
+                  }
+                </div>
+              </article>
+            }
+          </div>
+        }
+      </section>
+
+      <section class="panel place-section">
+        <div class="section-head">
+          <h3>Transport</h3>
+          <button type="button" class="btn primary" (click)="openPlaceForm('transport')">+</button>
+        </div>
+        @if (inspiration.transport.length === 0) {
+          <p class="empty">Aucun transport pour l’instant.</p>
+        } @else {
+          <div class="place-cards">
+            @for (place of inspiration.transport; track place.id) {
+              <article class="place-card">
+                <div
+                  class="place-photo"
+                  [class.has-photo]="!!place.photoUrl"
+                  [style.background-image]="place.photoUrl ? 'url(' + place.photoUrl + ')' : null"
+                ></div>
+                <div class="place-body">
+                  <div class="place-top">
+                    <h4>{{ place.title }}</h4>
+                    <button type="button" class="remove" (click)="removeInspirationItem('transport', place.id)" aria-label="Retirer">×</button>
+                  </div>
+                  @if (place.amount) { <p class="amount">{{ place.amount }}</p> }
+                  @if (place.address) { <p class="address">{{ place.address }}</p> }
+                  @if (place.note) { <p class="note">{{ place.note }}</p> }
+                  @if (place.link) {
+                    <a class="place-link" [href]="place.link" target="_blank" rel="noopener noreferrer">Ouvrir le lien</a>
+                  }
+                  @if (place.address) {
+                    <div class="map-frame">
+                      <iframe
+                        title="Carte {{ place.title }}"
+                        [src]="mapsEmbed(place.address)"
+                        loading="lazy"
+                        referrerpolicy="no-referrer-when-downgrade"
+                      ></iframe>
+                    </div>
+                    <a class="map-open" [href]="mapsLink(place.address)" target="_blank" rel="noopener noreferrer">Voir sur Maps</a>
+                  }
+                </div>
+              </article>
+            }
+          </div>
+        }
+      </section>
+    </div>
   }
 
   @if (selectedTrip(); as trip) {
@@ -132,11 +386,17 @@
     @if (detailSection() === 'outils') {
       <h2>Outils de préparation</h2>
       <div class="tools">
-        @for (tool of tools; track tool.title) {
-          <div class="tool">
+        @for (tool of tools; track tool.key) {
+          <button type="button" class="tool" (click)="openTool(tool)">
             <strong>{{ tool.title }}</strong>
             <span>{{ tool.sub }}</span>
-          </div>
+            @if (toolTotal(trip, tool.key) > 0) {
+              <span class="tool-price">{{ formatAmount(toolTotal(trip, tool.key)) }}</span>
+            }
+            @if ((trip.prepTools[tool.key] ?? []).length) {
+              <em class="tool-count">{{ (trip.prepTools[tool.key] ?? []).length }}</em>
+            }
+          </button>
         }
       </div>
 
@@ -194,18 +454,23 @@
     @if (detailSection() === 'budget') {
       <section class="panel">
         <h2>Budget {{ trip.title }}</h2>
-        <ul class="budget">
-          @for (line of trip.budget; track line.id) {
-            <li><span>{{ line.label }}</span><span>{{ line.amount }}</span></li>
-          }
-        </ul>
+        @if (trip.budget.length === 0) {
+          <p class="empty">Ajoute des prix dans la préparation pour alimenter le budget.</p>
+        } @else {
+          <ul class="budget">
+            @for (line of trip.budget; track line.id) {
+              <li><span>{{ line.label }}</span><span>{{ line.amount }}</span></li>
+            }
+            <li class="total"><span>Total</span><span>{{ formatAmount(selectedTripTotal()) }}</span></li>
+          </ul>
+        }
 
         <form class="inline-add budget-add" (ngSubmit)="addBudgetLine(trip.id)">
           <input
             type="text"
             name="budgetLabelDraft"
             [(ngModel)]="budgetLabelDraft"
-            placeholder="Poste (ex. Location voiture)"
+            placeholder="Poste manuel (ex. Assurance)"
             autocomplete="off"
           >
           <input
@@ -271,6 +536,276 @@
     }
   }
 
+  @if (placeFormKey(); as key) {
+    <div class="modal-backdrop" (click)="closePlaceForm()"></div>
+    <div
+      class="modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="place-modal-title"
+      (click)="$event.stopPropagation()"
+    >
+      <header class="modal-head">
+        <h2 id="place-modal-title">{{ placeFormTitle() }}</h2>
+        <button type="button" class="modal-close" (click)="closePlaceForm()" aria-label="Fermer">×</button>
+      </header>
+
+      <form class="modal-form" (ngSubmit)="submitPlaceForm()">
+        <label class="field">Nom
+          <input type="text" name="placeTitle" [(ngModel)]="placeForm.title" placeholder="Ex. Time Out Market" required autocomplete="off">
+        </label>
+
+        <label class="field">Adresse précise
+          <input type="text" name="placeAddress" [(ngModel)]="placeForm.address" placeholder="Ex. Av. 24 de Julho 49, Lisbonne" autocomplete="street-address">
+        </label>
+
+        <label class="field">Montant
+          <input type="text" name="placeAmount" [(ngModel)]="placeForm.amount" placeholder="Ex. 25 € / pers." autocomplete="off">
+        </label>
+
+        <label class="field">Lien
+          <input type="url" name="placeLink" [(ngModel)]="placeForm.link" placeholder="https://…" autocomplete="off">
+        </label>
+
+        <label class="field">Note
+          <textarea name="placeNote" [(ngModel)]="placeForm.note" rows="2" placeholder="Horaires, conseils…"></textarea>
+        </label>
+
+        <app-image-picker
+          [imageUrl]="placeForm.photoUrl"
+          (imageSelected)="onPlacePhotoSelected($event)"
+          (cleared)="clearPlacePhoto()"
+          (error)="placeFormError.set($event)"
+        />
+
+        @if (placeForm.address.trim()) {
+          <div class="map-preview">
+            <span class="photo-label">Aperçu Maps</span>
+            <div class="map-frame">
+              <iframe
+                title="Aperçu carte"
+                [src]="mapsEmbed(placeForm.address)"
+                loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade"
+              ></iframe>
+            </div>
+          </div>
+        }
+
+        @if (placeFormError()) {
+          <p class="error">{{ placeFormError() }}</p>
+        }
+
+        <div class="modal-actions">
+          <button type="button" class="btn" (click)="closePlaceForm()">Annuler</button>
+          <button type="submit" class="btn primary">Ajouter</button>
+        </div>
+      </form>
+    </div>
+  }
+
+  @if (selectedTool(); as tool) {
+    <div class="modal-backdrop" (click)="closeTool()"></div>
+    <div
+      class="modal"
+      [class.with-hebergement-map]="tool.key === 'hebergement'"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="tool-modal-title"
+      (click)="$event.stopPropagation()"
+    >
+      <header class="modal-head" [class.head-map]="tool.key === 'hebergement'">
+        <h2 id="tool-modal-title">{{ tool.title }}</h2>
+        <div class="head-right">
+          @if (tool.key === 'hebergement') {
+            <button
+              type="button"
+              class="mini-map"
+              (click)="expandPrepMap()"
+              [attr.aria-label]="prepMapSrc() ? 'Agrandir la carte' : 'Saisis un lieu pour afficher la carte'"
+            >
+              @if (prepMapSrc(); as mapSrc) {
+                <iframe title="Aperçu hébergement" [src]="mapSrc" loading="lazy" tabindex="-1"></iframe>
+              } @else {
+                <span>Carte</span>
+              }
+            </button>
+          }
+          <button type="button" class="modal-close" (click)="closeTool()" aria-label="Fermer">×</button>
+        </div>
+      </header>
+      <p class="tool-help">
+        @if (tool.key === 'itineraire') {
+          Ajoute tes étapes : départ, arrivée et temps de trajet. La carte enchaîne tous les trajets.
+        } @else {
+          {{ tool.sub }} — ajoute tes idées, lieux et prix. Le total est reporté dans Budget.
+        }
+      </p>
+
+      @if (tool.key === 'itineraire' && itineraryMapSrc(); as routeMap) {
+        <div class="route-map">
+          <iframe title="Itinéraire complet" [src]="routeMap" loading="lazy"></iframe>
+        </div>
+        <a class="map-open" [href]="itineraryMapsLink()" target="_blank" rel="noopener noreferrer">Voir le parcours complet sur Maps</a>
+      }
+
+      @if (selectedToolIdeas().length === 0) {
+        <p class="empty">{{ tool.key === 'itineraire' ? 'Aucun trajet pour l’instant.' : 'Aucune idée pour l’instant.' }}</p>
+      } @else {
+        <ul class="prep-list" [class.itineraire-list]="tool.key === 'itineraire'">
+          @for (idea of selectedToolIdeas(); track idea.id; let i = $index) {
+            <li>
+              <div>
+                @if (tool.key === 'itineraire') {
+                  <strong>Trajet {{ i + 1 }} · {{ idea.label }}</strong>
+                } @else {
+                  <strong>{{ idea.label }}</strong>
+                }
+                @if (idea.tripKind) { <p class="meta-line">{{ tripKindLabel(idea.tripKind) }}</p> }
+                @if (idea.modes?.length) { <p class="meta-line">{{ modesLabel(idea.modes) }}</p> }
+                @if (idea.departure || idea.arrival) {
+                  <p>
+                    @if (idea.departure) { {{ idea.departure }} }
+                    @if (idea.departure && idea.arrival) { → }
+                    @if (idea.arrival) { {{ idea.arrival }} }
+                  </p>
+                } @else if (idea.place) {
+                  <p>{{ idea.place }}</p>
+                }
+                @if (idea.duration) { <p class="meta-line">⏱ {{ idea.duration }}</p> }
+                @if (idea.note) { <p class="note">{{ idea.note }}</p> }
+                @if (tool.key === 'hebergement' && idea.place && mapsEmbed(idea.place); as ideaMap) {
+                  <div class="idea-map">
+                    <iframe title="Carte {{ idea.label }}" [src]="ideaMap" loading="lazy"></iframe>
+                  </div>
+                }
+              </div>
+              <div class="prep-meta">
+                @if (idea.price && tool.key !== 'itineraire') { <span class="price">{{ idea.price }}</span> }
+                @if (idea.duration && tool.key === 'itineraire') { <span class="price">{{ idea.duration }}</span> }
+                <button type="button" class="remove" (click)="removePrepIdea(idea.id)" aria-label="Supprimer">🗑</button>
+              </div>
+            </li>
+          }
+        </ul>
+        @if (tool.key !== 'itineraire' && selectedToolTotal() > 0) {
+          <p class="budget-total">Total {{ tool.title }} · {{ formatAmount(selectedToolTotal()) }}</p>
+        }
+      }
+
+      <form class="modal-form prep-form" (ngSubmit)="addPrepIdea()">
+        @if (tool.key !== 'itineraire') {
+          <label class="field">Idée / option
+            <input type="text" name="prepLabel" [(ngModel)]="prepLabelDraft" [placeholder]="tool.key === 'transport' ? 'Ex. Vol low-cost' : 'Ex. Location voiture'" required autocomplete="off">
+          </label>
+        } @else {
+          <label class="field">Nom du trajet
+            <input type="text" name="prepLabel" [(ngModel)]="prepLabelDraft" placeholder="Ex. Étape ville → plage (optionnel)" autocomplete="off">
+          </label>
+        }
+
+        @if (tool.key === 'transport') {
+          <label class="field">Départ
+            <input type="text" name="prepDeparture" [(ngModel)]="prepDepartureDraft" placeholder="Adresse ou nom du départ" autocomplete="off">
+          </label>
+          <label class="field">Arrivée
+            <input type="text" name="prepArrival" [(ngModel)]="prepArrivalDraft" placeholder="Adresse ou nom d’arrivée" autocomplete="off">
+          </label>
+
+          <fieldset class="choice-field">
+            <legend>Trajet</legend>
+            <div class="choice-row">
+              @for (option of tripKindOptions; track option.value) {
+                <label class="choice-chip" [class.active]="prepTripKind === option.value">
+                  <input
+                    type="radio"
+                    name="prepTripKind"
+                    [value]="option.value"
+                    [(ngModel)]="prepTripKind"
+                  >
+                  {{ option.label }}
+                </label>
+              }
+            </div>
+          </fieldset>
+
+          <fieldset class="choice-field">
+            <legend>Moyen de transport</legend>
+            <div class="choice-row wrap">
+              @for (option of modeOptions; track option.value) {
+                <label class="choice-chip" [class.active]="prepModes[option.value]">
+                  <input
+                    type="checkbox"
+                    [name]="'prepMode-' + option.value"
+                    [(ngModel)]="prepModes[option.value]"
+                  >
+                  {{ option.label }}
+                </label>
+              }
+            </div>
+          </fieldset>
+        } @else if (tool.key === 'itineraire') {
+          <label class="field">Départ
+            <input type="text" name="prepDeparture" [(ngModel)]="prepDepartureDraft" placeholder="Adresse ou lieu de départ" required autocomplete="off">
+          </label>
+          <label class="field">Arrivée
+            <input type="text" name="prepArrival" [(ngModel)]="prepArrivalDraft" placeholder="Adresse ou lieu d’arrivée" required autocomplete="off">
+          </label>
+          <label class="field">Temps de trajet
+            <input type="text" name="prepDuration" [(ngModel)]="prepDurationDraft" placeholder="Ex. 45 min" autocomplete="off">
+          </label>
+        } @else if (tool.key === 'hebergement') {
+          <label class="field">Lieu
+            <input
+              type="text"
+              name="prepPlace"
+              [ngModel]="prepPlaceDraft"
+              (ngModelChange)="onPrepPlaceTyped($event)"
+              placeholder="Ex. Airbnb Ribeira, Porto"
+              autocomplete="street-address"
+            >
+          </label>
+          @if (prepMapSrc(); as mapSrc) {
+            <p class="map-hint">Point placé sur la carte · clique la mini-carte pour agrandir</p>
+          }
+        } @else {
+          <label class="field">Lieu / fournisseur
+            <input type="text" name="prepPlace" [(ngModel)]="prepPlaceDraft" placeholder="Ex. Sixt Porto" autocomplete="off">
+          </label>
+        }
+
+        @if (tool.key !== 'itineraire') {
+          <label class="field">Prix
+            <input type="text" name="prepPrice" [(ngModel)]="prepPriceDraft" placeholder="Ex. 180 €" autocomplete="off">
+          </label>
+        }
+        <label class="field">Note
+          <input type="text" name="prepNote" [(ngModel)]="prepNoteDraft" placeholder="Détail utile…" autocomplete="off">
+        </label>
+        @if (prepFormError()) {
+          <p class="error">{{ prepFormError() }}</p>
+        }
+        <button type="submit" class="btn primary wide">+ Ajouter</button>
+      </form>
+    </div>
+
+    @if (tool.key === 'hebergement' && prepMapExpanded() && prepMapSrc(); as bigMap) {
+      <div class="map-lightbox" (click)="closePrepMap()" role="presentation">
+        <div class="map-lightbox-card" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-label="Carte agrandie">
+          <header class="modal-head">
+            <h2>Localisation</h2>
+            <button type="button" class="modal-close" (click)="closePrepMap()" aria-label="Fermer">×</button>
+          </header>
+          <p class="map-hint">{{ prepMapQuery() || prepPlaceDraft }}</p>
+          <div class="map-lightbox-frame">
+            <iframe title="Carte hébergement" [src]="bigMap" loading="lazy"></iframe>
+          </div>
+          <a class="map-open" [href]="mapsLink(prepMapQuery() || prepPlaceDraft)" target="_blank" rel="noopener noreferrer">Ouvrir dans Maps</a>
+        </div>
+      </div>
+    }
+  }
+
   @if (tripModalOpen()) {
     <div class="modal-backdrop" (click)="closeTripModal()"></div>
     <div
@@ -303,24 +838,12 @@
           </label>
         </div>
 
-        <div class="photo-field">
-          <span class="photo-label">Photo</span>
-          @if (tripForm.coverUrl) {
-            <div class="photo-preview" [style.background-image]="'url(' + tripForm.coverUrl + ')'"></div>
-            <div class="photo-actions">
-              <label class="btn">
-                Changer
-                <input type="file" accept="image/*" (change)="onTripPhotoSelected($event)" hidden>
-              </label>
-              <button type="button" class="btn" (click)="clearTripPhoto()">Retirer</button>
-            </div>
-          } @else {
-            <label class="photo-upload btn">
-              + Ajouter une photo
-              <input type="file" accept="image/*" (change)="onTripPhotoSelected($event)" hidden>
-            </label>
-          }
-        </div>
+        <app-image-picker
+          [imageUrl]="tripForm.coverUrl"
+          (imageSelected)="onTripPhotoSelected($event)"
+          (cleared)="clearTripPhoto()"
+          (error)="tripFormError.set($event)"
+        />
 
         @if (tripFormError()) {
           <p class="error">{{ tripFormError() }}</p>
@@ -363,33 +886,13 @@
           <textarea name="inspNotes" [(ngModel)]="inspirationForm.notes" rows="2" placeholder="Ambiance, conseils…"></textarea>
         </label>
 
-        <label class="field">Restaurants
-          <textarea name="inspRestos" [(ngModel)]="inspirationForm.restos" rows="2" placeholder="Un par ligne ou séparés par des virgules"></textarea>
-        </label>
-
-        <label class="field">Visites
-          <textarea name="inspVisits" [(ngModel)]="inspirationForm.visits" rows="2" placeholder="Un par ligne ou séparés par des virgules"></textarea>
-        </label>
-
-        <label class="field">Randonnées
-          <textarea name="inspHikes" [(ngModel)]="inspirationForm.hikes" rows="2" placeholder="Un par ligne ou séparés par des virgules"></textarea>
-        </label>
-
-        <label class="field">Hôtels
-          <textarea name="inspHotels" [(ngModel)]="inspirationForm.hotels" rows="2" placeholder="Un par ligne ou séparés par des virgules"></textarea>
-        </label>
-
-        <label class="field">Transport
-          <textarea name="inspTransport" [(ngModel)]="inspirationForm.transport" rows="2" placeholder="Un par ligne ou séparés par des virgules"></textarea>
-        </label>
-
         @if (inspirationFormError()) {
           <p class="error">{{ inspirationFormError() }}</p>
         }
 
         <div class="modal-actions">
           <button type="button" class="btn" (click)="closeInspirationModal()">Annuler</button>
-          <button type="submit" class="btn primary">Enregistrer</button>
+          <button type="submit" class="btn primary">Créer</button>
         </div>
       </form>
     </div>

@@ -1,8 +1,12 @@
 using System.Text;
+using System.Text.Json;
 using Freya.Application.Auth;
 using Freya.Application.Common;
 using Freya.Application.Dashboard;
 using Freya.Application.Events;
+using Freya.Application.Budget;
+using Freya.Application.Families;
+using Freya.Application.Social;
 using Freya.Domain.Entities;
 using Freya.Domain.Enums;
 using Freya.Infrastructure;
@@ -76,7 +80,14 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<FreyaDbContext>();
+    var users = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
     await db.Database.EnsureCreatedAsync();
+    await EnsureEventSchemaAsync(db);
+    await EnsureRecipeSchemaAsync(db);
+    await EnsureSocialSchemaAsync(db);
+    await EnsureFamilySchemaAsync(db);
+    await EnsureBudgetSchemaAsync(db);
+    await EnsureFriendCodesAsync(db, users);
 }
 
 app.UseSwagger();
@@ -104,7 +115,8 @@ api.MapPost("/auth/register", async (
     {
         UserName = request.Email.Trim(),
         Email = request.Email.Trim(),
-        DisplayName = string.IsNullOrWhiteSpace(request.DisplayName) ? request.Email.Split('@')[0] : request.DisplayName.Trim()
+        DisplayName = string.IsNullOrWhiteSpace(request.DisplayName) ? request.Email.Split('@')[0] : request.DisplayName.Trim(),
+        FriendCode = await NextFriendCodeAsync(users)
     };
 
     var result = await users.CreateAsync(user, request.Password);
@@ -114,7 +126,7 @@ api.MapPost("/auth/register", async (
     }
 
     var token = tokens.CreateToken(user);
-    return Results.Ok(new AuthResponse(token, user.Email!, user.DisplayName, user.Id));
+    return Results.Ok(new AuthResponse(token, user.Email!, user.DisplayName, user.Id, user.FriendCode, user.AvatarUrl));
 });
 
 api.MapPost("/auth/login", async (
@@ -128,8 +140,14 @@ api.MapPost("/auth/login", async (
         return Results.Unauthorized();
     }
 
+    if (user.FriendCode <= 0)
+    {
+        user.FriendCode = await NextFriendCodeAsync(users);
+        await users.UpdateAsync(user);
+    }
+
     var token = tokens.CreateToken(user);
-    return Results.Ok(new AuthResponse(token, user.Email!, user.DisplayName, user.Id));
+    return Results.Ok(new AuthResponse(token, user.Email!, user.DisplayName, user.Id, user.FriendCode, user.AvatarUrl));
 });
 
 api.MapGet("/auth/me", async (ICurrentUser current, UserManager<AppUser> users) =>
@@ -145,7 +163,56 @@ api.MapGet("/auth/me", async (ICurrentUser current, UserManager<AppUser> users) 
         return Results.Unauthorized();
     }
 
-    return Results.Ok(new UserProfileDto(user.Id, user.Email!, user.DisplayName));
+    if (user.FriendCode <= 0)
+    {
+        user.FriendCode = await NextFriendCodeAsync(users);
+        await users.UpdateAsync(user);
+    }
+
+    return Results.Ok(new UserProfileDto(user.Id, user.Email!, user.DisplayName, user.FriendCode, user.AvatarUrl));
+}).RequireAuthorization();
+
+api.MapPatch("/auth/me", async (UpdateProfileRequest request, ICurrentUser current, UserManager<AppUser> users) =>
+{
+    if (current.UserId is null)
+    {
+        return Results.Unauthorized();
+    }
+
+    var user = await users.FindByIdAsync(current.UserId);
+    if (user is null)
+    {
+        return Results.Unauthorized();
+    }
+
+    if (request.AvatarUrl is not null)
+    {
+        var avatar = request.AvatarUrl.Trim();
+        if (avatar.Length == 0)
+        {
+            user.AvatarUrl = null;
+        }
+        else if (!avatar.StartsWith("data:image/", StringComparison.OrdinalIgnoreCase))
+        {
+            return Results.BadRequest(new { message = "Image de profil invalide." });
+        }
+        else if (avatar.Length > 3_500_000)
+        {
+            return Results.BadRequest(new { message = "Image trop lourde (max 2,5 Mo)." });
+        }
+        else
+        {
+            user.AvatarUrl = avatar;
+        }
+    }
+
+    if (user.FriendCode <= 0)
+    {
+        user.FriendCode = await NextFriendCodeAsync(users);
+    }
+
+    await users.UpdateAsync(user);
+    return Results.Ok(new UserProfileDto(user.Id, user.Email!, user.DisplayName, user.FriendCode, user.AvatarUrl));
 }).RequireAuthorization();
 
 api.MapGet("/dashboard/today", async (ICurrentUser current, FreyaDbContext db) =>
@@ -157,15 +224,15 @@ api.MapGet("/dashboard/today", async (ICurrentUser current, FreyaDbContext db) =
 
     var today = DateOnly.FromDateTime(DateTime.Now);
     var events = await db.Events
-        .Where(e => e.UserId == current.UserId && e.Date == today)
+        .Where(e => e.UserId == current.UserId && e.Date <= today && (e.EndDate ?? e.Date) >= today)
         .OrderBy(e => e.StartTime)
-        .Select(e => new EventDto(e.Id, e.Title, e.Date, e.StartTime, e.EndTime, e.Kind, e.Category))
+        .Select(e => new EventDto(e.Id, e.Title, e.Date, e.EndDate, e.StartTime, e.EndTime, e.AllDay, e.Kind, e.Category))
         .ToListAsync();
 
     var meals = await db.MealSlots
         .Where(m => m.UserId == current.UserId && m.Date == today)
         .OrderBy(m => m.Slot)
-        .Select(m => new MealTodayDto(m.Slot.ToString(), m.Title, m.Done, m.ImageUrl))
+        .Select(m => new MealTodayDto(m.Id, m.Slot.ToString(), m.Title, m.Done, m.ImageUrl, m.Kcal))
         .ToListAsync();
 
     var dto = new DashboardTodayDto(
@@ -189,9 +256,9 @@ api.MapGet("/events", async (DateOnly? from, DateOnly? to, ICurrentUser current,
     var end = to ?? start.AddDays(6);
 
     var events = await db.Events
-        .Where(e => e.UserId == current.UserId && e.Date >= start && e.Date <= end)
+        .Where(e => e.UserId == current.UserId && e.Date <= end && (e.EndDate ?? e.Date) >= start)
         .OrderBy(e => e.Date).ThenBy(e => e.StartTime)
-        .Select(e => new EventDto(e.Id, e.Title, e.Date, e.StartTime, e.EndTime, e.Kind, e.Category))
+        .Select(e => new EventDto(e.Id, e.Title, e.Date, e.EndDate, e.StartTime, e.EndTime, e.AllDay, e.Kind, e.Category))
         .ToListAsync();
 
     return Results.Ok(events);
@@ -206,7 +273,24 @@ api.MapPost("/events", async (CreateEventRequest request, ICurrentUser current, 
 
     if (string.IsNullOrWhiteSpace(request.Title))
     {
-        return Results.BadRequest(new { message = "Indique un nom, une date et une heure." });
+        return Results.BadRequest(new { message = "Indique un nom et une date." });
+    }
+
+    var endDate = request.EndDate ?? request.Date;
+    if (endDate < request.Date)
+    {
+        return Results.BadRequest(new { message = "La date de fin doit être après la date de début." });
+    }
+
+    var allDay = request.AllDay;
+    var startTime = allDay ? TimeOnly.MinValue : (request.StartTime ?? new TimeOnly(9, 0));
+    var endTime = allDay
+        ? new TimeOnly(23, 59)
+        : (request.EndTime ?? startTime.AddMinutes(45));
+
+    if (!allDay && endDate == request.Date && endTime < startTime)
+    {
+        return Results.BadRequest(new { message = "L’heure de fin doit être après l’heure de début." });
     }
 
     var entity = new CalendarEvent
@@ -215,8 +299,10 @@ api.MapPost("/events", async (CreateEventRequest request, ICurrentUser current, 
         UserId = current.UserId,
         Title = request.Title.Trim(),
         Date = request.Date,
-        StartTime = request.StartTime,
-        EndTime = request.EndTime ?? request.StartTime.AddMinutes(45),
+        EndDate = endDate,
+        StartTime = startTime,
+        EndTime = endTime,
+        AllDay = allDay,
         Kind = request.Kind,
         Category = request.Category
     };
@@ -225,7 +311,7 @@ api.MapPost("/events", async (CreateEventRequest request, ICurrentUser current, 
     await db.SaveChangesAsync();
 
     return Results.Created($"/api/v1/events/{entity.Id}",
-        new EventDto(entity.Id, entity.Title, entity.Date, entity.StartTime, entity.EndTime, entity.Kind, entity.Category));
+        new EventDto(entity.Id, entity.Title, entity.Date, entity.EndDate, entity.StartTime, entity.EndTime, entity.AllDay, entity.Kind, entity.Category));
 }).RequireAuthorization();
 
 api.MapPut("/events/{id:guid}", async (Guid id, UpdateEventRequest request, ICurrentUser current, FreyaDbContext db) =>
@@ -241,15 +327,34 @@ api.MapPut("/events/{id:guid}", async (Guid id, UpdateEventRequest request, ICur
         return Results.NotFound();
     }
 
+    var endDate = request.EndDate ?? request.Date;
+    if (endDate < request.Date)
+    {
+        return Results.BadRequest(new { message = "La date de fin doit être après la date de début." });
+    }
+
+    var allDay = request.AllDay;
+    var startTime = allDay ? TimeOnly.MinValue : (request.StartTime ?? new TimeOnly(9, 0));
+    var endTime = allDay
+        ? new TimeOnly(23, 59)
+        : (request.EndTime ?? startTime.AddMinutes(45));
+
+    if (!allDay && endDate == request.Date && endTime < startTime)
+    {
+        return Results.BadRequest(new { message = "L’heure de fin doit être après l’heure de début." });
+    }
+
     entity.Title = request.Title.Trim();
     entity.Date = request.Date;
-    entity.StartTime = request.StartTime;
-    entity.EndTime = request.EndTime ?? request.StartTime.AddMinutes(45);
+    entity.EndDate = endDate;
+    entity.StartTime = startTime;
+    entity.EndTime = endTime;
+    entity.AllDay = allDay;
     entity.Kind = request.Kind;
     entity.Category = request.Category;
     await db.SaveChangesAsync();
 
-    return Results.Ok(new EventDto(entity.Id, entity.Title, entity.Date, entity.StartTime, entity.EndTime, entity.Kind, entity.Category));
+    return Results.Ok(new EventDto(entity.Id, entity.Title, entity.Date, entity.EndDate, entity.StartTime, entity.EndTime, entity.AllDay, entity.Kind, entity.Category));
 }).RequireAuthorization();
 
 api.MapDelete("/events/{id:guid}", async (Guid id, ICurrentUser current, FreyaDbContext db) =>
@@ -290,7 +395,8 @@ api.MapGet("/meals/week", async (DateOnly? weekStart, ICurrentUser current, Frey
             m.Title,
             m.RecipeId,
             m.ImageUrl,
-            m.Done
+            m.Done,
+            m.Kcal
         })
         .ToListAsync();
 
@@ -309,6 +415,15 @@ api.MapPost("/meals", async (MealCreateRequest request, ICurrentUser current, Fr
         return Results.BadRequest(new { message = "Le titre du repas est requis." });
     }
 
+    int? kcal = request.Kcal;
+    if (kcal is null && request.RecipeId is Guid recipeId)
+    {
+        kcal = await db.Recipes
+            .Where(r => r.Id == recipeId && (r.UserId == null || r.UserId == current.UserId))
+            .Select(r => r.Kcal)
+            .FirstOrDefaultAsync();
+    }
+
     var entity = new MealSlot
     {
         Id = Guid.NewGuid(),
@@ -318,12 +433,31 @@ api.MapPost("/meals", async (MealCreateRequest request, ICurrentUser current, Fr
         Title = request.Title.Trim(),
         RecipeId = request.RecipeId,
         ImageUrl = request.ImageUrl,
-        Done = false
+        Done = false,
+        Kcal = kcal
     };
 
     db.MealSlots.Add(entity);
     await db.SaveChangesAsync();
     return Results.Created($"/api/v1/meals/{entity.Id}", entity);
+}).RequireAuthorization();
+
+api.MapPatch("/meals/{id:guid}/done", async (Guid id, MealDoneRequest request, ICurrentUser current, FreyaDbContext db) =>
+{
+    if (current.UserId is null)
+    {
+        return Results.Unauthorized();
+    }
+
+    var entity = await db.MealSlots.FirstOrDefaultAsync(m => m.Id == id && m.UserId == current.UserId);
+    if (entity is null)
+    {
+        return Results.NotFound();
+    }
+
+    entity.Done = request.Done;
+    await db.SaveChangesAsync();
+    return Results.Ok(new { entity.Id, entity.Done });
 }).RequireAuthorization();
 
 api.MapGet("/grocery", async (ICurrentUser current, FreyaDbContext db) =>
@@ -444,7 +578,9 @@ api.MapPost("/recipes", async (RecipeCreateRequest request, ICurrentUser current
         Difficulty = request.Difficulty ?? "Facile",
         Categories = request.Categories ?? string.Empty,
         ImageUrl = request.ImageUrl,
-        Instructions = request.Instructions
+        Instructions = request.Instructions,
+        Ingredients = request.Ingredients,
+        Kcal = request.Kcal
     };
 
     db.Recipes.Add(entity);
@@ -515,6 +651,897 @@ api.MapPost("/trips", async (TripCreateRequest request, ICurrentUser current, Fr
     return Results.Created($"/api/v1/trips/{entity.Id}", entity);
 }).RequireAuthorization();
 
+api.MapGet("/friends", async (ICurrentUser current, FreyaDbContext db) =>
+{
+    if (current.UserId is null)
+    {
+        return Results.Unauthorized();
+    }
+
+    var friendIds = await db.Friendships
+        .AsNoTracking()
+        .Where(f => f.UserId == current.UserId)
+        .Select(f => f.FriendUserId)
+        .ToListAsync();
+
+    var friends = await db.Users
+        .AsNoTracking()
+        .Where(u => friendIds.Contains(u.Id))
+        .Select(u => new { u.Id, u.DisplayName, u.FriendCode, u.AvatarUrl })
+        .ToListAsync();
+
+    var conversations = await db.Conversations
+        .AsNoTracking()
+        .Where(c => c.UserAId == current.UserId || c.UserBId == current.UserId)
+        .ToListAsync();
+
+    var result = friends
+        .Select(f =>
+        {
+            var conv = conversations.FirstOrDefault(c =>
+                (c.UserAId == current.UserId && c.UserBId == f.Id) ||
+                (c.UserBId == current.UserId && c.UserAId == f.Id));
+            return new FriendDto(f.Id, f.DisplayName, f.FriendCode, conv?.Id, f.AvatarUrl);
+        })
+        .OrderBy(f => f.DisplayName)
+        .ToList();
+
+    return Results.Ok(result);
+}).RequireAuthorization();
+
+api.MapPost("/friends", async (AddFriendRequest request, ICurrentUser current, FreyaDbContext db, UserManager<AppUser> users) =>
+{
+    if (current.UserId is null)
+    {
+        return Results.Unauthorized();
+    }
+
+    if (request.FriendCode is < 100000 or > 999999)
+    {
+        return Results.BadRequest(new { message = "Le code ami doit contenir 6 chiffres." });
+    }
+
+    var me = await users.FindByIdAsync(current.UserId);
+    if (me is null)
+    {
+        return Results.Unauthorized();
+    }
+
+    if (me.FriendCode == request.FriendCode)
+    {
+        return Results.BadRequest(new { message = "Tu ne peux pas t’ajouter toi-même." });
+    }
+
+    var friend = await users.Users.FirstOrDefaultAsync(u => u.FriendCode == request.FriendCode);
+    if (friend is null)
+    {
+        return Results.NotFound(new { message = "Aucun profil trouvé avec ce code." });
+    }
+
+    var already = await db.Friendships.AnyAsync(f =>
+        f.UserId == current.UserId && f.FriendUserId == friend.Id);
+    if (already)
+    {
+        return Results.BadRequest(new { message = "Cette personne est déjà dans tes amis." });
+    }
+
+    db.Friendships.Add(new Friendship
+    {
+        Id = Guid.NewGuid(),
+        UserId = current.UserId,
+        FriendUserId = friend.Id
+    });
+    db.Friendships.Add(new Friendship
+    {
+        Id = Guid.NewGuid(),
+        UserId = friend.Id,
+        FriendUserId = current.UserId
+    });
+
+    var conversation = await GetOrCreateConversationAsync(db, current.UserId, friend.Id);
+    await db.SaveChangesAsync();
+
+    return Results.Ok(new FriendDto(friend.Id, friend.DisplayName, friend.FriendCode, conversation.Id, friend.AvatarUrl));
+}).RequireAuthorization();
+
+api.MapDelete("/friends/{friendUserId}", async (string friendUserId, ICurrentUser current, FreyaDbContext db) =>
+{
+    if (current.UserId is null)
+    {
+        return Results.Unauthorized();
+    }
+
+    var links = await db.Friendships
+        .Where(f =>
+            (f.UserId == current.UserId && f.FriendUserId == friendUserId) ||
+            (f.UserId == friendUserId && f.FriendUserId == current.UserId))
+        .ToListAsync();
+
+    if (links.Count == 0)
+    {
+        return Results.NotFound();
+    }
+
+    db.Friendships.RemoveRange(links);
+    await db.SaveChangesAsync();
+    return Results.NoContent();
+}).RequireAuthorization();
+
+api.MapGet("/chat/conversations", async (ICurrentUser current, FreyaDbContext db) =>
+{
+    if (current.UserId is null)
+    {
+        return Results.Unauthorized();
+    }
+
+    var conversations = await db.Conversations
+        .AsNoTracking()
+        .Where(c => c.UserAId == current.UserId || c.UserBId == current.UserId)
+        .OrderByDescending(c => c.LastMessageAtUtc ?? c.CreatedAtUtc)
+        .ToListAsync();
+
+    var peerIds = conversations
+        .Select(c => c.UserAId == current.UserId ? c.UserBId : c.UserAId)
+        .Distinct()
+        .ToList();
+
+    var peers = await db.Users
+        .AsNoTracking()
+        .Where(u => peerIds.Contains(u.Id))
+        .ToDictionaryAsync(u => u.Id, u => u);
+
+    var conversationIds = conversations.Select(c => c.Id).ToList();
+    var recentMessages = await db.ChatMessages
+        .AsNoTracking()
+        .Where(m => conversationIds.Contains(m.ConversationId))
+        .OrderByDescending(m => m.SentAtUtc)
+        .ToListAsync();
+
+    var lastByConv = recentMessages
+        .GroupBy(m => m.ConversationId)
+        .ToDictionary(g => g.Key, g => g.First());
+
+    var result = conversations.Select(c =>
+    {
+        var peerId = c.UserAId == current.UserId ? c.UserBId : c.UserAId;
+        peers.TryGetValue(peerId, out var peer);
+        lastByConv.TryGetValue(c.Id, out var last);
+        return new ConversationDto(
+            c.Id,
+            peerId,
+            peer?.DisplayName ?? "Profil",
+            peer?.FriendCode ?? 0,
+            last?.Body,
+            last?.SentAtUtc ?? c.LastMessageAtUtc,
+            peer?.AvatarUrl);
+    }).ToList();
+
+    return Results.Ok(result);
+}).RequireAuthorization();
+
+api.MapPost("/chat/conversations", async (StartConversationRequest request, ICurrentUser current, FreyaDbContext db) =>
+{
+    if (current.UserId is null)
+    {
+        return Results.Unauthorized();
+    }
+
+    if (string.IsNullOrWhiteSpace(request.PeerUserId) || request.PeerUserId == current.UserId)
+    {
+        return Results.BadRequest(new { message = "Profil invalide." });
+    }
+
+    var areFriends = await db.Friendships.AnyAsync(f =>
+        f.UserId == current.UserId && f.FriendUserId == request.PeerUserId);
+    if (!areFriends)
+    {
+        return Results.BadRequest(new { message = "Ajoute d’abord cette personne en ami." });
+    }
+
+    var peer = await db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == request.PeerUserId);
+    if (peer is null)
+    {
+        return Results.NotFound(new { message = "Profil introuvable." });
+    }
+
+    var conversation = await GetOrCreateConversationAsync(db, current.UserId, peer.Id);
+    await db.SaveChangesAsync();
+
+    return Results.Ok(new ConversationDto(
+        conversation.Id,
+        peer.Id,
+        peer.DisplayName,
+        peer.FriendCode,
+        null,
+        conversation.LastMessageAtUtc,
+        peer.AvatarUrl));
+}).RequireAuthorization();
+
+api.MapGet("/chat/conversations/{id:guid}/messages", async (Guid id, ICurrentUser current, FreyaDbContext db) =>
+{
+    if (current.UserId is null)
+    {
+        return Results.Unauthorized();
+    }
+
+    var conversation = await db.Conversations.AsNoTracking()
+        .FirstOrDefaultAsync(c => c.Id == id && (c.UserAId == current.UserId || c.UserBId == current.UserId));
+    if (conversation is null)
+    {
+        return Results.NotFound();
+    }
+
+    var messages = await db.ChatMessages
+        .AsNoTracking()
+        .Where(m => m.ConversationId == id)
+        .OrderBy(m => m.SentAtUtc)
+        .Select(m => new ChatMessageDto(m.Id, m.SenderId, m.Body, m.SentAtUtc, m.SenderId == current.UserId))
+        .ToListAsync();
+
+    return Results.Ok(messages);
+}).RequireAuthorization();
+
+api.MapPost("/chat/conversations/{id:guid}/messages", async (
+    Guid id,
+    SendMessageRequest request,
+    ICurrentUser current,
+    FreyaDbContext db) =>
+{
+    if (current.UserId is null)
+    {
+        return Results.Unauthorized();
+    }
+
+    var body = (request.Body ?? string.Empty).Trim();
+    if (string.IsNullOrWhiteSpace(body))
+    {
+        return Results.BadRequest(new { message = "Écris un message." });
+    }
+
+    if (body.Length > 2000)
+    {
+        return Results.BadRequest(new { message = "Message trop long." });
+    }
+
+    var conversation = await db.Conversations
+        .FirstOrDefaultAsync(c => c.Id == id && (c.UserAId == current.UserId || c.UserBId == current.UserId));
+    if (conversation is null)
+    {
+        return Results.NotFound();
+    }
+
+    var message = new ChatMessage
+    {
+        Id = Guid.NewGuid(),
+        ConversationId = conversation.Id,
+        SenderId = current.UserId,
+        Body = body,
+        SentAtUtc = DateTime.UtcNow
+    };
+
+    conversation.LastMessageAtUtc = message.SentAtUtc;
+    db.ChatMessages.Add(message);
+    await db.SaveChangesAsync();
+
+    return Results.Ok(new ChatMessageDto(message.Id, message.SenderId, message.Body, message.SentAtUtc, true));
+}).RequireAuthorization();
+
+api.MapPut("/planning/snapshot", async (PlanningSnapshotRequest request, ICurrentUser current, FreyaDbContext db) =>
+{
+    if (current.UserId is null)
+    {
+        return Results.Unauthorized();
+    }
+
+    var snapshot = await db.PlanningSnapshots.FirstOrDefaultAsync(s => s.UserId == current.UserId);
+    if (snapshot is null)
+    {
+        snapshot = new UserPlanningSnapshot { UserId = current.UserId };
+        db.PlanningSnapshots.Add(snapshot);
+    }
+
+    snapshot.ObjectivesJson = string.IsNullOrWhiteSpace(request.ObjectivesJson) ? "[]" : request.ObjectivesJson;
+    snapshot.RoomsJson = string.IsNullOrWhiteSpace(request.RoomsJson) ? "[]" : request.RoomsJson;
+    snapshot.TasksJson = string.IsNullOrWhiteSpace(request.TasksJson) ? "[]" : request.TasksJson;
+    snapshot.UpdatedAtUtc = DateTime.UtcNow;
+    await db.SaveChangesAsync();
+    return Results.NoContent();
+}).RequireAuthorization();
+
+api.MapGet("/families", async (ICurrentUser current, FreyaDbContext db) =>
+{
+    if (current.UserId is null)
+    {
+        return Results.Unauthorized();
+    }
+
+    var memberships = await db.FamilyMembers
+        .AsNoTracking()
+        .Where(m => m.UserId == current.UserId)
+        .Select(m => m.FamilyId)
+        .ToListAsync();
+
+    if (memberships.Count == 0)
+    {
+        return Results.Ok(Array.Empty<FamilyDto>());
+    }
+
+    var rows = await db.Families
+        .AsNoTracking()
+        .Where(f => memberships.Contains(f.Id))
+        .OrderBy(f => f.Name)
+        .Select(f => new
+        {
+            f.Id,
+            f.Name,
+            f.InviteCode,
+            f.CreatedByUserId,
+            MemberCount = db.FamilyMembers.Count(m => m.FamilyId == f.Id)
+        })
+        .ToListAsync();
+
+    var families = rows
+        .Select(f => new FamilyDto(
+            f.Id,
+            f.Name,
+            f.InviteCode,
+            f.MemberCount,
+            f.CreatedByUserId == current.UserId))
+        .ToList();
+
+    return Results.Ok(families);
+}).RequireAuthorization();
+
+api.MapPost("/families", async (CreateFamilyRequest request, ICurrentUser current, FreyaDbContext db) =>
+{
+    if (current.UserId is null)
+    {
+        return Results.Unauthorized();
+    }
+
+    var name = (request.Name ?? string.Empty).Trim();
+    if (name.Length is < 2 or > 120)
+    {
+        return Results.BadRequest(new { message = "Le nom de famille doit faire entre 2 et 120 caractères." });
+    }
+
+    var family = new Family
+    {
+        Id = Guid.NewGuid(),
+        Name = name,
+        InviteCode = await NextFamilyInviteCodeAsync(db),
+        CreatedByUserId = current.UserId,
+        CreatedAtUtc = DateTime.UtcNow
+    };
+    db.Families.Add(family);
+    db.FamilyMembers.Add(new FamilyMember
+    {
+        Id = Guid.NewGuid(),
+        FamilyId = family.Id,
+        UserId = current.UserId,
+        JoinedAtUtc = DateTime.UtcNow
+    });
+    await db.SaveChangesAsync();
+
+    return Results.Ok(new FamilyDto(family.Id, family.Name, family.InviteCode, 1, true));
+}).RequireAuthorization();
+
+api.MapPost("/families/join", async (JoinFamilyRequest request, ICurrentUser current, FreyaDbContext db) =>
+{
+    if (current.UserId is null)
+    {
+        return Results.Unauthorized();
+    }
+
+    if (request.InviteCode is < 100000 or > 999999)
+    {
+        return Results.BadRequest(new { message = "Le code famille doit contenir 6 chiffres." });
+    }
+
+    var family = await db.Families.FirstOrDefaultAsync(f => f.InviteCode == request.InviteCode);
+    if (family is null)
+    {
+        return Results.NotFound(new { message = "Aucune famille trouvée avec ce code." });
+    }
+
+    var already = await db.FamilyMembers.AnyAsync(m => m.FamilyId == family.Id && m.UserId == current.UserId);
+    if (already)
+    {
+        return Results.BadRequest(new { message = "Tu fais déjà partie de cette famille." });
+    }
+
+    db.FamilyMembers.Add(new FamilyMember
+    {
+        Id = Guid.NewGuid(),
+        FamilyId = family.Id,
+        UserId = current.UserId,
+        JoinedAtUtc = DateTime.UtcNow
+    });
+    await db.SaveChangesAsync();
+
+    var count = await db.FamilyMembers.CountAsync(m => m.FamilyId == family.Id);
+    return Results.Ok(new FamilyDto(family.Id, family.Name, family.InviteCode, count, family.CreatedByUserId == current.UserId));
+}).RequireAuthorization();
+
+api.MapDelete("/families/{id:guid}/leave", async (Guid id, ICurrentUser current, FreyaDbContext db) =>
+{
+    if (current.UserId is null)
+    {
+        return Results.Unauthorized();
+    }
+
+    var membership = await db.FamilyMembers.FirstOrDefaultAsync(m => m.FamilyId == id && m.UserId == current.UserId);
+    if (membership is null)
+    {
+        return Results.NotFound();
+    }
+
+    db.FamilyMembers.Remove(membership);
+    var remaining = await db.FamilyMembers.CountAsync(m => m.FamilyId == id && m.Id != membership.Id);
+    if (remaining == 0)
+    {
+        var family = await db.Families.FirstOrDefaultAsync(f => f.Id == id);
+        if (family is not null)
+        {
+            db.Families.Remove(family);
+        }
+    }
+
+    await db.SaveChangesAsync();
+    return Results.NoContent();
+}).RequireAuthorization();
+
+api.MapGet("/families/{id:guid}/today", async (Guid id, DateOnly? date, ICurrentUser current, FreyaDbContext db) =>
+{
+    if (current.UserId is null)
+    {
+        return Results.Unauthorized();
+    }
+
+    var isMember = await db.FamilyMembers.AnyAsync(m => m.FamilyId == id && m.UserId == current.UserId);
+    if (!isMember)
+    {
+        return Results.Forbid();
+    }
+
+    var family = await db.Families.AsNoTracking().FirstOrDefaultAsync(f => f.Id == id);
+    if (family is null)
+    {
+        return Results.NotFound();
+    }
+
+    var day = date ?? DateOnly.FromDateTime(DateTime.Now);
+    var memberIds = await db.FamilyMembers
+        .AsNoTracking()
+        .Where(m => m.FamilyId == id)
+        .Select(m => m.UserId)
+        .ToListAsync();
+
+    var users = await db.Users
+        .AsNoTracking()
+        .Where(u => memberIds.Contains(u.Id))
+        .ToDictionaryAsync(u => u.Id, u => u);
+
+    var members = users.Values
+        .Select(u => new FamilyMemberDto(u.Id, u.DisplayName, u.AvatarUrl))
+        .OrderBy(u => u.DisplayName)
+        .ToList();
+
+    var events = await db.Events
+        .AsNoTracking()
+        .Where(e => memberIds.Contains(e.UserId) && e.Date <= day && (e.EndDate ?? e.Date) >= day)
+        .OrderBy(e => e.StartTime)
+        .ToListAsync();
+
+    var eventDtos = events.Select(e =>
+    {
+        users.TryGetValue(e.UserId, out var owner);
+        return new FamilyEventDto(
+            e.Id,
+            e.UserId,
+            owner?.DisplayName ?? "Membre",
+            e.UserId == current.UserId,
+            e.Title,
+            e.Date,
+            e.EndDate,
+            e.StartTime,
+            e.EndTime,
+            e.AllDay,
+            (int)e.Kind,
+            (int)e.Category);
+    }).ToList();
+
+    var snapshots = await db.PlanningSnapshots
+        .AsNoTracking()
+        .Where(s => memberIds.Contains(s.UserId))
+        .ToListAsync();
+
+    var objectives = new List<FamilyPlanItemDto>();
+    var habits = new List<FamilyPlanItemDto>();
+    var tasks = new List<FamilyPlanItemDto>();
+
+    foreach (var snapshot in snapshots)
+    {
+        users.TryGetValue(snapshot.UserId, out var owner);
+        var ownerName = owner?.DisplayName ?? "Membre";
+        var mine = snapshot.UserId == current.UserId;
+        var dayIso = day.ToString("yyyy-MM-dd");
+
+        foreach (var item in ParseObjectives(snapshot.ObjectivesJson))
+        {
+            if (!IsDueOn(item.Date, item.Repeat, dayIso)) continue;
+            objectives.Add(new FamilyPlanItemDto(
+                item.Id,
+                snapshot.UserId,
+                ownerName,
+                mine,
+                item.Title,
+                RepeatLabel(item.Repeat),
+                item.Done,
+                "objective",
+                null));
+        }
+
+        foreach (var room in ParseRooms(snapshot.RoomsJson))
+        {
+            foreach (var task in room.Tasks)
+            {
+                if (!IsDueOn(task.Date, task.Repeat, dayIso)) continue;
+                habits.Add(new FamilyPlanItemDto(
+                    task.Id,
+                    snapshot.UserId,
+                    ownerName,
+                    mine,
+                    $"{task.Title} · {room.Name}",
+                    RepeatLabel(task.Repeat),
+                    task.Done,
+                    "habit",
+                    room.Id));
+            }
+        }
+
+        foreach (var task in ParseTasks(snapshot.TasksJson))
+        {
+            tasks.Add(new FamilyPlanItemDto(
+                task.Id,
+                snapshot.UserId,
+                ownerName,
+                mine,
+                task.Title,
+                "Tâche",
+                task.Done,
+                "task",
+                null));
+        }
+    }
+
+    return Results.Ok(new FamilyTodayDto(
+        family.Id,
+        family.Name,
+        members,
+        eventDtos,
+        objectives,
+        habits,
+        tasks));
+}).RequireAuthorization();
+
+api.MapGet("/families/{id:guid}/events", async (
+    Guid id,
+    DateOnly? from,
+    DateOnly? to,
+    ICurrentUser current,
+    FreyaDbContext db) =>
+{
+    if (current.UserId is null)
+    {
+        return Results.Unauthorized();
+    }
+
+    var isMember = await db.FamilyMembers.AnyAsync(m => m.FamilyId == id && m.UserId == current.UserId);
+    if (!isMember)
+    {
+        return Results.Forbid();
+    }
+
+    var start = from ?? DateOnly.FromDateTime(DateTime.Today);
+    var end = to ?? start.AddDays(6);
+    var memberIds = await db.FamilyMembers
+        .AsNoTracking()
+        .Where(m => m.FamilyId == id)
+        .Select(m => m.UserId)
+        .ToListAsync();
+
+    var users = await db.Users
+        .AsNoTracking()
+        .Where(u => memberIds.Contains(u.Id))
+        .ToDictionaryAsync(u => u.Id, u => u.DisplayName);
+
+    var events = await db.Events
+        .AsNoTracking()
+        .Where(e => memberIds.Contains(e.UserId) && e.Date <= end && (e.EndDate ?? e.Date) >= start)
+        .OrderBy(e => e.Date)
+        .ThenBy(e => e.StartTime)
+        .ToListAsync();
+
+    var result = events.Select(e => new FamilyEventDto(
+        e.Id,
+        e.UserId,
+        users.GetValueOrDefault(e.UserId) ?? "Membre",
+        e.UserId == current.UserId,
+        e.Title,
+        e.Date,
+        e.EndDate,
+        e.StartTime,
+        e.EndTime,
+        e.AllDay,
+        (int)e.Kind,
+        (int)e.Category)).ToList();
+
+    return Results.Ok(result);
+}).RequireAuthorization();
+
+api.MapGet("/budget/month", async (int? year, int? month, string? ownerUserId, ICurrentUser current, FreyaDbContext db) =>
+{
+    if (current.UserId is null) return Results.Unauthorized();
+
+    var now = DateTime.Now;
+    var y = year ?? now.Year;
+    var m = month ?? now.Month;
+    if (m is < 1 or > 12) return Results.BadRequest(new { message = "Mois invalide." });
+
+    var ownerId = string.IsNullOrWhiteSpace(ownerUserId) ? current.UserId : ownerUserId.Trim();
+    var canEdit = ownerId == current.UserId;
+    BudgetShare? share = null;
+
+    if (!canEdit)
+    {
+        share = await db.BudgetShares.AsNoTracking()
+            .FirstOrDefaultAsync(s => s.OwnerUserId == ownerId && s.ViewerUserId == current.UserId);
+        if (share is null || !(share.ShareSalary || share.ShareAllocations || share.ShareSavings || share.ShareMovements))
+        {
+            return Results.Forbid();
+        }
+    }
+
+    var owner = await db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == ownerId);
+    if (owner is null) return Results.NotFound(new { message = "Profil introuvable." });
+
+    var entity = await db.PersonalBudgetMonths
+        .Include(b => b.Allocations)
+        .Include(b => b.Movements)
+        .AsNoTracking()
+        .FirstOrDefaultAsync(b => b.UserId == ownerId && b.Year == y && b.Month == m);
+
+    if (entity is null)
+    {
+        return Results.Ok(new BudgetMonthDto(
+            Guid.Empty,
+            y,
+            m,
+            canEdit || (share?.ShareSalary ?? false) ? 0 : 0,
+            null,
+            [],
+            [],
+            canEdit,
+            owner.DisplayName,
+            ownerId));
+    }
+
+    var allocations = entity.Allocations
+        .Where(a =>
+            canEdit ||
+            (a.Kind == "save" && (share?.ShareSavings ?? false)) ||
+            (a.Kind != "save" && (share?.ShareAllocations ?? false)))
+        .OrderBy(a => a.Label)
+        .Select(a => new BudgetAllocationDto(a.Id, a.Label, a.Kind, a.PlannedAmount))
+        .ToList();
+
+    var movements = (canEdit || (share?.ShareMovements ?? false))
+        ? entity.Movements
+            .OrderByDescending(x => x.Date)
+            .Select(x => new BudgetMovementDto(x.Id, x.Label, x.Kind, x.Amount, x.Date, x.Note))
+            .ToList()
+        : [];
+
+    var salary = canEdit || (share?.ShareSalary ?? false) ? entity.Salary : 0;
+
+    return Results.Ok(new BudgetMonthDto(
+        entity.Id,
+        entity.Year,
+        entity.Month,
+        salary,
+        canEdit ? entity.Note : null,
+        allocations,
+        movements,
+        canEdit,
+        owner.DisplayName,
+        ownerId));
+}).RequireAuthorization();
+
+api.MapPut("/budget/month", async (UpsertBudgetMonthRequest request, ICurrentUser current, FreyaDbContext db) =>
+{
+    if (current.UserId is null) return Results.Unauthorized();
+    if (request.Month is < 1 or > 12) return Results.BadRequest(new { message = "Mois invalide." });
+    if (request.Salary < 0) return Results.BadRequest(new { message = "Salaire invalide." });
+
+    var entity = await db.PersonalBudgetMonths
+        .Include(b => b.Allocations)
+        .Include(b => b.Movements)
+        .FirstOrDefaultAsync(b => b.UserId == current.UserId && b.Year == request.Year && b.Month == request.Month);
+
+    if (entity is null)
+    {
+        entity = new PersonalBudgetMonth
+        {
+            Id = Guid.NewGuid(),
+            UserId = current.UserId,
+            Year = request.Year,
+            Month = request.Month
+        };
+        db.PersonalBudgetMonths.Add(entity);
+    }
+
+    entity.Salary = request.Salary;
+    entity.Note = string.IsNullOrWhiteSpace(request.Note) ? null : request.Note.Trim();
+
+    db.BudgetAllocations.RemoveRange(entity.Allocations);
+    entity.Allocations.Clear();
+    foreach (var item in request.Allocations ?? [])
+    {
+        var label = (item.Label ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(label)) continue;
+        var kind = item.Kind is "save" or "spend" ? item.Kind : "spend";
+        entity.Allocations.Add(new BudgetAllocation
+        {
+            Id = item.Id is Guid g && g != Guid.Empty ? g : Guid.NewGuid(),
+            BudgetMonthId = entity.Id,
+            Label = label,
+            Kind = kind,
+            PlannedAmount = Math.Max(0, item.PlannedAmount)
+        });
+    }
+
+    db.BudgetMovements.RemoveRange(entity.Movements);
+    entity.Movements.Clear();
+    foreach (var item in request.Movements ?? [])
+    {
+        var label = (item.Label ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(label)) continue;
+        var kind = item.Kind is "expense" or "saving" or "income" ? item.Kind : "expense";
+        entity.Movements.Add(new BudgetMovement
+        {
+            Id = item.Id is Guid g && g != Guid.Empty ? g : Guid.NewGuid(),
+            BudgetMonthId = entity.Id,
+            Label = label,
+            Kind = kind,
+            Amount = Math.Max(0, item.Amount),
+            Date = item.Date,
+            Note = string.IsNullOrWhiteSpace(item.Note) ? null : item.Note.Trim()
+        });
+    }
+
+    await db.SaveChangesAsync();
+
+    var me = await db.Users.AsNoTracking().FirstAsync(u => u.Id == current.UserId);
+    return Results.Ok(new BudgetMonthDto(
+        entity.Id,
+        entity.Year,
+        entity.Month,
+        entity.Salary,
+        entity.Note,
+        entity.Allocations.Select(a => new BudgetAllocationDto(a.Id, a.Label, a.Kind, a.PlannedAmount)).ToList(),
+        entity.Movements.OrderByDescending(x => x.Date).Select(x => new BudgetMovementDto(x.Id, x.Label, x.Kind, x.Amount, x.Date, x.Note)).ToList(),
+        true,
+        me.DisplayName,
+        me.Id));
+}).RequireAuthorization();
+
+api.MapGet("/budget/shares", async (ICurrentUser current, FreyaDbContext db) =>
+{
+    if (current.UserId is null) return Results.Unauthorized();
+
+    var shares = await db.BudgetShares.AsNoTracking()
+        .Where(s => s.OwnerUserId == current.UserId)
+        .ToListAsync();
+    var viewerIds = shares.Select(s => s.ViewerUserId).ToList();
+    var viewers = await db.Users.AsNoTracking()
+        .Where(u => viewerIds.Contains(u.Id))
+        .ToDictionaryAsync(u => u.Id, u => u.DisplayName);
+
+    var result = shares.Select(s => new BudgetShareDto(
+        s.ViewerUserId,
+        viewers.GetValueOrDefault(s.ViewerUserId) ?? "Profil",
+        s.ShareSalary,
+        s.ShareAllocations,
+        s.ShareSavings,
+        s.ShareMovements)).ToList();
+
+    return Results.Ok(result);
+}).RequireAuthorization();
+
+api.MapPut("/budget/shares", async (UpsertBudgetShareRequest request, ICurrentUser current, FreyaDbContext db) =>
+{
+    if (current.UserId is null) return Results.Unauthorized();
+    if (string.IsNullOrWhiteSpace(request.ViewerUserId) || request.ViewerUserId == current.UserId)
+    {
+        return Results.BadRequest(new { message = "Destinataire invalide." });
+    }
+
+    var areFriends = await db.Friendships.AnyAsync(f =>
+        f.UserId == current.UserId && f.FriendUserId == request.ViewerUserId);
+    if (!areFriends)
+    {
+        return Results.BadRequest(new { message = "Tu ne peux partager qu’avec un ami." });
+    }
+
+    var viewer = await db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == request.ViewerUserId);
+    if (viewer is null) return Results.NotFound(new { message = "Profil introuvable." });
+
+    var anyShare = request.ShareSalary || request.ShareAllocations || request.ShareSavings || request.ShareMovements;
+    var existing = await db.BudgetShares
+        .FirstOrDefaultAsync(s => s.OwnerUserId == current.UserId && s.ViewerUserId == request.ViewerUserId);
+
+    if (!anyShare)
+    {
+        if (existing is not null)
+        {
+            db.BudgetShares.Remove(existing);
+            await db.SaveChangesAsync();
+        }
+        return Results.NoContent();
+    }
+
+    if (existing is null)
+    {
+        existing = new BudgetShare
+        {
+            Id = Guid.NewGuid(),
+            OwnerUserId = current.UserId,
+            ViewerUserId = request.ViewerUserId
+        };
+        db.BudgetShares.Add(existing);
+    }
+
+    existing.ShareSalary = request.ShareSalary;
+    existing.ShareAllocations = request.ShareAllocations;
+    existing.ShareSavings = request.ShareSavings;
+    existing.ShareMovements = request.ShareMovements;
+    existing.UpdatedAtUtc = DateTime.UtcNow;
+    await db.SaveChangesAsync();
+
+    return Results.Ok(new BudgetShareDto(
+        existing.ViewerUserId,
+        viewer.DisplayName,
+        existing.ShareSalary,
+        existing.ShareAllocations,
+        existing.ShareSavings,
+        existing.ShareMovements));
+}).RequireAuthorization();
+
+api.MapGet("/budget/shared-with-me", async (ICurrentUser current, FreyaDbContext db) =>
+{
+    if (current.UserId is null) return Results.Unauthorized();
+
+    var ownerIds = await db.BudgetShares.AsNoTracking()
+        .Where(s => s.ViewerUserId == current.UserId &&
+                    (s.ShareSalary || s.ShareAllocations || s.ShareSavings || s.ShareMovements))
+        .Select(s => s.OwnerUserId)
+        .ToListAsync();
+
+    if (ownerIds.Count == 0)
+    {
+        return Results.Ok(Array.Empty<SharedBudgetOwnerDto>());
+    }
+
+    var owners = await db.Users.AsNoTracking()
+        .Where(u => ownerIds.Contains(u.Id))
+        .OrderBy(u => u.DisplayName)
+        .Select(u => new SharedBudgetOwnerDto(u.Id, u.DisplayName, u.AvatarUrl))
+        .ToListAsync();
+
+    return Results.Ok(owners);
+}).RequireAuthorization();
+
 app.Run();
 
 static DateOnly StartOfWeek(DateOnly date)
@@ -523,8 +1550,418 @@ static DateOnly StartOfWeek(DateOnly date)
     return date.AddDays(-diff);
 }
 
-internal record MealCreateRequest(DateOnly Date, MealSlotType Slot, string Title, Guid? RecipeId, string? ImageUrl);
+static async Task EnsureEventSchemaAsync(FreyaDbContext db)
+{
+    try
+    {
+        await db.Database.ExecuteSqlRawAsync("""ALTER TABLE "Events" ADD COLUMN "EndDate" TEXT NULL""");
+    }
+    catch
+    {
+        /* column may already exist */
+    }
+
+    try
+    {
+        await db.Database.ExecuteSqlRawAsync("""ALTER TABLE "Events" ADD COLUMN "AllDay" INTEGER NOT NULL DEFAULT 0""");
+    }
+    catch
+    {
+        /* column may already exist */
+    }
+}
+
+static async Task EnsureRecipeSchemaAsync(FreyaDbContext db)
+{
+    try
+    {
+        await db.Database.ExecuteSqlRawAsync("""ALTER TABLE "Recipes" ADD COLUMN "Ingredients" TEXT NULL""");
+    }
+    catch
+    {
+        /* column may already exist */
+    }
+
+    try
+    {
+        await db.Database.ExecuteSqlRawAsync("""ALTER TABLE "Recipes" ADD COLUMN "Kcal" INTEGER NULL""");
+    }
+    catch
+    {
+        /* column may already exist */
+    }
+
+    try
+    {
+        await db.Database.ExecuteSqlRawAsync("""ALTER TABLE "MealSlots" ADD COLUMN "Kcal" INTEGER NULL""");
+    }
+    catch
+    {
+        /* column may already exist */
+    }
+}
+
+static async Task EnsureSocialSchemaAsync(FreyaDbContext db)
+{
+    try
+    {
+        await db.Database.ExecuteSqlRawAsync("""ALTER TABLE "AspNetUsers" ADD COLUMN "FriendCode" INTEGER NOT NULL DEFAULT 0""");
+    }
+    catch
+    {
+        /* column may already exist */
+    }
+
+    try
+    {
+        await db.Database.ExecuteSqlRawAsync("""ALTER TABLE "AspNetUsers" ADD COLUMN "AvatarUrl" TEXT NULL""");
+    }
+    catch
+    {
+        /* column may already exist */
+    }
+
+    await db.Database.ExecuteSqlRawAsync("""
+        CREATE TABLE IF NOT EXISTS "Friendships" (
+            "Id" TEXT NOT NULL CONSTRAINT "PK_Friendships" PRIMARY KEY,
+            "UserId" TEXT NOT NULL,
+            "FriendUserId" TEXT NOT NULL,
+            "CreatedAtUtc" TEXT NOT NULL
+        );
+        """);
+
+    await db.Database.ExecuteSqlRawAsync("""
+        CREATE UNIQUE INDEX IF NOT EXISTS "IX_Friendships_UserId_FriendUserId"
+        ON "Friendships" ("UserId", "FriendUserId");
+        """);
+
+    await db.Database.ExecuteSqlRawAsync("""
+        CREATE TABLE IF NOT EXISTS "Conversations" (
+            "Id" TEXT NOT NULL CONSTRAINT "PK_Conversations" PRIMARY KEY,
+            "UserAId" TEXT NOT NULL,
+            "UserBId" TEXT NOT NULL,
+            "CreatedAtUtc" TEXT NOT NULL,
+            "LastMessageAtUtc" TEXT NULL
+        );
+        """);
+
+    await db.Database.ExecuteSqlRawAsync("""
+        CREATE UNIQUE INDEX IF NOT EXISTS "IX_Conversations_UserAId_UserBId"
+        ON "Conversations" ("UserAId", "UserBId");
+        """);
+
+    await db.Database.ExecuteSqlRawAsync("""
+        CREATE TABLE IF NOT EXISTS "ChatMessages" (
+            "Id" TEXT NOT NULL CONSTRAINT "PK_ChatMessages" PRIMARY KEY,
+            "ConversationId" TEXT NOT NULL,
+            "SenderId" TEXT NOT NULL,
+            "Body" TEXT NOT NULL,
+            "SentAtUtc" TEXT NOT NULL,
+            CONSTRAINT "FK_ChatMessages_Conversations_ConversationId"
+                FOREIGN KEY ("ConversationId") REFERENCES "Conversations" ("Id") ON DELETE CASCADE
+        );
+        """);
+
+    await db.Database.ExecuteSqlRawAsync("""
+        CREATE INDEX IF NOT EXISTS "IX_ChatMessages_ConversationId_SentAtUtc"
+        ON "ChatMessages" ("ConversationId", "SentAtUtc");
+        """);
+}
+
+static async Task EnsureFamilySchemaAsync(FreyaDbContext db)
+{
+    await db.Database.ExecuteSqlRawAsync("""
+        CREATE TABLE IF NOT EXISTS "Families" (
+            "Id" TEXT NOT NULL CONSTRAINT "PK_Families" PRIMARY KEY,
+            "Name" TEXT NOT NULL,
+            "InviteCode" INTEGER NOT NULL,
+            "CreatedByUserId" TEXT NOT NULL,
+            "CreatedAtUtc" TEXT NOT NULL
+        );
+        """);
+
+    await db.Database.ExecuteSqlRawAsync("""
+        CREATE UNIQUE INDEX IF NOT EXISTS "IX_Families_InviteCode"
+        ON "Families" ("InviteCode");
+        """);
+
+    await db.Database.ExecuteSqlRawAsync("""
+        CREATE TABLE IF NOT EXISTS "FamilyMembers" (
+            "Id" TEXT NOT NULL CONSTRAINT "PK_FamilyMembers" PRIMARY KEY,
+            "FamilyId" TEXT NOT NULL,
+            "UserId" TEXT NOT NULL,
+            "JoinedAtUtc" TEXT NOT NULL,
+            CONSTRAINT "FK_FamilyMembers_Families_FamilyId"
+                FOREIGN KEY ("FamilyId") REFERENCES "Families" ("Id") ON DELETE CASCADE
+        );
+        """);
+
+    await db.Database.ExecuteSqlRawAsync("""
+        CREATE UNIQUE INDEX IF NOT EXISTS "IX_FamilyMembers_FamilyId_UserId"
+        ON "FamilyMembers" ("FamilyId", "UserId");
+        """);
+
+    await db.Database.ExecuteSqlRawAsync("""
+        CREATE TABLE IF NOT EXISTS "PlanningSnapshots" (
+            "UserId" TEXT NOT NULL CONSTRAINT "PK_PlanningSnapshots" PRIMARY KEY,
+            "ObjectivesJson" TEXT NOT NULL,
+            "RoomsJson" TEXT NOT NULL,
+            "TasksJson" TEXT NOT NULL,
+            "UpdatedAtUtc" TEXT NOT NULL
+        );
+        """);
+}
+
+static async Task EnsureBudgetSchemaAsync(FreyaDbContext db)
+{
+    await db.Database.ExecuteSqlRawAsync("""
+        CREATE TABLE IF NOT EXISTS "PersonalBudgetMonths" (
+            "Id" TEXT NOT NULL CONSTRAINT "PK_PersonalBudgetMonths" PRIMARY KEY,
+            "UserId" TEXT NOT NULL,
+            "Year" INTEGER NOT NULL,
+            "Month" INTEGER NOT NULL,
+            "Salary" TEXT NOT NULL,
+            "Note" TEXT NULL
+        );
+        """);
+
+    await db.Database.ExecuteSqlRawAsync("""
+        CREATE UNIQUE INDEX IF NOT EXISTS "IX_PersonalBudgetMonths_UserId_Year_Month"
+        ON "PersonalBudgetMonths" ("UserId", "Year", "Month");
+        """);
+
+    await db.Database.ExecuteSqlRawAsync("""
+        CREATE TABLE IF NOT EXISTS "BudgetAllocations" (
+            "Id" TEXT NOT NULL CONSTRAINT "PK_BudgetAllocations" PRIMARY KEY,
+            "BudgetMonthId" TEXT NOT NULL,
+            "Label" TEXT NOT NULL,
+            "Kind" TEXT NOT NULL,
+            "PlannedAmount" TEXT NOT NULL,
+            CONSTRAINT "FK_BudgetAllocations_PersonalBudgetMonths_BudgetMonthId"
+                FOREIGN KEY ("BudgetMonthId") REFERENCES "PersonalBudgetMonths" ("Id") ON DELETE CASCADE
+        );
+        """);
+
+    await db.Database.ExecuteSqlRawAsync("""
+        CREATE TABLE IF NOT EXISTS "BudgetMovements" (
+            "Id" TEXT NOT NULL CONSTRAINT "PK_BudgetMovements" PRIMARY KEY,
+            "BudgetMonthId" TEXT NOT NULL,
+            "Label" TEXT NOT NULL,
+            "Kind" TEXT NOT NULL,
+            "Amount" TEXT NOT NULL,
+            "Date" TEXT NOT NULL,
+            "Note" TEXT NULL,
+            CONSTRAINT "FK_BudgetMovements_PersonalBudgetMonths_BudgetMonthId"
+                FOREIGN KEY ("BudgetMonthId") REFERENCES "PersonalBudgetMonths" ("Id") ON DELETE CASCADE
+        );
+        """);
+
+    await db.Database.ExecuteSqlRawAsync("""
+        CREATE TABLE IF NOT EXISTS "BudgetShares" (
+            "Id" TEXT NOT NULL CONSTRAINT "PK_BudgetShares" PRIMARY KEY,
+            "OwnerUserId" TEXT NOT NULL,
+            "ViewerUserId" TEXT NOT NULL,
+            "ShareSalary" INTEGER NOT NULL,
+            "ShareAllocations" INTEGER NOT NULL,
+            "ShareSavings" INTEGER NOT NULL,
+            "ShareMovements" INTEGER NOT NULL,
+            "UpdatedAtUtc" TEXT NOT NULL
+        );
+        """);
+
+    await db.Database.ExecuteSqlRawAsync("""
+        CREATE UNIQUE INDEX IF NOT EXISTS "IX_BudgetShares_OwnerUserId_ViewerUserId"
+        ON "BudgetShares" ("OwnerUserId", "ViewerUserId");
+        """);
+}
+
+static async Task EnsureFriendCodesAsync(FreyaDbContext db, UserManager<AppUser> users)
+{
+    var missing = await users.Users.Where(u => u.FriendCode <= 0).ToListAsync();
+    if (missing.Count == 0)
+    {
+        return;
+    }
+
+    foreach (var user in missing)
+    {
+        user.FriendCode = await NextFriendCodeAsync(users);
+        await users.UpdateAsync(user);
+    }
+}
+
+static async Task<int> NextFamilyInviteCodeAsync(FreyaDbContext db)
+{
+    var existing = await db.Families.Select(f => f.InviteCode).ToListAsync();
+    var used = existing.ToHashSet();
+    for (var i = 0; i < 40; i++)
+    {
+        var code = Random.Shared.Next(100000, 1000000);
+        if (!used.Contains(code)) return code;
+    }
+
+    for (var code = 100000; code <= 999999; code++)
+    {
+        if (!used.Contains(code)) return code;
+    }
+
+    throw new InvalidOperationException("Plus de codes famille disponibles.");
+}
+
+static bool IsDueOn(string date, string repeat, string dayIso)
+{
+    if (string.IsNullOrWhiteSpace(date) || string.IsNullOrWhiteSpace(dayIso)) return false;
+    if (string.CompareOrdinal(dayIso, date) < 0) return false;
+    repeat = string.IsNullOrWhiteSpace(repeat) ? "once" : repeat;
+    if (repeat == "once") return date == dayIso;
+    if (repeat == "daily") return true;
+
+    if (!DateOnly.TryParse(date, out var start) || !DateOnly.TryParse(dayIso, out var day))
+    {
+        return false;
+    }
+
+    if (repeat == "weekly") return (int)start.DayOfWeek == (int)day.DayOfWeek;
+    if (repeat == "monthly") return start.Day == day.Day;
+    return false;
+}
+
+static string RepeatLabel(string repeat) => repeat switch
+{
+    "daily" => "Au jour",
+    "weekly" => "À la semaine",
+    "monthly" => "Au mois",
+    _ => "1 fois"
+};
+
+static JsonSerializerOptions PlanJsonOptions() => new()
+{
+    PropertyNameCaseInsensitive = true
+};
+
+static List<PlanObjectiveJson> ParseObjectives(string json)
+{
+    try
+    {
+        return JsonSerializer.Deserialize<List<PlanObjectiveJson>>(json, PlanJsonOptions()) ?? [];
+    }
+    catch
+    {
+        return [];
+    }
+}
+
+static List<PlanRoomJson> ParseRooms(string json)
+{
+    try
+    {
+        return JsonSerializer.Deserialize<List<PlanRoomJson>>(json, PlanJsonOptions()) ?? [];
+    }
+    catch
+    {
+        return [];
+    }
+}
+
+static List<PlanTaskJson> ParseTasks(string json)
+{
+    try
+    {
+        return JsonSerializer.Deserialize<List<PlanTaskJson>>(json, PlanJsonOptions()) ?? [];
+    }
+    catch
+    {
+        return [];
+    }
+}
+
+static async Task<int> NextFriendCodeAsync(UserManager<AppUser> users)
+{
+    var existing = await users.Users
+        .Where(u => u.FriendCode > 0)
+        .Select(u => u.FriendCode)
+        .ToListAsync();
+    var used = existing.ToHashSet();
+    var random = Random.Shared;
+
+    for (var i = 0; i < 40; i++)
+    {
+        var code = random.Next(100000, 1000000);
+        if (!used.Contains(code))
+        {
+            return code;
+        }
+    }
+
+    for (var code = 100000; code <= 999999; code++)
+    {
+        if (!used.Contains(code))
+        {
+            return code;
+        }
+    }
+
+    throw new InvalidOperationException("Plus de codes amis disponibles.");
+}
+
+static async Task<Conversation> GetOrCreateConversationAsync(FreyaDbContext db, string userId, string peerId)
+{
+    var a = string.CompareOrdinal(userId, peerId) <= 0 ? userId : peerId;
+    var b = string.CompareOrdinal(userId, peerId) <= 0 ? peerId : userId;
+
+    var existing = await db.Conversations
+        .FirstOrDefaultAsync(c => c.UserAId == a && c.UserBId == b);
+    if (existing is not null)
+    {
+        return existing;
+    }
+
+    var created = new Conversation
+    {
+        Id = Guid.NewGuid(),
+        UserAId = a,
+        UserBId = b,
+        CreatedAtUtc = DateTime.UtcNow
+    };
+    db.Conversations.Add(created);
+    return created;
+}
+
+internal sealed class PlanObjectiveJson
+{
+    public string Id { get; set; } = string.Empty;
+    public string Title { get; set; } = string.Empty;
+    public string Date { get; set; } = string.Empty;
+    public string Repeat { get; set; } = "once";
+    public bool Done { get; set; }
+}
+
+internal sealed class PlanHabitJson
+{
+    public string Id { get; set; } = string.Empty;
+    public string Title { get; set; } = string.Empty;
+    public string Date { get; set; } = string.Empty;
+    public string Repeat { get; set; } = "daily";
+    public bool Done { get; set; }
+}
+
+internal sealed class PlanRoomJson
+{
+    public string Id { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public List<PlanHabitJson> Tasks { get; set; } = [];
+}
+
+internal sealed class PlanTaskJson
+{
+    public string Id { get; set; } = string.Empty;
+    public string Title { get; set; } = string.Empty;
+    public bool Done { get; set; }
+}
+
+internal record MealCreateRequest(DateOnly Date, MealSlotType Slot, string Title, Guid? RecipeId, string? ImageUrl, int? Kcal);
+internal record MealDoneRequest(bool Done);
 internal record GroceryCreateRequest(string Name, string? Quantity, string? Aisle);
 internal record GroceryPatchRequest(GroceryStatus? Status, string? Quantity, bool? Favorite);
-internal record RecipeCreateRequest(string Title, int DurationMin, string? Difficulty, string? Categories, string? ImageUrl, string? Instructions);
+internal record RecipeCreateRequest(string Title, int DurationMin, string? Difficulty, string? Categories, string? ImageUrl, string? Instructions, string? Ingredients, int? Kcal);
 internal record TripCreateRequest(string Title, DateOnly StartDate, DateOnly EndDate, string? CoverUrl, string? Subtitle);

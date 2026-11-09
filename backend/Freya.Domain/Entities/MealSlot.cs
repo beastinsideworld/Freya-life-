@@ -12,4 +12,5 @@ public class MealSlot
     public Guid? RecipeId { get; set; }
     public string? ImageUrl { get; set; }
     public bool Done { get; set; }
+    public int? Kcal { get; set; }
 }

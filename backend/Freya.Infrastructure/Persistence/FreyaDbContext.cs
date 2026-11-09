@@ -18,10 +18,25 @@ public class FreyaDbContext : IdentityDbContext<AppUser>
     public DbSet<Trip> Trips => Set<Trip>();
     public DbSet<TripPlace> TripPlaces => Set<TripPlace>();
     public DbSet<TripBudgetLine> TripBudgetLines => Set<TripBudgetLine>();
+    public DbSet<Friendship> Friendships => Set<Friendship>();
+    public DbSet<Conversation> Conversations => Set<Conversation>();
+    public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
+    public DbSet<Family> Families => Set<Family>();
+    public DbSet<FamilyMember> FamilyMembers => Set<FamilyMember>();
+    public DbSet<UserPlanningSnapshot> PlanningSnapshots => Set<UserPlanningSnapshot>();
+    public DbSet<PersonalBudgetMonth> PersonalBudgetMonths => Set<PersonalBudgetMonth>();
+    public DbSet<BudgetAllocation> BudgetAllocations => Set<BudgetAllocation>();
+    public DbSet<BudgetMovement> BudgetMovements => Set<BudgetMovement>();
+    public DbSet<BudgetShare> BudgetShares => Set<BudgetShare>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+
+        builder.Entity<AppUser>(e =>
+        {
+            e.HasIndex(x => x.FriendCode).IsUnique();
+        });
 
         builder.Entity<CalendarEvent>(e =>
         {
@@ -57,6 +72,85 @@ public class FreyaDbContext : IdentityDbContext<AppUser>
             e.Property(x => x.Title).HasMaxLength(200).IsRequired();
             e.HasMany(x => x.Places).WithOne(x => x.Trip!).HasForeignKey(x => x.TripId);
             e.HasMany(x => x.BudgetLines).WithOne(x => x.Trip!).HasForeignKey(x => x.TripId);
+        });
+
+        builder.Entity<Friendship>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => new { x.UserId, x.FriendUserId }).IsUnique();
+            e.Property(x => x.UserId).HasMaxLength(450).IsRequired();
+            e.Property(x => x.FriendUserId).HasMaxLength(450).IsRequired();
+        });
+
+        builder.Entity<Conversation>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => new { x.UserAId, x.UserBId }).IsUnique();
+            e.Property(x => x.UserAId).HasMaxLength(450).IsRequired();
+            e.Property(x => x.UserBId).HasMaxLength(450).IsRequired();
+            e.HasMany(x => x.Messages).WithOne(x => x.Conversation!).HasForeignKey(x => x.ConversationId);
+        });
+
+        builder.Entity<ChatMessage>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => new { x.ConversationId, x.SentAtUtc });
+            e.Property(x => x.SenderId).HasMaxLength(450).IsRequired();
+            e.Property(x => x.Body).HasMaxLength(2000).IsRequired();
+        });
+
+        builder.Entity<Family>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => x.InviteCode).IsUnique();
+            e.Property(x => x.Name).HasMaxLength(120).IsRequired();
+            e.Property(x => x.CreatedByUserId).HasMaxLength(450).IsRequired();
+            e.HasMany(x => x.Members).WithOne(x => x.Family!).HasForeignKey(x => x.FamilyId);
+        });
+
+        builder.Entity<FamilyMember>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => new { x.FamilyId, x.UserId }).IsUnique();
+            e.Property(x => x.UserId).HasMaxLength(450).IsRequired();
+        });
+
+        builder.Entity<UserPlanningSnapshot>(e =>
+        {
+            e.HasKey(x => x.UserId);
+            e.Property(x => x.UserId).HasMaxLength(450);
+        });
+
+        builder.Entity<PersonalBudgetMonth>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => new { x.UserId, x.Year, x.Month }).IsUnique();
+            e.Property(x => x.UserId).HasMaxLength(450).IsRequired();
+            e.HasMany(x => x.Allocations).WithOne(x => x.BudgetMonth!).HasForeignKey(x => x.BudgetMonthId);
+            e.HasMany(x => x.Movements).WithOne(x => x.BudgetMonth!).HasForeignKey(x => x.BudgetMonthId);
+        });
+
+        builder.Entity<BudgetAllocation>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Label).HasMaxLength(120).IsRequired();
+            e.Property(x => x.Kind).HasMaxLength(20).IsRequired();
+        });
+
+        builder.Entity<BudgetMovement>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Label).HasMaxLength(120).IsRequired();
+            e.Property(x => x.Kind).HasMaxLength(20).IsRequired();
+            e.Property(x => x.Note).HasMaxLength(500);
+        });
+
+        builder.Entity<BudgetShare>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => new { x.OwnerUserId, x.ViewerUserId }).IsUnique();
+            e.Property(x => x.OwnerUserId).HasMaxLength(450).IsRequired();
+            e.Property(x => x.ViewerUserId).HasMaxLength(450).IsRequired();
         });
     }
 }

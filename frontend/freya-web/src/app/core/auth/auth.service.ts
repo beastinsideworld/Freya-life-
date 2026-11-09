@@ -9,6 +9,8 @@ export interface AuthResponse {
   email: string;
   displayName: string;
   userId: string;
+  friendCode: number;
+  avatarUrl?: string | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -41,6 +43,12 @@ export class AuthService {
 
   token(): string | null {
     return this.state()?.token ?? null;
+  }
+
+  patchProfile(partial: Partial<AuthResponse>): void {
+    const current = this.state();
+    if (!current) return;
+    this.persist({ ...current, ...partial });
   }
 
   private persist(res: AuthResponse): void {

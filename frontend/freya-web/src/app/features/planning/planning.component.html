@@ -10,6 +10,7 @@
     <button type="button" [class.active]="tab() === 'mois'" (click)="setTab('mois')">Mois</button>
     <button type="button" [class.active]="tab() === 'objectif'" (click)="setTab('objectif')">Objectifs</button>
     <button type="button" [class.active]="tab() === 'habitude'" (click)="setTab('habitude')">Habitudes</button>
+    <button type="button" [class.active]="tab() === 'tache'" (click)="setTab('tache')">Tâches</button>
   </div>
 
   @if (tab() === 'semaine' || tab() === 'mois') {
@@ -22,12 +23,31 @@
         <label class="field">Événement
           <input type="text" [(ngModel)]="title" placeholder="Musculation" autocomplete="off">
         </label>
-        <label class="field">Date
-          <app-date-picker [(ngModel)]="date" name="eventDate"></app-date-picker>
-        </label>
-        <label class="field">Heure
-          <input type="time" [(ngModel)]="time">
-        </label>
+
+        <div class="composer-row">
+          <label class="field">Début
+            <app-date-picker [(ngModel)]="date" name="eventDate"></app-date-picker>
+          </label>
+          <label class="field">Fin
+            <app-date-picker [(ngModel)]="endDate" name="eventEndDate"></app-date-picker>
+          </label>
+        </div>
+
+        <button type="button" class="btn all-day" [class.active]="allDay" (click)="toggleAllDay()">
+          {{ allDay ? '✓ Journée entière' : 'Journée entière' }}
+        </button>
+
+        @if (!allDay) {
+          <div class="composer-row">
+            <label class="field">Heure début
+              <input type="time" [(ngModel)]="time" name="eventStartTime">
+            </label>
+            <label class="field">Heure fin
+              <input type="time" [(ngModel)]="endTime" name="eventEndTime">
+            </label>
+          </div>
+        }
+
         <button type="button" class="btn primary" (click)="addEvent()">Enregistrer</button>
         @if (error()) {
           <p class="error">{{ error() }}</p>
@@ -37,7 +57,9 @@
 
     @if (tab() === 'semaine') {
       <div class="week-head">
+        <button type="button" class="nav-arrow" (click)="shiftWeek(-1)" aria-label="Semaine précédente">‹</button>
         <h2>{{ weekLabel() }}</h2>
+        <button type="button" class="nav-arrow" (click)="shiftWeek(1)" aria-label="Semaine suivante">›</button>
       </div>
       <div class="week-grid" aria-label="Grille semaine">
         <div class="corner"></div>
@@ -70,11 +92,30 @@
         </div>
       </div>
     } @else {
-      <h2>{{ monthNameNow() }}</h2>
+      <div class="week-head month-head">
+        <button type="button" class="nav-arrow" (click)="shiftMonth(-1)" aria-label="Mois précédent">‹</button>
+        <h2>{{ monthNameNow() }}</h2>
+        <button type="button" class="nav-arrow" (click)="shiftMonth(1)" aria-label="Mois suivant">›</button>
+      </div>
       <div class="month">
-        <p>Lun</p><p>Mar</p><p>Mer</p><p>Jeu</p><p>Ven</p><p>Sam</p><p>Dim</p>
+        <p class="weekday">Lun</p><p class="weekday">Mar</p><p class="weekday">Mer</p><p class="weekday">Jeu</p><p class="weekday">Ven</p><p class="weekday">Sam</p><p class="weekday">Dim</p>
         @for (cell of monthCells(); track $index) {
-          <p [class.has]="cell.has" [class.today]="cell.today">{{ cell.day ?? '' }}</p>
+          <div
+            class="month-cell"
+            [class.empty]="cell.day === null"
+            [class.holiday]="cell.holiday"
+            [class.today]="cell.today"
+            [class.has]="cell.dots.length > 0"
+          >
+            <span class="day-num">{{ cell.day ?? '' }}</span>
+            @if (cell.dots.length) {
+              <span class="dots" aria-hidden="true">
+                @for (dot of cell.dots; track $index) {
+                  <i class="dot" [class]="dot"></i>
+                }
+              </span>
+            }
+          </div>
         }
       </div>
     }
@@ -138,6 +179,45 @@
     </section>
   }
 
+  @if (tab() === 'tache') {
+    <section class="panel mode-panel">
+      <div class="section-head">
+        <h2>Tâches ({{ tasks().length }})</h2>
+        <button type="button" class="btn primary" (click)="toggleTaskForm()">+ Ajouter une tâche</button>
+      </div>
+
+      @if (showTaskForm()) {
+        <form class="inline-form" (ngSubmit)="addPlanningTask()">
+          <label class="field">Tâche
+            <input type="text" name="planningTaskTitle" [(ngModel)]="planningTaskTitle" placeholder="Ex. Appeler le garage" required autocomplete="off">
+          </label>
+          <div class="form-actions">
+            <button type="button" class="btn" (click)="toggleTaskForm()">Annuler</button>
+            <button type="submit" class="btn primary">Ajouter</button>
+          </div>
+        </form>
+      }
+
+      @if (tasks().length === 0) {
+        <p class="empty">Aucune tâche pour le moment.</p>
+      } @else {
+        <ul class="item-list">
+          @for (item of tasks(); track item.id) {
+            <li [class.done]="item.done">
+              <button type="button" class="check" [class.on]="item.done" (click)="togglePlanningTask(item.id)" aria-label="Marquer comme fait">
+                {{ item.done ? '✓' : '' }}
+              </button>
+              <div class="item-body">
+                <strong>{{ item.title }}</strong>
+              </div>
+              <button type="button" class="ghost trash" (click)="deletePlanningTask(item.id)" aria-label="Supprimer">🗑</button>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+  }
+
   @if (tab() === 'habitude') {
     <section class="panel mode-panel">
       <div class="section-head">
@@ -171,7 +251,10 @@
         <div class="room-panel">
           <div class="section-head compact">
             <h3>{{ room.name }}</h3>
-            <button type="button" class="btn primary" (click)="toggleHabitForm()">+ Ajouter une tâche</button>
+            <div class="room-actions">
+              <button type="button" class="btn primary" (click)="toggleHabitForm()">+ Ajouter une tâche</button>
+              <button type="button" class="ghost trash" (click)="askRemoveRoom(room.id)" aria-label="Supprimer la pièce" title="Supprimer la pièce">🗑</button>
+            </div>
           </div>
 
           @if (showHabitForm()) {
@@ -238,12 +321,27 @@
         <label class="field">Événement
           <input type="text" name="editEventTitle" [(ngModel)]="editEventTitle" required autocomplete="off">
         </label>
-        <label class="field">Date
-          <app-date-picker name="editEventDate" [(ngModel)]="editEventDate"></app-date-picker>
-        </label>
-        <label class="field">Heure
-          <input type="time" name="editEventTime" [(ngModel)]="editEventTime" required>
-        </label>
+        <div class="composer-row">
+          <label class="field">Début
+            <app-date-picker name="editEventDate" [(ngModel)]="editEventDate"></app-date-picker>
+          </label>
+          <label class="field">Fin
+            <app-date-picker name="editEventEndDate" [(ngModel)]="editEventEndDate"></app-date-picker>
+          </label>
+        </div>
+        <button type="button" class="btn all-day" [class.active]="editEventAllDay" (click)="toggleEditAllDay()">
+          {{ editEventAllDay ? '✓ Journée entière' : 'Journée entière' }}
+        </button>
+        @if (!editEventAllDay) {
+          <div class="composer-row">
+            <label class="field">Heure début
+              <input type="time" name="editEventTime" [(ngModel)]="editEventTime">
+            </label>
+            <label class="field">Heure fin
+              <input type="time" name="editEventEndTime" [(ngModel)]="editEventEndTime">
+            </label>
+          </div>
+        }
         <div class="modal-actions">
           <button type="button" class="btn" (click)="closeAllEditors()">Annuler</button>
           <button type="submit" class="btn primary">Enregistrer</button>
@@ -281,7 +379,8 @@
             }
           </div>
         </fieldset>
-        <div class="modal-actions">
+        <div class="modal-actions with-trash">
+          <button type="button" class="btn danger-ghost" (click)="deleteObjective()" aria-label="Supprimer l’objectif">🗑</button>
           <button type="button" class="btn" (click)="closeAllEditors()">Annuler</button>
           <button type="submit" class="btn primary">Enregistrer</button>
         </div>
@@ -323,6 +422,18 @@
           <button type="submit" class="btn primary">Enregistrer</button>
         </div>
       </form>
+    </div>
+  }
+
+  @if (roomToDelete(); as room) {
+    <div class="modal-backdrop" (click)="cancelRemoveRoom()" role="presentation"></div>
+    <div class="modal confirm-modal" role="dialog" aria-modal="true" aria-labelledby="delete-room-title">
+      <h2 id="delete-room-title">Supprimer la pièce</h2>
+      <p>Supprimer <strong>{{ room.name }}</strong> et toutes ses tâches ?</p>
+      <div class="modal-actions">
+        <button type="button" class="btn" (click)="cancelRemoveRoom()">Annuler</button>
+        <button type="button" class="btn primary" (click)="confirmRemoveRoom()">Supprimer</button>
+      </div>
     </div>
   }
 </section>

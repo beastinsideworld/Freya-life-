@@ -4,6 +4,8 @@ import { createId } from '../../core/id';
 
 type TeleCategory = 'audiovisuel' | 'jeu' | 'manga' | 'activite';
 type MediaType = 'film' | 'serie' | 'docu';
+/** discover = à découvrir / à faire · progress = en cours · done = terminé / fait */
+type TeleStatus = 'discover' | 'progress' | 'done';
 
 interface TeleItem {
   id: string;
@@ -11,11 +13,18 @@ interface TeleItem {
   category: TeleCategory;
   mediaType?: MediaType;
   note: string;
-  done: boolean;
+  status: TeleStatus;
   createdAt: string;
 }
 
-const TELE_KEY = 'freya.tele.items';
+interface StatusSection {
+  id: TeleStatus;
+  label: string;
+  items: TeleItem[];
+}
+
+const TELE_KEY = 'freya.tele.items.v2';
+const TELE_KEY_LEGACY = 'freya.tele.items';
 
 @Component({
   selector: 'app-tele',
@@ -46,16 +55,27 @@ export class TeleComponent implements OnInit {
   title = '';
   note = '';
   mediaType: MediaType = 'film';
+  status: TeleStatus = 'discover';
   editTitle = '';
   editNote = '';
   editMediaType: MediaType = 'film';
   editCategory: TeleCategory = 'audiovisuel';
+  editStatus: TeleStatus = 'discover';
 
   readonly filteredItems = computed(() =>
     this.items()
       .filter((item) => item.category === this.category())
-      .sort((a, b) => Number(a.done) - Number(b.done) || b.createdAt.localeCompare(a.createdAt))
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
   );
+
+  readonly statusSections = computed((): StatusSection[] => {
+    const items = this.filteredItems();
+    const defs = this.statusDefsFor(this.category());
+    return defs.map((def) => ({
+      ...def,
+      items: items.filter((item) => item.status === def.id)
+    }));
+  });
 
   readonly currentCategory = computed(
     () => this.categories.find((cat) => cat.id === this.category()) ?? this.categories[0]
@@ -69,10 +89,30 @@ export class TeleComponent implements OnInit {
     this.category.set(id);
     this.showForm.set(false);
     this.editingItem.set(null);
+    this.status = 'discover';
+  }
+
+  statusDefsFor(category: TeleCategory): Array<{ id: TeleStatus; label: string }> {
+    if (category === 'activite') {
+      return [
+        { id: 'discover', label: 'À faire' },
+        { id: 'done', label: 'Fait' }
+      ];
+    }
+    return [
+      { id: 'discover', label: 'À découvrir' },
+      { id: 'progress', label: 'En cours' },
+      { id: 'done', label: 'Terminé' }
+    ];
+  }
+
+  statusLabel(status: TeleStatus, category: TeleCategory = this.category()): string {
+    return this.statusDefsFor(category).find((item) => item.id === status)?.label ?? status;
   }
 
   toggleForm(): void {
     this.editingItem.set(null);
+    this.status = 'discover';
     this.showForm.update((v) => !v);
   }
 
@@ -80,13 +120,16 @@ export class TeleComponent implements OnInit {
     const title = this.title.trim();
     if (!title) return;
 
+    const status =
+      this.category() === 'activite' && this.status === 'progress' ? 'discover' : this.status;
+
     const item: TeleItem = {
       id: createId(),
       title,
       category: this.category(),
       mediaType: this.category() === 'audiovisuel' ? this.mediaType : undefined,
       note: this.note.trim(),
-      done: false,
+      status,
       createdAt: new Date().toISOString()
     };
 
@@ -95,6 +138,7 @@ export class TeleComponent implements OnInit {
     this.title = '';
     this.note = '';
     this.mediaType = 'film';
+    this.status = 'discover';
     this.showForm.set(false);
   }
 
@@ -106,6 +150,7 @@ export class TeleComponent implements OnInit {
     this.editNote = item.note;
     this.editCategory = item.category;
     this.editMediaType = item.mediaType ?? 'film';
+    this.editStatus = item.status;
   }
 
   closeEditor(): void {
@@ -117,6 +162,11 @@ export class TeleComponent implements OnInit {
     const title = this.editTitle.trim();
     if (!current || !title) return;
 
+    let status = this.editStatus;
+    if (this.editCategory === 'activite' && status === 'progress') {
+      status = 'discover';
+    }
+
     this.items.update((list) =>
       list.map((item) =>
         item.id === current.id
@@ -125,7 +175,8 @@ export class TeleComponent implements OnInit {
               title,
               note: this.editNote.trim(),
               category: this.editCategory,
-              mediaType: this.editCategory === 'audiovisuel' ? this.editMediaType : undefined
+              mediaType: this.editCategory === 'audiovisuel' ? this.editMediaType : undefined,
+              status
             }
           : item
       )
@@ -134,11 +185,20 @@ export class TeleComponent implements OnInit {
     this.editingItem.set(null);
   }
 
-  toggleDone(id: string): void {
+  setItemStatus(id: string, status: TeleStatus, ev?: Event): void {
+    ev?.stopPropagation();
     this.items.update((list) =>
-      list.map((item) => (item.id === id ? { ...item, done: !item.done } : item))
+      list.map((item) => (item.id === id ? { ...item, status } : item))
     );
     this.persist();
+  }
+
+  cycleStatus(item: TeleItem, ev?: Event): void {
+    ev?.stopPropagation();
+    const defs = this.statusDefsFor(item.category);
+    const index = defs.findIndex((def) => def.id === item.status);
+    const next = defs[(index + 1) % defs.length]?.id ?? 'discover';
+    this.setItemStatus(item.id, next);
   }
 
   removeItem(id: string): void {
@@ -152,16 +212,52 @@ export class TeleComponent implements OnInit {
   }
 
   private loadItems(): TeleItem[] {
-    try {
-      const raw = localStorage.getItem(TELE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as TeleItem[];
-        if (Array.isArray(parsed) && parsed.length) return parsed;
-      }
-    } catch {
-      /* ignore */
+    const fromV2 = this.readRaw(TELE_KEY);
+    if (fromV2.length) return fromV2.map((item) => this.normalizeItem(item));
+
+    const fromLegacy = this.readRaw(TELE_KEY_LEGACY);
+    if (fromLegacy.length) {
+      const migrated = fromLegacy.map((item) => this.normalizeItem(item));
+      localStorage.setItem(TELE_KEY, JSON.stringify(migrated));
+      return migrated;
     }
 
+    return this.demoItems();
+  }
+
+  private readRaw(key: string): any[] {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+
+  private normalizeItem(raw: any): TeleItem {
+    const category = (raw.category as TeleCategory) || 'audiovisuel';
+    let status: TeleStatus = raw.status;
+    if (status !== 'discover' && status !== 'progress' && status !== 'done') {
+      status = raw.done ? 'done' : 'discover';
+    }
+    if (category === 'activite' && status === 'progress') {
+      status = 'discover';
+    }
+    return {
+      id: String(raw.id ?? createId()),
+      title: String(raw.title ?? 'Sans titre'),
+      category,
+      mediaType: category === 'audiovisuel' ? raw.mediaType : undefined,
+      note: String(raw.note ?? ''),
+      status,
+      createdAt: String(raw.createdAt ?? new Date().toISOString())
+    };
+  }
+
+  private demoItems(): TeleItem[] {
+    const now = new Date().toISOString();
     return [
       {
         id: '1',
@@ -169,32 +265,65 @@ export class TeleComponent implements OnInit {
         category: 'audiovisuel',
         mediaType: 'serie',
         note: 'Vu en pub, saison 3',
-        done: false,
-        createdAt: new Date().toISOString()
+        status: 'progress',
+        createdAt: now
+      },
+      {
+        id: '1b',
+        title: 'Dune 2',
+        category: 'audiovisuel',
+        mediaType: 'film',
+        note: 'À voir en salle',
+        status: 'discover',
+        createdAt: now
       },
       {
         id: '2',
         title: 'Zelda Tears of the Kingdom',
         category: 'jeu',
         note: 'Soldes Switch',
-        done: false,
-        createdAt: new Date().toISOString()
+        status: 'progress',
+        createdAt: now
+      },
+      {
+        id: '2b',
+        title: 'Hades II',
+        category: 'jeu',
+        note: 'Early access',
+        status: 'discover',
+        createdAt: now
       },
       {
         id: '3',
         title: 'One Piece',
         category: 'manga',
         note: 'Reprendre au tome 100',
-        done: false,
-        createdAt: new Date().toISOString()
+        status: 'progress',
+        createdAt: now
+      },
+      {
+        id: '3b',
+        title: 'Chainsaw Man',
+        category: 'manga',
+        note: 'Partie 2',
+        status: 'discover',
+        createdAt: now
       },
       {
         id: '4',
         title: 'Atelier poterie',
         category: 'activite',
         note: 'Pub Instagram Bordeaux',
-        done: false,
-        createdAt: new Date().toISOString()
+        status: 'discover',
+        createdAt: now
+      },
+      {
+        id: '4b',
+        title: 'Expo photo',
+        category: 'activite',
+        note: 'Musée dimanche dernier',
+        status: 'done',
+        createdAt: now
       }
     ];
   }

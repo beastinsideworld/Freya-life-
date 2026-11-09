@@ -24,24 +24,92 @@
   inset: auto 0 0;
   width: 100%;
   height: var(--nav-h);
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  display: flex;
   align-items: center;
-  gap: 0.1rem;
-  padding: 0.35rem 0.3rem calc(0.35rem + env(safe-area-inset-bottom));
+  gap: 0.2rem;
+  padding: 0.35rem 0.45rem calc(0.35rem + env(safe-area-inset-bottom));
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
   background: linear-gradient(180deg, rgba(18, 8, 11, 0.92), rgba(8, 3, 5, 0.98));
   border-top: 1px solid var(--border);
   backdrop-filter: blur(14px);
   z-index: 40;
+  touch-action: pan-x;
+}
+
+.bottom-nav::-webkit-scrollbar {
+  display: none;
 }
 
 .bottom-nav a {
+  position: relative;
   display: flex;
+  flex: 0 0 auto;
   align-items: center;
   justify-content: center;
+  width: 3.55rem;
+  min-width: 3.55rem;
   min-height: 3.4rem;
   border-radius: 0.9rem;
   color: var(--muted);
+  scroll-snap-align: center;
+}
+
+.dot-badge {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.35rem;
+  min-width: 1rem;
+  height: 1rem;
+  padding: 0 0.25rem;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff7f2;
+  font-size: 0.65rem;
+  line-height: 1rem;
+  text-align: center;
+}
+
+.idea-toasts {
+  position: fixed;
+  top: calc(4.1rem + env(safe-area-inset-top));
+  right: 0.85rem;
+  z-index: 47;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  width: min(260px, calc(100vw - 5.5rem));
+  pointer-events: none;
+}
+
+.idea-toast {
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  width: 100%;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 0.85rem;
+  background: rgba(18, 8, 11, 0.96);
+  box-shadow: var(--shadow-glow);
+  color: var(--text);
+  text-align: left;
+}
+
+.idea-toast strong {
+  font-weight: 500;
+  font-size: 0.88rem;
+}
+
+.idea-toast span {
+  color: var(--gold);
+  font-size: 0.75rem;
 }
 
 .bottom-nav .ico {
@@ -92,10 +160,28 @@
   }
 
   .side-nav a {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.45rem;
     border-radius: var(--radius-pill);
     padding: 0.7rem 0.9rem;
     color: var(--muted);
     border: 1px solid transparent;
+  }
+
+  .nav-badge {
+    min-width: 1.25rem;
+    height: 1.25rem;
+    padding: 0 0.35rem;
+    border-radius: 999px;
+    border: 0;
+    background: var(--accent);
+    color: #fff7f2;
+    font-size: 0.72rem;
+    line-height: 1.25rem;
+    text-align: center;
   }
 
   .side-nav a.active {

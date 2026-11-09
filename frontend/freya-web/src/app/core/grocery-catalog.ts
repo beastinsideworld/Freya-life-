@@ -99,3 +99,16 @@ export function findCatalogArticle(name: string): CatalogArticle | undefined {
   const q = name.trim().toLowerCase();
   return GROCERY_CATALOG.find((item) => item.name.toLowerCase() === q);
 }
+
+export function catalogByAisle(aisle: string | null, limit = 24): CatalogArticle[] {
+  if (!aisle || aisle === 'Toutes') {
+    return GROCERY_CATALOG.slice(0, limit);
+  }
+  return GROCERY_CATALOG.filter((item) => item.aisle === aisle).slice(0, limit);
+}
+
+export function ingredientNames(): string[] {
+  return [...new Set(GROCERY_CATALOG.map((item) => item.name))].sort((a, b) =>
+    a.localeCompare(b, 'fr')
+  );
+}
