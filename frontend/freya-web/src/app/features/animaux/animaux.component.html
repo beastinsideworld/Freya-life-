@@ -1,20 +1,19 @@
 <section class="page animaux-page">
-  @if (!(tab() === 'animaux' && selectedPet())) {
+  @if (!selectedPet()) {
     <header class="hero animaux-hero">
-      <div class="icon" aria-hidden="true">🐾</div>
+      <div class="icon" aria-hidden="true"><app-nav-icon name="animaux" /></div>
       <h1>Animaux</h1>
       <p class="sub">Le suivi complet de tes compagnons</p>
     </header>
 
     <div class="seg pets-tabs" role="tablist" aria-label="Sections animaux">
       <button type="button" role="tab" [class.active]="tab() === 'accueil'" (click)="setTab('accueil')">Accueil</button>
-      <button type="button" role="tab" [class.active]="tab() === 'animaux'" (click)="setTab('animaux')">Mes animaux</button>
       <button type="button" role="tab" [class.active]="tab() === 'depenses'" (click)="setTab('depenses')">Dépenses</button>
       <button type="button" role="tab" [class.active]="tab() === 'rendezvous'" (click)="setTab('rendezvous')">Rendez-vous</button>
     </div>
   }
 
-  @if (tab() === 'accueil') {
+  @if (!selectedPet() && tab() === 'accueil') {
     <section class="panel">
       <header class="card-head">
         <h2>Mes compagnons ({{ pets().length }})</h2>
@@ -22,7 +21,7 @@
       </header>
       <ul class="pet-list">
         @for (pet of pets(); track pet.id) {
-          <li>
+          <li class="pet-list-item">
             <button type="button" class="pet-row" (click)="openPet(pet)">
               <span class="avatar" aria-hidden="true">{{ pet.photoEmoji }}</span>
               <span class="row-main">
@@ -31,6 +30,7 @@
               </span>
               <span class="chev" aria-hidden="true">›</span>
             </button>
+            <button type="button" class="share-icon-btn" (click)="openShare(pet, $event)" aria-label="Partager">↗</button>
           </li>
         } @empty {
           <li class="empty-row">Aucun animal pour le moment.</li>
@@ -68,151 +68,120 @@
     </section>
   }
 
-  @if (tab() === 'animaux') {
-    @if (selectedPet(); as pet) {
-      <header class="detail-top">
-        <button type="button" class="back-btn" (click)="backFromPet()" aria-label="Retour">‹</button>
-        <h1>{{ pet.name }} <em class="sex">{{ sexSymbol(pet.sex) }}</em></h1>
-        <button type="button" class="ghost-btn" (click)="store.removePet(pet.id); backFromPet()" aria-label="Supprimer">⋯</button>
-      </header>
+  @if (selectedPet(); as pet) {
+    <header class="detail-top">
+      <button type="button" class="back-btn" (click)="backFromPet()" aria-label="Retour">‹</button>
+      <h1>{{ pet.name }} <em class="sex">{{ sexSymbol(pet.sex) }}</em></h1>
+      <button type="button" class="ghost-btn" (click)="store.removePet(pet.id); backFromPet()" aria-label="Supprimer">⋯</button>
+    </header>
 
-      <section class="panel profile-card">
-        <div class="profile-row">
-          <span class="avatar xl" aria-hidden="true">{{ pet.photoEmoji }}</span>
-          <div>
-            <strong>{{ pet.species }} - {{ pet.breed }}</strong>
-            <span>{{ store.ageLabel(pet) }} ({{ store.birthLabel(pet) }})</span>
-          </div>
+    <section class="panel profile-card">
+      <div class="profile-row">
+        <span class="avatar xl" aria-hidden="true">{{ pet.photoEmoji }}</span>
+        <div>
+          <strong>{{ pet.species }} - {{ pet.breed }}</strong>
+          <span>{{ store.ageLabel(pet) }} ({{ store.birthLabel(pet) }})</span>
         </div>
-        <div class="mini-actions">
-          <button type="button" (click)="openSection('sante')"><span aria-hidden="true">❤</span> Santé</button>
-          <button type="button" (click)="openSection('poids')"><span aria-hidden="true">⚖</span> Poids</button>
-          <button type="button" (click)="setTab('rendezvous')"><span aria-hidden="true">📅</span> Rendez-vous</button>
-        </div>
-      </section>
-
-      <button type="button" class="panel menu-card" (click)="openSection('identite')">
-        <span class="row-ico" aria-hidden="true">🪪</span>
-        <span class="row-main">
-          <strong>Identité</strong>
-          <span>Puce : {{ pet.chip || '—' }} · Assurance : {{ pet.insurance ? 'Oui' : 'Non' }}</span>
-        </span>
-        <span class="chev" aria-hidden="true">›</span>
+      </div>
+      <div class="mini-actions">
+        <button type="button" (click)="openSection('sante')"><span aria-hidden="true">❤</span> Santé</button>
+        <button type="button" (click)="openSection('poids')"><span aria-hidden="true">⚖</span> Poids</button>
+        <button type="button" (click)="setTab('rendezvous')"><span aria-hidden="true">📅</span> Rendez-vous</button>
+      </div>
+      <button type="button" class="btn primary wide share-btn-main" (click)="openShare(pet)">
+        Partager le profil
       </button>
+    </section>
 
-      <button type="button" class="panel menu-card" (click)="openSection('sante')">
-        <span class="row-ico" aria-hidden="true">🩺</span>
-        <span class="row-main">
-          <strong>Santé</strong>
-          <span>Vaccins, traitements, antécédents</span>
-        </span>
-        <span class="chev" aria-hidden="true">›</span>
-      </button>
+    <button type="button" class="panel menu-card" (click)="openSection('identite')">
+      <span class="row-ico" aria-hidden="true">🪪</span>
+      <span class="row-main">
+        <strong>Identité</strong>
+        <span>Puce : {{ pet.chip || '—' }} · Assurance : {{ pet.insurance ? (pet.insuranceName || 'Oui') : 'Non' }}</span>
+      </span>
+      <span class="chev" aria-hidden="true">›</span>
+    </button>
 
-      <button type="button" class="panel menu-card" (click)="openSection('alimentation')">
-        <span class="row-ico" aria-hidden="true">🥣</span>
-        <span class="row-main">
-          <strong>Alimentation</strong>
-          <span>
-            {{ pet.foodBrand || 'Non renseigné' }}
-            @if (pet.mealsPerDay) {
-              · {{ pet.mealsPerDay }} repas / jour
-              @if (pet.mealGrams) { • {{ pet.mealGrams }} g }
-            }
-          </span>
-        </span>
-        <span class="chev" aria-hidden="true">›</span>
-      </button>
+    <button type="button" class="panel menu-card" (click)="openSection('sante')">
+      <span class="row-ico" aria-hidden="true">🩺</span>
+      <span class="row-main">
+        <strong>Santé</strong>
+        <span>{{ healthSummary(pet) }}</span>
+      </span>
+      <span class="chev" aria-hidden="true">›</span>
+    </button>
 
-      <button type="button" class="panel menu-card" (click)="openSection('poids')">
-        <span class="row-ico" aria-hidden="true">⚖</span>
-        <span class="row-main">
-          <strong>Poids</strong>
-          <span>
-            {{ pet.weightKg ? pet.weightKg.toFixed(1).replace('.', ',') + ' kg' : '—' }}
-            @if (pet.weightDeltaKg) {
-              <em [class.pos]="pet.weightDeltaKg < 0" [class.neg]="pet.weightDeltaKg > 0">
-                {{ pet.weightDeltaKg > 0 ? '+' : '' }}{{ pet.weightDeltaKg.toFixed(1).replace('.', ',') }} kg sur 1 mois
-              </em>
-            }
-          </span>
-        </span>
-        <span class="chev" aria-hidden="true">›</span>
-      </button>
+    <button type="button" class="panel menu-card" (click)="openSection('alimentation')">
+      <span class="row-ico" aria-hidden="true">🥣</span>
+      <span class="row-main">
+        <strong>Alimentation</strong>
+        <span>{{ foodSummary(pet) }}</span>
+      </span>
+      <span class="chev" aria-hidden="true">›</span>
+    </button>
 
-      <button type="button" class="panel menu-card" (click)="openSection('notes')">
-        <span class="row-ico" aria-hidden="true">📝</span>
-        <span class="row-main">
-          <strong>Notes & suivi</strong>
-          <span>Comportement, éducation, observations</span>
-        </span>
-        <span class="chev" aria-hidden="true">›</span>
-      </button>
-
-      @if (detailSection() === 'notes') {
-        <section class="panel">
-          <label class="field">Notes
-            <textarea
-              rows="4"
-              [ngModel]="pet.notes || ''"
-              (ngModelChange)="updatePetNotes(pet, $event)"
-              name="petNotes"
-              placeholder="Observations…"
-            ></textarea>
-          </label>
-        </section>
-      }
-
-      <section class="panel">
-        <header class="card-head">
-          <h2><span aria-hidden="true">🔔</span> Rappels personnalisés</h2>
-        </header>
-        <ul class="toggle-list">
-          <li>
-            <span>Traitements</span>
-            <button type="button" class="switch" [class.on]="pet.reminders.treatments" (click)="toggleReminder(pet, 'treatments')" aria-label="Traitements"></button>
-          </li>
-          <li>
-            <span>Vaccins</span>
-            <button type="button" class="switch" [class.on]="pet.reminders.vaccines" (click)="toggleReminder(pet, 'vaccines')" aria-label="Vaccins"></button>
-          </li>
-          <li>
-            <span>Vermifuge / Antiparasitaire</span>
-            <button type="button" class="switch" [class.on]="pet.reminders.vermifuge" (click)="toggleReminder(pet, 'vermifuge')" aria-label="Vermifuge"></button>
-          </li>
-          <li>
-            <span>Rappel poids (mensuel)</span>
-            <button type="button" class="switch" [class.on]="pet.reminders.weight" (click)="toggleReminder(pet, 'weight')" aria-label="Poids"></button>
-          </li>
-        </ul>
-      </section>
-    } @else {
-      <section class="panel">
-        <header class="card-head">
-          <h2>Mes animaux</h2>
-          <button type="button" class="icon-btn" (click)="openPetForm()" aria-label="Ajouter">+</button>
-        </header>
-        <ul class="pet-list">
-          @for (pet of pets(); track pet.id) {
-            <li>
-              <button type="button" class="pet-row" (click)="openPet(pet)">
-                <span class="avatar" aria-hidden="true">{{ pet.photoEmoji }}</span>
-                <span class="row-main">
-                  <strong>{{ pet.name }} <em class="sex">{{ sexSymbol(pet.sex) }}</em></strong>
-                  <span>{{ pet.species }} • {{ store.ageLabel(pet) }}</span>
-                </span>
-                <span class="chev" aria-hidden="true">›</span>
-              </button>
-            </li>
-          } @empty {
-            <li class="empty-row">Ajoute ton premier compagnon.</li>
+    <button type="button" class="panel menu-card" (click)="openSection('poids')">
+      <span class="row-ico" aria-hidden="true">⚖</span>
+      <span class="row-main">
+        <strong>Poids</strong>
+        <span>
+          {{ pet.weightKg ? pet.weightKg.toFixed(1).replace('.', ',') + ' kg' : '—' }}
+          @if (pet.weightDeltaKg) {
+            <em [class.pos]="pet.weightDeltaKg < 0" [class.neg]="pet.weightDeltaKg > 0">
+              {{ pet.weightDeltaKg > 0 ? '+' : '' }}{{ pet.weightDeltaKg.toFixed(1).replace('.', ',') }} kg sur 1 mois
+            </em>
           }
-        </ul>
-      </section>
+        </span>
+      </span>
+      <span class="chev" aria-hidden="true">›</span>
+    </button>
+
+    <button type="button" class="panel menu-card" (click)="openSection('notes')">
+      <span class="row-ico" aria-hidden="true">📝</span>
+      <span class="row-main">
+        <strong>Notes & suivi</strong>
+        <span>{{ pet.notes || 'Comportement, éducation, observations' }}</span>
+      </span>
+      <span class="chev" aria-hidden="true">›</span>
+    </button>
+
+    @if (pet.sex === 'F') {
+      <button type="button" class="panel menu-card" (click)="openSection('chaleurs')">
+        <span class="row-ico" aria-hidden="true">💗</span>
+        <span class="row-main">
+          <strong>Chaleurs</strong>
+          <span>{{ heatSummary(pet) }}</span>
+        </span>
+        <span class="chev" aria-hidden="true">›</span>
+      </button>
     }
+
+    <section class="panel">
+      <header class="card-head">
+        <h2><span aria-hidden="true">🔔</span> Rappels personnalisés</h2>
+      </header>
+      <ul class="toggle-list">
+        <li>
+          <span>Traitements</span>
+          <button type="button" class="switch" [class.on]="pet.reminders.treatments" (click)="toggleReminder(pet, 'treatments')" aria-label="Traitements"></button>
+        </li>
+        <li>
+          <span>Vaccins</span>
+          <button type="button" class="switch" [class.on]="pet.reminders.vaccines" (click)="toggleReminder(pet, 'vaccines')" aria-label="Vaccins"></button>
+        </li>
+        <li>
+          <span>Vermifuge / Antiparasitaire</span>
+          <button type="button" class="switch" [class.on]="pet.reminders.vermifuge" (click)="toggleReminder(pet, 'vermifuge')" aria-label="Vermifuge"></button>
+        </li>
+        <li>
+          <span>Rappel poids (mensuel)</span>
+          <button type="button" class="switch" [class.on]="pet.reminders.weight" (click)="toggleReminder(pet, 'weight')" aria-label="Poids"></button>
+        </li>
+      </ul>
+    </section>
   }
 
-  @if (tab() === 'depenses') {
+  @if (!selectedPet() && tab() === 'depenses') {
     <header class="subpage-head">
       <h1>Dépenses Animaux</h1>
     </header>
@@ -309,7 +278,7 @@
     </section>
   }
 
-  @if (tab() === 'rendezvous') {
+  @if (!selectedPet() && tab() === 'rendezvous') {
     <header class="subpage-head">
       <h1>Rendez-vous</h1>
     </header>
@@ -348,11 +317,17 @@
         </div>
         <ul class="detail-meta">
           <li><span aria-hidden="true">📅</span> {{ formatDate(appt.date) }}</li>
+          @if (appt.endDate) {
+            <li><span aria-hidden="true">➡️</span> Fin prévue : {{ formatIsoFr(appt.endDate) }}</li>
+          }
           @if (appt.time) {
             <li><span aria-hidden="true">⏰</span> {{ appt.time }}</li>
           }
           @if (appt.place) {
             <li><span aria-hidden="true">📍</span> {{ appt.place }}</li>
+          }
+          @if (appt.kind === 'heat') {
+            <li><span aria-hidden="true">💗</span> Prévision de chaleurs</li>
           }
         </ul>
         <div class="notes-box">
@@ -370,12 +345,212 @@
   }
 </section>
 
+@if (shareOpen() && sharePet()) {
+  <div class="modal-backdrop" (click)="closeShare()" role="presentation"></div>
+  <div class="modal form-modal" role="dialog" aria-modal="true" aria-labelledby="share-pet-title">
+    <header class="modal-head">
+      <h2 id="share-pet-title">Partager {{ sharePet()!.name }}</h2>
+      <button type="button" class="modal-close" (click)="closeShare()" aria-label="Fermer">×</button>
+    </header>
+    <p class="hint">Envoie le profil via un lien ou un e-mail.</p>
+
+    @if (shareBusy()) {
+      <p class="empty">Génération du lien…</p>
+    } @else {
+      <label class="field">Lien de partage
+        <input type="text" [ngModel]="shareLink()" name="shareLink" readonly>
+      </label>
+      <div class="share-actions">
+        <button type="button" class="btn primary" (click)="copyShareLink()">
+          {{ shareCopied() ? 'Copié' : 'Copier le lien' }}
+        </button>
+        @if (canNativeShare()) {
+          <button type="button" class="btn" (click)="nativeShare()">Partager…</button>
+        }
+      </div>
+
+      <label class="field">E-mail (optionnel)
+        <input type="email" [(ngModel)]="draftShareEmail" name="shareEmail" placeholder="ami@email.com">
+      </label>
+      <button type="button" class="btn primary wide" (click)="sendShareEmail()">Envoyer par e-mail</button>
+    }
+
+    @if (shareError()) {
+      <p class="error">{{ shareError() }}</p>
+    }
+  </div>
+}
+
+@if (detailSection(); as section) {
+  <div class="modal-backdrop" (click)="closeSection()" role="presentation"></div>
+  <div class="modal form-modal section-modal" role="dialog" aria-modal="true" [attr.aria-labelledby]="'section-title'">
+    <header class="modal-head">
+      <h2 id="section-title">{{ sectionTitle(section) }}</h2>
+      <button type="button" class="modal-close" (click)="closeSection()" aria-label="Fermer">×</button>
+    </header>
+    <div class="form-grid">
+      @if (section === 'identite') {
+        <label class="field">Nom <input [(ngModel)]="draftPetName" name="idName" placeholder="Isis"></label>
+        <label class="field">Sexe
+          <select [(ngModel)]="draftPetSex" name="idSex">
+            <option value="F">Femelle</option>
+            <option value="M">Mâle</option>
+          </select>
+        </label>
+        <label class="field">Espèce <input [(ngModel)]="draftPetSpecies" name="idSpecies" placeholder="Chien" (ngModelChange)="breedMenuOpen.set(true)"></label>
+        <div class="combo-field">
+          <label class="field">Race
+            <input
+              [ngModel]="draftPetBreed"
+              (ngModelChange)="onBreedInput($event)"
+              (focus)="breedMenuOpen.set(true)"
+              name="idBreed"
+              placeholder="Écrire ou choisir…"
+              autocomplete="off"
+            >
+          </label>
+          @if (breedMenuOpen() && filteredBreeds().length) {
+            <ul class="combo-list" role="listbox">
+              @for (breed of filteredBreeds(); track breed) {
+                <li>
+                  <button type="button" (mousedown)="selectBreed(breed)">{{ breed }}</button>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+        <label class="field">Naissance
+          <button type="button" class="date-trigger" (click)="openCalendar('birth', draftPetBirth)">
+            {{ formatIsoFr(draftPetBirth) }}
+          </button>
+        </label>
+        <label class="field">Icône <input [(ngModel)]="draftPetEmoji" name="idEmoji" maxlength="4"></label>
+        <label class="field">N° de puce <input [(ngModel)]="draftChip" name="idChip" placeholder="250269801234567"></label>
+        <label class="field check-field">
+          <input type="checkbox" [(ngModel)]="draftInsurance" name="idInsurance">
+          Assurance
+        </label>
+        @if (draftInsurance) {
+          <label class="field">Assureur <input [(ngModel)]="draftInsuranceName" name="idInsuranceName" placeholder="SantéVet"></label>
+        }
+      }
+
+      @if (section === 'sante') {
+        <label class="field">Vaccins
+          <textarea rows="3" [(ngModel)]="draftVaccines" name="healthVaccines" placeholder="Vaccins à jour, dates…"></textarea>
+        </label>
+        <label class="field">Traitements
+          <textarea rows="3" [(ngModel)]="draftTreatments" name="healthTreatments" placeholder="Antiparasitaire, vermifuge…"></textarea>
+        </label>
+        <label class="field">Antécédents
+          <textarea rows="3" [(ngModel)]="draftMedicalHistory" name="healthHistory" placeholder="Opérations, allergies…"></textarea>
+        </label>
+      }
+
+      @if (section === 'alimentation') {
+        <label class="field">Marque / aliment <input [(ngModel)]="draftFoodBrand" name="foodBrand" placeholder="Pro Plan Medium Adult"></label>
+        <label class="field">Repas / jour <input type="number" min="0" step="1" [(ngModel)]="draftMealsPerDay" name="foodMeals"></label>
+        <label class="field">Quantité (g) <input type="number" min="0" step="1" [(ngModel)]="draftMealGrams" name="foodGrams"></label>
+        <label class="field">Horaires <input [(ngModel)]="draftMealSchedule" name="foodSchedule" placeholder="matin et soir"></label>
+      }
+
+      @if (section === 'poids') {
+        <label class="field">Poids actuel (kg) <input [(ngModel)]="draftWeightKg" name="weightKg" placeholder="25,0" inputmode="decimal"></label>
+        <label class="field">Évolution sur 1 mois (kg)
+          <input [(ngModel)]="draftWeightDelta" name="weightDelta" placeholder="-0,2" inputmode="decimal">
+        </label>
+      }
+
+      @if (section === 'notes') {
+        <label class="field">Notes & suivi
+          <textarea rows="5" [(ngModel)]="draftNotes" name="petNotes" placeholder="Comportement, éducation, observations…"></textarea>
+        </label>
+      }
+
+      @if (section === 'chaleurs') {
+        <p class="hint">Enregistre les chaleurs passées : Freya calcule les prochaines et les ajoute au planning Rendez-vous.</p>
+
+        <div class="field">
+          <span class="field-label">Espacement approximatif</span>
+          <div class="chip-row">
+            @for (preset of heatIntervalPresets; track preset.days) {
+              <button
+                type="button"
+                class="chip"
+                [class.active]="draftHeatInterval === preset.days"
+                (click)="setHeatIntervalPreset(preset.days)"
+              >{{ preset.label }}</button>
+            }
+          </div>
+          <label class="field tight">Jours
+            <input type="number" min="7" [(ngModel)]="draftHeatCustomDays" name="heatCustomDays">
+          </label>
+          <button type="button" class="btn" (click)="applyHeatInterval()">Appliquer l’espacement</button>
+        </div>
+
+        <div class="heat-form">
+          <label class="field">Début
+            <button type="button" class="date-trigger" (click)="openCalendar('heatStart', draftHeatStart)">
+              {{ formatIsoFr(draftHeatStart) }}
+            </button>
+          </label>
+          <label class="field">Fin
+            <button type="button" class="date-trigger" (click)="openCalendar('heatEnd', draftHeatEnd)">
+              {{ formatIsoFr(draftHeatEnd) }}
+            </button>
+          </label>
+          <button type="button" class="btn primary" (click)="addHeatCycle()">Ajouter cette chaleur</button>
+        </div>
+
+        @if (selectedPet(); as heatPet) {
+          <div class="heat-block">
+            <h3>Chaleurs passées</h3>
+            <ul class="heat-list">
+              @for (cycle of heatPet.heatTracking.cycles; track cycle.id) {
+                <li>
+                  <div>
+                    <strong>{{ formatIsoFr(cycle.startDate) }} → {{ formatIsoFr(cycle.endDate) }}</strong>
+                    <span>{{ cycle.durationDays }} jour(s)</span>
+                  </div>
+                  <button type="button" class="icon-btn danger" (click)="store.removeHeatCycle(heatPet.id, cycle.id)" aria-label="Supprimer">×</button>
+                </li>
+              } @empty {
+                <li class="empty-row">Aucune chaleur enregistrée.</li>
+              }
+            </ul>
+          </div>
+
+          <div class="heat-block">
+            <h3>Prochaines chaleurs probables</h3>
+            <ul class="heat-list predict">
+              @for (cycle of predictedHeats(); track cycle.startDate) {
+                <li>
+                  <div>
+                    <strong>{{ formatIsoFr(cycle.startDate) }} → {{ formatIsoFr(cycle.endDate) }}</strong>
+                    <span>~ {{ cycle.durationDays }} jour(s) · dans le planning</span>
+                  </div>
+                </li>
+              } @empty {
+                <li class="empty-row">Ajoute au moins une chaleur passée pour lancer les prévisions.</li>
+              }
+            </ul>
+          </div>
+        }
+      }
+
+      @if (section !== 'chaleurs') {
+        <button type="button" class="btn primary" (click)="saveSection()">Enregistrer</button>
+      }
+    </div>
+  </div>
+}
+
 @if (petFormOpen()) {
-  <div class="modal-backdrop" (click)="petFormOpen.set(false)" role="presentation"></div>
+  <div class="modal-backdrop" (click)="petFormOpen.set(false); breedMenuOpen.set(false); closeCalendar()" role="presentation"></div>
   <div class="modal form-modal" role="dialog" aria-modal="true">
     <header class="modal-head">
       <h2>Ajouter un animal</h2>
-      <button type="button" class="modal-close" (click)="petFormOpen.set(false)" aria-label="Fermer">×</button>
+      <button type="button" class="modal-close" (click)="petFormOpen.set(false); breedMenuOpen.set(false); closeCalendar()" aria-label="Fermer">×</button>
     </header>
     <div class="form-grid">
       <label class="field">Nom <input [(ngModel)]="draftPetName" name="petName" placeholder="Isis"></label>
@@ -386,10 +561,60 @@
         </select>
       </label>
       <label class="field">Espèce <input [(ngModel)]="draftPetSpecies" name="petSpecies" placeholder="Chien"></label>
-      <label class="field">Race <input [(ngModel)]="draftPetBreed" name="petBreed" placeholder="Berger Australien"></label>
-      <label class="field">Naissance <input type="date" [(ngModel)]="draftPetBirth" name="petBirth"></label>
+      <div class="combo-field">
+        <label class="field">Race
+          <input
+            [ngModel]="draftPetBreed"
+            (ngModelChange)="onBreedInput($event)"
+            (focus)="breedMenuOpen.set(true)"
+            name="petBreed"
+            placeholder="Écrire ou choisir…"
+            autocomplete="off"
+          >
+        </label>
+        @if (breedMenuOpen() && filteredBreeds().length) {
+          <ul class="combo-list" role="listbox">
+            @for (breed of filteredBreeds(); track breed) {
+              <li>
+                <button type="button" (mousedown)="selectBreed(breed)">{{ breed }}</button>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+      <label class="field">Naissance
+        <button type="button" class="date-trigger" (click)="openCalendar('birth', draftPetBirth)">
+          {{ formatIsoFr(draftPetBirth) }}
+        </button>
+      </label>
       <label class="field">Icône <input [(ngModel)]="draftPetEmoji" name="petEmoji" maxlength="4"></label>
       <button type="button" class="btn primary" (click)="addPet()">Ajouter</button>
+    </div>
+  </div>
+}
+
+@if (calendarOpen()) {
+  <div class="modal-backdrop calendar-layer" (click)="closeCalendar()" role="presentation"></div>
+  <div class="modal calendar-popover" role="dialog" aria-modal="true" aria-label="Calendrier">
+    <header class="cal-head">
+      <button type="button" (click)="shiftCalendarMonth(-1)" aria-label="Mois précédent">‹</button>
+      <strong>{{ calendarMonthLabel() }}</strong>
+      <button type="button" (click)="shiftCalendarMonth(1)" aria-label="Mois suivant">›</button>
+    </header>
+    <div class="cal-weekdays" aria-hidden="true">
+      <span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span>
+    </div>
+    <div class="cal-grid">
+      @for (cell of calendarCells(); track $index) {
+        <button
+          type="button"
+          class="cal-day"
+          [class.empty]="!cell.inMonth"
+          [class.selected]="cell.iso === selectedCalendarIso()"
+          [disabled]="!cell.inMonth"
+          (click)="pickCalendarDay(cell.iso)"
+        >{{ cell.day || '' }}</button>
+      }
     </div>
   </div>
 }

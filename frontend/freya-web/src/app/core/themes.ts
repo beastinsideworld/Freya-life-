@@ -35,8 +35,8 @@ export const THEME_CATEGORIES: ThemeCategory[] = [
   {
     id: 'classique',
     label: 'Classique',
-    description: 'Thème Freya par défaut.',
-    themes: [{ id: 'freya', label: 'Freya', swatch: '#8f2d3b' }]
+    description: 'Thème Freya noir/bordeaux — Playfair & Poppins.',
+    themes: [{ id: 'freya', label: 'Freya Rose-gold', swatch: '#ff9caf' }]
   },
   {
     id: 'elements',

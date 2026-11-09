@@ -50,7 +50,7 @@
   height: 2.6rem;
   border-radius: 50%;
   border: 1px solid #b04555;
-  background: linear-gradient(180deg, #a33445, var(--accent-deep));
+  background: var(--grad-btn);
   box-shadow: var(--shadow-glow);
   color: #fff7f2;
   font-size: 1.4rem;
@@ -400,7 +400,7 @@ button.cell.filled:focus-visible {
 
 .cats button.active {
   color: #fff;
-  background: linear-gradient(180deg, #a33445, var(--accent-deep));
+  background: var(--grad-btn);
   box-shadow: var(--shadow-glow);
 }
 
@@ -513,7 +513,7 @@ button.cell.filled:focus-visible {
   height: 2.5rem;
   border-radius: 50%;
   border: 1px solid #b04555;
-  background: linear-gradient(180deg, #a33445, var(--accent-deep));
+  background: var(--grad-btn);
   box-shadow: var(--shadow-glow);
   color: #fff7f2;
   font-size: 1.3rem;

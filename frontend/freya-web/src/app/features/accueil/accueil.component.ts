@@ -26,6 +26,7 @@ import {
 import { FamilyService, FamilySummary } from '../../core/family.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { DatePickerComponent } from '../../shared/date-picker/date-picker.component';
+import { NavIconComponent } from '../../shared/nav-icon/nav-icon.component';
 
 const EVENT_DONE_KEY = 'freya.accueil.event-done.v1';
 const FAMILY_SCOPE_KEY = 'freya.accueil.family-scope.v1';
@@ -65,13 +66,44 @@ interface DayEvent {
   mine?: boolean;
 }
 
+type MealSlotKey = 'breakfast' | 'lunch' | 'snack' | 'dinner';
+
 interface DayMeal {
   id: string;
+  key: MealSlotKey;
   slot: string;
   title: string;
   done: boolean;
   kcal: number;
+  iconSrc: string;
 }
+
+const MEAL_SLOTS: Array<{ key: MealSlotKey; slot: string; iconSrc: string; aliases: string[] }> = [
+  {
+    key: 'breakfast',
+    slot: 'Petit-déjeuner',
+    iconSrc: 'assets/meals/petit-dejeuner.png',
+    aliases: ['breakfast', 'petit-déjeuner', 'petit dejeuner', 'petit-dejeuner']
+  },
+  {
+    key: 'lunch',
+    slot: 'Déjeuner',
+    iconSrc: 'assets/meals/dejeuner.png',
+    aliases: ['lunch', 'déjeuner', 'dejeuner', 'main']
+  },
+  {
+    key: 'snack',
+    slot: 'Collation',
+    iconSrc: 'assets/meals/collation.png',
+    aliases: ['snack', 'collation']
+  },
+  {
+    key: 'dinner',
+    slot: 'Dîner',
+    iconSrc: 'assets/meals/diner.png',
+    aliases: ['dinner', 'dîner', 'diner', 'repas']
+  }
+];
 
 interface WeekDay {
   date: string;
@@ -103,7 +135,7 @@ interface NextTrip {
 @Component({
   selector: 'app-accueil',
   standalone: true,
-  imports: [RouterLink, FormsModule, DatePickerComponent],
+  imports: [RouterLink, FormsModule, DatePickerComponent, NavIconComponent],
   templateUrl: './accueil.component.html',
   styleUrl: './accueil.component.scss'
 })
@@ -114,16 +146,16 @@ export class AccueilComponent implements OnInit, OnDestroy {
   readonly todayObjectives = signal<DayListItem[]>([]);
   readonly todayHabits = signal<DayListItem[]>([]);
   readonly todayTasks = signal<DayListItem[]>([]);
-  readonly meals = signal<DayMeal[]>([]);
+  readonly meals = signal<DayMeal[]>(this.fallbackMeals());
   readonly weekDays = signal<WeekDay[]>([]);
   readonly nextTrip = signal<NextTrip | null>(null);
   readonly temperature = signal(12);
   readonly error = signal('');
   readonly editingEvent = signal<DayEvent | null>(null);
-  readonly weatherOpen = signal(false);
   readonly weatherDays = signal<WeatherDay[]>([]);
   readonly weatherLoading = signal(false);
   readonly weatherPlace = signal('Ma position');
+  readonly weatherFallback = signal(false);
   readonly reminderOpen = signal(false);
   readonly reminderItems = signal<ReminderItem[]>([]);
   readonly postponeTarget = signal<ReminderItem | null>(null);
@@ -212,13 +244,8 @@ export class AccueilComponent implements OnInit, OnDestroy {
     });
   }
 
-  openWeatherPopup(): void {
-    this.weatherOpen.set(true);
-    this.resolveGeolocation(() => this.loadWeatherWeek(true));
-  }
-
-  closeWeatherPopup(): void {
-    this.weatherOpen.set(false);
+  weatherFor(date: string): WeatherDay | null {
+    return this.weatherDays().find((d) => d.date === date) ?? null;
   }
 
   closeReminderPopup(): void {
@@ -396,44 +423,88 @@ export class AccueilComponent implements OnInit, OnDestroy {
   private loadWeatherWeek(force = false): void {
     if (!force && this.weatherDays().length) return;
     this.weatherLoading.set(true);
+    this.weatherFallback.set(false);
     const lat = this.geoCoords?.lat ?? 48.8566;
     const lon = this.geoCoords?.lon ?? 2.3522;
+    const cacheKey = `freya.weather.v1:${lat.toFixed(2)},${lon.toFixed(2)}`;
+
+    const applyDto = (dto: any, fromCache = false): boolean => {
+      const times: string[] = dto?.daily?.time ?? [];
+      const codes: number[] = dto?.daily?.weather_code ?? [];
+      const maxes: number[] = dto?.daily?.temperature_2m_max ?? [];
+      const mins: number[] = dto?.daily?.temperature_2m_min ?? [];
+      if (!times.length) return false;
+      this.weatherDays.set(
+        times.map((date, i) => {
+          const info = this.weatherFromCode(codes[i] ?? 0);
+          const d = new Date(date + 'T12:00:00');
+          return {
+            date,
+            label: d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' }),
+            icon: info.icon,
+            tempMax: Math.round(maxes[i] ?? this.temperature()),
+            tempMin: Math.round(mins[i] ?? this.temperature() - 4),
+            summary: info.summary
+          };
+        })
+      );
+      if (maxes[0] != null) this.temperature.set(Math.round(maxes[0]));
+      this.weatherFallback.set(fromCache);
+      this.weatherLoading.set(false);
+      return true;
+    };
+
+    const useCacheOrDemo = (): void => {
+      try {
+        const raw = localStorage.getItem(cacheKey);
+        if (raw) {
+          const parsed = JSON.parse(raw) as { at: number; dto: unknown };
+          // Cache valide 12 h
+          if (parsed?.dto && Date.now() - Number(parsed.at || 0) < 12 * 60 * 60 * 1000) {
+            if (applyDto(parsed.dto, true)) return;
+          }
+        }
+      } catch {
+        /* ignore */
+      }
+      this.weatherDays.set(this.demoWeatherWeek());
+      this.weatherFallback.set(true);
+      this.weatherLoading.set(false);
+    };
+
+    // Couvrir toute la semaine calendaire (lundi → dimanche)
+    const pastDays = (this.now.getDay() + 6) % 7; // 0 = lundi … 6 = dimanche
+    const forecastDays = Math.max(1, 7 - pastDays);
     const url =
       `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
-      '&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=7';
-    this.http.get<any>(url).subscribe({
-      next: (dto) => {
-        const times: string[] = dto?.daily?.time ?? [];
-        const codes: number[] = dto?.daily?.weather_code ?? [];
-        const maxes: number[] = dto?.daily?.temperature_2m_max ?? [];
-        const mins: number[] = dto?.daily?.temperature_2m_min ?? [];
-        if (!times.length) {
-          this.weatherDays.set(this.demoWeatherWeek());
-          this.weatherLoading.set(false);
-          return;
+      `&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto` +
+      `&past_days=${pastDays}&forecast_days=${forecastDays}`;
+
+    const attemptFetch = (attempt: number): void => {
+      this.http.get<any>(url).subscribe({
+        next: (dto) => {
+          if (!applyDto(dto, false)) {
+            useCacheOrDemo();
+            return;
+          }
+          try {
+            localStorage.setItem(cacheKey, JSON.stringify({ at: Date.now(), dto }));
+          } catch {
+            /* quota */
+          }
+        },
+        error: () => {
+          // Open-Meteo renvoie parfois 503 : 2 retries puis cache / démo
+          if (attempt < 2) {
+            window.setTimeout(() => attemptFetch(attempt + 1), 600 * (attempt + 1));
+            return;
+          }
+          useCacheOrDemo();
         }
-        this.weatherDays.set(
-          times.map((date, i) => {
-            const info = this.weatherFromCode(codes[i] ?? 0);
-            const d = new Date(date + 'T12:00:00');
-            return {
-              date,
-              label: d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' }),
-              icon: info.icon,
-              tempMax: Math.round(maxes[i] ?? this.temperature()),
-              tempMin: Math.round(mins[i] ?? this.temperature() - 4),
-              summary: info.summary
-            };
-          })
-        );
-        if (maxes[0] != null) this.temperature.set(Math.round(maxes[0]));
-        this.weatherLoading.set(false);
-      },
-      error: () => {
-        this.weatherDays.set(this.demoWeatherWeek());
-        this.weatherLoading.set(false);
-      }
-    });
+      });
+    };
+
+    attemptFetch(0);
   }
 
   private weatherFromCode(code: number): { icon: string; summary: string } {
@@ -527,7 +598,9 @@ export class AccueilComponent implements OnInit, OnDestroy {
       list.map((row) => (row.id === meal.id ? { ...row, done } : row))
     );
 
-    if (!meal.id || meal.id.startsWith('demo-')) return;
+    if (!meal.id || meal.id.startsWith('demo-') || meal.id.startsWith('empty-') || meal.id.startsWith('slot-')) {
+      return;
+    }
     this.http.patch(`${environment.apiUrl}/meals/${meal.id}/done`, { done }).subscribe({
       error: () => {
         this.meals.update((list) =>
@@ -818,12 +891,12 @@ export class AccueilComponent implements OnInit, OnDestroy {
         this.temperature.set(dto.temperatureC ?? 12);
         const apiMeals = (dto.meals ?? []).map((m: any) => ({
           id: String(m.id ?? createId()),
-          slot: this.mealLabel(m.slot),
-          title: m.title,
+          slot: this.mealLabel(String(m.slot ?? '')),
+          title: String(m.title ?? ''),
           done: !!m.done,
-          kcal: Number(m.kcal ?? this.estimateKcal(m.title))
+          kcal: Number(m.kcal ?? this.estimateKcal(String(m.title ?? '')))
         }));
-        this.meals.set(apiMeals.length ? apiMeals : this.fallbackMeals());
+        this.meals.set(this.normalizeMeals(apiMeals));
       },
       error: () => this.meals.set(this.fallbackMeals())
     });
@@ -831,6 +904,61 @@ export class AccueilComponent implements OnInit, OnDestroy {
 
   totalMealsKcal(): number {
     return this.meals().reduce((sum, meal) => sum + (meal.kcal || 0), 0);
+  }
+
+  private normalizeMeals(
+    incoming: Array<{ id?: string; slot: string; title: string; done: boolean; kcal: number }>
+  ): DayMeal[] {
+    const demos = environment.useDemoData ? this.demoMeals() : [];
+    return MEAL_SLOTS.map((def) => {
+      const match = incoming.find((m) => this.matchMealSlot(m.slot, def));
+      if (match) {
+        return {
+          id: match.id || `slot-${def.key}`,
+          key: def.key,
+          slot: def.slot,
+          title: match.title || 'À définir',
+          done: match.done,
+          kcal: match.kcal || this.defaultKcal(def.key),
+          iconSrc: def.iconSrc
+        };
+      }
+      const demo = demos.find((m) => m.key === def.key);
+      return (
+        demo ?? {
+          id: `empty-${def.key}`,
+          key: def.key,
+          slot: def.slot,
+          title: 'À définir',
+          done: false,
+          kcal: 0,
+          iconSrc: def.iconSrc
+        }
+      );
+    });
+  }
+
+  private matchMealSlot(
+    slot: string,
+    def: (typeof MEAL_SLOTS)[number]
+  ): boolean {
+    const value = slot.trim().toLowerCase();
+    if (!value) return false;
+    if (value === def.key || value === def.slot.toLowerCase()) return true;
+    return def.aliases.some((alias) => value === alias || value.includes(alias));
+  }
+
+  private defaultKcal(key: MealSlotKey): number {
+    switch (key) {
+      case 'breakfast':
+        return 380;
+      case 'lunch':
+        return 520;
+      case 'snack':
+        return 180;
+      case 'dinner':
+        return 480;
+    }
   }
 
   private loadNextTrip(): void {
@@ -933,7 +1061,7 @@ export class AccueilComponent implements OnInit, OnDestroy {
   }
 
   private buildWeek(items: DayEvent[]): WeekDay[] {
-    const labels = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+    const labels = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
     const start = this.startOfWeek(this.now);
     const today = toIsoDate(this.now);
     return labels.map((label, i) => {
@@ -977,15 +1105,27 @@ export class AccueilComponent implements OnInit, OnDestroy {
   }
 
   private fallbackMeals(): DayMeal[] {
-    return environment.useDemoData ? this.demoMeals() : [];
+    return this.normalizeMeals(environment.useDemoData ? this.demoMeals() : []);
   }
 
   private demoMeals(): DayMeal[] {
-    return [
-      { id: 'demo-breakfast', slot: 'Petit-déjeuner', title: 'Porridge protéiné', done: true, kcal: 380 },
-      { id: 'demo-lunch', slot: 'Déjeuner', title: 'Poulet, riz, légumes', done: true, kcal: 620 },
-      { id: 'demo-dinner', slot: 'Dîner', title: 'Saumon, patates douces', done: false, kcal: 540 }
-    ];
+    return MEAL_SLOTS.map((def, i) => {
+      const samples = [
+        { title: 'Porridge protéiné', done: true, kcal: 508 },
+        { title: 'Wraps matin légumes', done: true, kcal: 430 },
+        { title: 'Yaourt, fruits et amandes', done: false, kcal: 310 },
+        { title: 'Saumon, poireaux et riz', done: false, kcal: 246 }
+      ][i];
+      return {
+        id: `demo-${def.key}`,
+        key: def.key,
+        slot: def.slot,
+        title: samples.title,
+        done: samples.done,
+        kcal: samples.kcal,
+        iconSrc: def.iconSrc
+      };
+    });
   }
 
   private estimateKcal(title: string): number {

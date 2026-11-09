@@ -21,6 +21,7 @@ public class FreyaDbContext : IdentityDbContext<AppUser>
     public DbSet<Friendship> Friendships => Set<Friendship>();
     public DbSet<Conversation> Conversations => Set<Conversation>();
     public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
+    public DbSet<ConversationReadState> ConversationReadStates => Set<ConversationReadState>();
     public DbSet<Family> Families => Set<Family>();
     public DbSet<FamilyMember> FamilyMembers => Set<FamilyMember>();
     public DbSet<UserPlanningSnapshot> PlanningSnapshots => Set<UserPlanningSnapshot>();
@@ -30,6 +31,7 @@ public class FreyaDbContext : IdentityDbContext<AppUser>
     public DbSet<BudgetShare> BudgetShares => Set<BudgetShare>();
     public DbSet<BudgetAccount> BudgetAccounts => Set<BudgetAccount>();
     public DbSet<BudgetProject> BudgetProjects => Set<BudgetProject>();
+    public DbSet<PetProfileShare> PetProfileShares => Set<PetProfileShare>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -99,6 +101,17 @@ public class FreyaDbContext : IdentityDbContext<AppUser>
             e.HasIndex(x => new { x.ConversationId, x.SentAtUtc });
             e.Property(x => x.SenderId).HasMaxLength(450).IsRequired();
             e.Property(x => x.Body).HasMaxLength(2000).IsRequired();
+        });
+
+        builder.Entity<ConversationReadState>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => new { x.ConversationId, x.UserId }).IsUnique();
+            e.Property(x => x.UserId).HasMaxLength(450).IsRequired();
+            e.HasOne(x => x.Conversation)
+                .WithMany()
+                .HasForeignKey(x => x.ConversationId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         builder.Entity<Family>(e =>
@@ -173,6 +186,16 @@ public class FreyaDbContext : IdentityDbContext<AppUser>
             e.Property(x => x.UserId).HasMaxLength(450).IsRequired();
             e.Property(x => x.Label).HasMaxLength(160).IsRequired();
             e.Property(x => x.Icon).HasMaxLength(16).IsRequired();
+        });
+
+        builder.Entity<PetProfileShare>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => x.Token).IsUnique();
+            e.Property(x => x.Token).HasMaxLength(64).IsRequired();
+            e.Property(x => x.OwnerUserId).HasMaxLength(450).IsRequired();
+            e.Property(x => x.OwnerName).HasMaxLength(120).IsRequired();
+            e.Property(x => x.PetPayloadJson).IsRequired();
         });
     }
 }

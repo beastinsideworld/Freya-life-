@@ -14,14 +14,14 @@
         }
       </select>
     </label>
-    <div class="icon" aria-hidden="true">⌂</div>
+    <div class="icon" aria-hidden="true"><app-nav-icon name="accueil" /></div>
     <h1>Accueil</h1>
     <p class="sub">Ta journée en un coup d’œil</p>
   </header>
 
   @if (nextTrip(); as trip) {
     <a class="trip-banner" [routerLink]="['/voyages']" [queryParams]="{ trip: trip.id }">
-      <span class="trip-label">Voyage</span>
+      <span class="trip-label"><span class="section-ico" aria-hidden="true"><app-nav-icon name="voyages" /></span> Voyage</span>
       <strong>{{ trip.title }}</strong>
       <span class="trip-count">{{ countdown(trip.daysUntil) }}</span>
     </a>
@@ -29,9 +29,6 @@
 
   <div class="top-meta">
     <p class="meta-pill">{{ dateLabel() }} · {{ time() }}</p>
-    <button type="button" class="meta-pill weather" (click)="openWeatherPopup()" aria-label="Météo de la semaine">
-      ☀ {{ temperature() }}°C
-    </button>
   </div>
 
   <section class="panel composer" aria-label="Nouvel événement">
@@ -165,15 +162,33 @@
 
   <section class="panel meals">
     <div class="section-head">
-      <h2>🍴 Repas du jour <span class="kcal-total">{{ totalMealsKcal() }} kcal</span></h2>
+      <h2>
+        <span class="section-ico" aria-hidden="true"><app-nav-icon name="repas" /></span>
+        Repas du jour
+        <span class="kcal-total">≈ {{ totalMealsKcal() }} kcal</span>
+      </h2>
       <a routerLink="/repas">Voir les recettes →</a>
     </div>
     <div class="meal-row">
-      @for (meal of meals(); track meal.id) {
-        <article class="meal-card" [class.done]="meal.done" (click)="toggleMeal(meal)" role="button" tabindex="0">
-          <div class="ph" aria-hidden="true"></div>
+      @for (meal of meals(); track meal.key) {
+        <article
+          class="meal-card"
+          [class.done]="meal.done"
+          (click)="toggleMeal(meal)"
+          role="button"
+          tabindex="0"
+          [attr.aria-label]="meal.slot + ', ' + meal.kcal + ' kilocalories'"
+        >
           <span class="kcal-badge">{{ meal.kcal }} kcal</span>
-          <span class="status" [class.on]="meal.done">{{ meal.done ? '✓' : '' }}</span>
+          <button
+            type="button"
+            class="meal-edit"
+            (click)="$event.stopPropagation(); toggleMeal(meal)"
+            [attr.aria-label]="meal.done ? 'Marquer non pris' : 'Marquer pris'"
+          >✎</button>
+          <div class="meal-ico" aria-hidden="true">
+            <img [src]="meal.iconSrc" [alt]="''" draggable="false" />
+          </div>
           <h3>{{ meal.slot }}</h3>
           <p>{{ meal.title }}</p>
         </article>
@@ -183,17 +198,29 @@
 
   <section class="panel week" aria-label="Planning de la semaine">
     <div class="section-head">
-      <h2>▦ Planning de la semaine</h2>
+      <h2><span class="section-ico" aria-hidden="true"><app-nav-icon name="planning" /></span> Planning de la semaine</h2>
       <a routerLink="/planning">Voir →</a>
     </div>
+    @if (weatherFallback() && !weatherLoading()) {
+      <p class="weather-inline-note">Météo estimée (service temporairement indisponible)</p>
+    }
     <div class="week-row">
       @for (day of weekDays(); track day.date) {
+        @let wx = weatherFor(day.date);
         <article [class.today]="day.isToday">
           <h3>{{ day.label }}</h3>
           <p class="day-num">{{ day.dayNum }}</p>
-          @if (day.events.length === 0) {
-            <p class="empty-day">Libre</p>
-          } @else {
+          <div class="day-weather" [attr.title]="wx?.summary || 'Météo'">
+            <span class="day-weather-ico" aria-hidden="true">{{ wx?.icon || (weatherLoading() ? '…' : '☀') }}</span>
+            <span class="day-weather-temp">
+              @if (wx) {
+                {{ wx.tempMax }}° | {{ wx.tempMin }}°
+              } @else {
+                —
+              }
+            </span>
+          </div>
+          @if (day.events.length) {
             <ul>
               @for (item of day.events; track item.id) {
                 <li>
@@ -248,31 +275,6 @@
         <button type="submit" class="btn primary">Enregistrer</button>
       </div>
     </form>
-  </div>
-}
-
-@if (weatherOpen()) {
-  <div class="modal-backdrop" (click)="closeWeatherPopup()" role="presentation"></div>
-  <div class="modal weather-modal" role="dialog" aria-modal="true" aria-labelledby="weather-title">
-    <header class="modal-head">
-      <h2 id="weather-title">Météo de la semaine</h2>
-      <button type="button" class="modal-close" (click)="closeWeatherPopup()" aria-label="Fermer">×</button>
-    </header>
-    <p class="weather-place">{{ weatherPlace() }}</p>
-    @if (weatherLoading()) {
-      <p class="empty">Chargement…</p>
-    } @else {
-      <ul class="weather-week">
-        @for (day of weatherDays(); track day.date) {
-          <li>
-            <span class="w-day">{{ day.label }}</span>
-            <span class="w-icon" aria-hidden="true">{{ day.icon }}</span>
-            <span class="w-sum">{{ day.summary }}</span>
-            <span class="w-temp">{{ day.tempMax }}° / {{ day.tempMin }}°</span>
-          </li>
-        }
-      </ul>
-    }
   </div>
 }
 

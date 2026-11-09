@@ -8,15 +8,17 @@ import { PlanningComponent } from './features/planning/planning.component';
 import { RepasComponent } from './features/repas/repas.component';
 import { VoyagesComponent } from './features/voyages/voyages.component';
 import { TeleComponent } from './features/tele/tele.component';
-import { SimplePageComponent } from './features/placeholders/simple-page.component';
 import { ParametresComponent } from './features/parametres/parametres.component';
 import { ChatComponent } from './features/chat/chat.component';
 import { BudgetComponent } from './features/budget/budget.component';
 import { AnimauxComponent } from './features/animaux/animaux.component';
+import { PetShareViewComponent } from './features/animaux/pet-share-view.component';
+import { SportComponent } from './features/sport/sport.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: 'register', component: RegisterComponent },
+  { path: 'partage/animaux/:token', component: PetShareViewComponent },
   {
     path: '',
     component: ShellComponent,
@@ -29,11 +31,7 @@ export const routes: Routes = [
       { path: 'tele', component: TeleComponent },
       { path: 'chat', component: ChatComponent },
       { path: 'budget', component: BudgetComponent },
-      {
-        path: 'sport',
-        component: SimplePageComponent,
-        data: { title: 'Sport', subtitle: 'Séances, objectifs et suivi sportif à venir.' }
-      },
+      { path: 'sport', component: SportComponent },
       { path: 'animaux', component: AnimauxComponent },
       { path: 'parametres', component: ParametresComponent }
     ]

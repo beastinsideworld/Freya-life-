@@ -96,6 +96,7 @@ using (var scope = app.Services.CreateScope())
     await EnsureSocialSchemaAsync(db);
     await EnsureFamilySchemaAsync(db);
     await EnsureBudgetSchemaAsync(db);
+    await EnsurePetShareSchemaAsync(db);
     await EnsureFriendCodesAsync(db, users);
 }
 
@@ -205,9 +206,9 @@ api.MapPatch("/auth/me", async (UpdateProfileRequest request, ICurrentUser curre
         {
             return Results.BadRequest(new { message = "Image de profil invalide." });
         }
-        else if (avatar.Length > 3_500_000)
+        else if (avatar.Length > 8_000_000)
         {
-            return Results.BadRequest(new { message = "Image trop lourde (max 2,5 Mo)." });
+            return Results.BadRequest(new { message = "Image trop lourde (max ~6 Mo compressés)." });
         }
         else
         {
@@ -841,11 +842,21 @@ api.MapGet("/chat/conversations", async (ICurrentUser current, FreyaDbContext db
         .GroupBy(m => m.ConversationId)
         .ToDictionary(g => g.Key, g => g.First());
 
+    var readStates = await db.ConversationReadStates
+        .AsNoTracking()
+        .Where(r => r.UserId == current.UserId && conversationIds.Contains(r.ConversationId))
+        .ToDictionaryAsync(r => r.ConversationId, r => r.LastReadAtUtc);
+
     var result = conversations.Select(c =>
     {
         var peerId = c.UserAId == current.UserId ? c.UserBId : c.UserAId;
         peers.TryGetValue(peerId, out var peer);
         lastByConv.TryGetValue(c.Id, out var last);
+        readStates.TryGetValue(c.Id, out var lastRead);
+        var unread = recentMessages.Count(m =>
+            m.ConversationId == c.Id
+            && m.SenderId != current.UserId
+            && m.SentAtUtc > lastRead);
         return new ConversationDto(
             c.Id,
             peerId,
@@ -853,7 +864,8 @@ api.MapGet("/chat/conversations", async (ICurrentUser current, FreyaDbContext db
             peer?.FriendCode ?? 0,
             last?.Body,
             last?.SentAtUtc ?? c.LastMessageAtUtc,
-            peer?.AvatarUrl);
+            peer?.AvatarUrl,
+            unread);
     }).ToList();
 
     return Results.Ok(result);
@@ -911,6 +923,9 @@ api.MapGet("/chat/conversations/{id:guid}/messages", async (Guid id, ICurrentUse
         return Results.NotFound();
     }
 
+    await MarkConversationReadAsync(db, id, current.UserId);
+    await db.SaveChangesAsync();
+
     var messages = await db.ChatMessages
         .AsNoTracking()
         .Where(m => m.ConversationId == id)
@@ -919,6 +934,25 @@ api.MapGet("/chat/conversations/{id:guid}/messages", async (Guid id, ICurrentUse
         .ToListAsync();
 
     return Results.Ok(messages);
+}).RequireAuthorization();
+
+api.MapPost("/chat/conversations/{id:guid}/read", async (Guid id, ICurrentUser current, FreyaDbContext db) =>
+{
+    if (current.UserId is null)
+    {
+        return Results.Unauthorized();
+    }
+
+    var conversation = await db.Conversations.AsNoTracking()
+        .FirstOrDefaultAsync(c => c.Id == id && (c.UserAId == current.UserId || c.UserBId == current.UserId));
+    if (conversation is null)
+    {
+        return Results.NotFound();
+    }
+
+    await MarkConversationReadAsync(db, id, current.UserId);
+    await db.SaveChangesAsync();
+    return Results.Ok(new { unreadCount = 0 });
 }).RequireAuthorization();
 
 api.MapPost("/chat/conversations/{id:guid}/messages", async (
@@ -1701,6 +1735,39 @@ api.MapGet("/budget/shared-with-me", async (ICurrentUser current, FreyaDbContext
     return Results.Ok(owners);
 }).RequireAuthorization();
 
+api.MapPost("/pets/shares", async (CreatePetShareRequest request, ICurrentUser current, FreyaDbContext db) =>
+{
+    if (current.UserId is null) return Results.Unauthorized();
+    if (string.IsNullOrWhiteSpace(request.PetPayloadJson))
+    {
+        return Results.BadRequest(new { message = "Profil animal manquant." });
+    }
+
+    var me = await db.Users.AsNoTracking().FirstAsync(u => u.Id == current.UserId);
+    var token = Convert.ToHexString(Guid.NewGuid().ToByteArray()).ToLowerInvariant();
+    var entity = new PetProfileShare
+    {
+        Id = Guid.NewGuid(),
+        Token = token,
+        OwnerUserId = current.UserId,
+        OwnerName = me.DisplayName,
+        PetPayloadJson = request.PetPayloadJson,
+        CreatedAtUtc = DateTime.UtcNow
+    };
+    db.PetProfileShares.Add(entity);
+    await db.SaveChangesAsync();
+    return Results.Ok(new PetShareDto(entity.Token, entity.OwnerName, entity.CreatedAtUtc));
+}).RequireAuthorization();
+
+api.MapGet("/pets/shares/{token}", async (string token, FreyaDbContext db) =>
+{
+    if (string.IsNullOrWhiteSpace(token)) return Results.BadRequest(new { message = "Lien invalide." });
+    var entity = await db.PetProfileShares.AsNoTracking()
+        .FirstOrDefaultAsync(s => s.Token == token.Trim().ToLowerInvariant());
+    if (entity is null) return Results.NotFound(new { message = "Lien de partage introuvable." });
+    return Results.Ok(new PetShareViewDto(entity.Token, entity.OwnerName, entity.PetPayloadJson, entity.CreatedAtUtc));
+});
+
 app.Run();
 
 static DateOnly StartOfWeek(DateOnly date)
@@ -1824,6 +1891,18 @@ static async Task EnsureSocialSchemaAsync(FreyaDbContext db)
     await db.Database.ExecuteSqlRawAsync("""
         CREATE INDEX IF NOT EXISTS "IX_ChatMessages_ConversationId_SentAtUtc"
         ON "ChatMessages" ("ConversationId", "SentAtUtc");
+
+        CREATE TABLE IF NOT EXISTS "ConversationReadStates" (
+            "Id" TEXT NOT NULL CONSTRAINT "PK_ConversationReadStates" PRIMARY KEY,
+            "ConversationId" TEXT NOT NULL,
+            "UserId" TEXT NOT NULL,
+            "LastReadAtUtc" TEXT NOT NULL,
+            CONSTRAINT "FK_ConversationReadStates_Conversations_ConversationId"
+                FOREIGN KEY ("ConversationId") REFERENCES "Conversations" ("Id") ON DELETE CASCADE
+        );
+
+        CREATE UNIQUE INDEX IF NOT EXISTS "IX_ConversationReadStates_ConversationId_UserId"
+        ON "ConversationReadStates" ("ConversationId", "UserId");
         """);
 }
 
@@ -1989,6 +2068,25 @@ static async Task EnsureBudgetSchemaAsync(FreyaDbContext db)
         """);
 }
 
+static async Task EnsurePetShareSchemaAsync(FreyaDbContext db)
+{
+    await db.Database.ExecuteSqlRawAsync("""
+        CREATE TABLE IF NOT EXISTS "PetProfileShares" (
+            "Id" TEXT NOT NULL CONSTRAINT "PK_PetProfileShares" PRIMARY KEY,
+            "Token" TEXT NOT NULL,
+            "OwnerUserId" TEXT NOT NULL,
+            "OwnerName" TEXT NOT NULL,
+            "PetPayloadJson" TEXT NOT NULL,
+            "CreatedAtUtc" TEXT NOT NULL
+        );
+        """);
+
+    await db.Database.ExecuteSqlRawAsync("""
+        CREATE UNIQUE INDEX IF NOT EXISTS "IX_PetProfileShares_Token"
+        ON "PetProfileShares" ("Token");
+        """);
+}
+
 static async Task EnsureFriendCodesAsync(FreyaDbContext db, UserManager<AppUser> users)
 {
     var missing = await users.Users.Where(u => u.FriendCode <= 0).ToListAsync();
@@ -2118,6 +2216,25 @@ static async Task<int> NextFriendCodeAsync(UserManager<AppUser> users)
     throw new InvalidOperationException("Plus de codes amis disponibles.");
 }
 
+static async Task MarkConversationReadAsync(FreyaDbContext db, Guid conversationId, string userId)
+{
+    var state = await db.ConversationReadStates
+        .FirstOrDefaultAsync(r => r.ConversationId == conversationId && r.UserId == userId);
+    if (state is null)
+    {
+        db.ConversationReadStates.Add(new ConversationReadState
+        {
+            Id = Guid.NewGuid(),
+            ConversationId = conversationId,
+            UserId = userId,
+            LastReadAtUtc = DateTime.UtcNow
+        });
+        return;
+    }
+
+    state.LastReadAtUtc = DateTime.UtcNow;
+}
+
 static async Task<Conversation> GetOrCreateConversationAsync(FreyaDbContext db, string userId, string peerId)
 {
     var a = string.CompareOrdinal(userId, peerId) <= 0 ? userId : peerId;
@@ -2179,3 +2296,6 @@ internal record GroceryCreateRequest(string Name, string? Quantity, string? Aisl
 internal record GroceryPatchRequest(GroceryStatus? Status, string? Quantity, bool? Favorite);
 internal record RecipeCreateRequest(string Title, int DurationMin, string? Difficulty, string? Categories, string? ImageUrl, string? Instructions, string? Ingredients, int? Kcal);
 internal record TripCreateRequest(string Title, DateOnly StartDate, DateOnly EndDate, string? CoverUrl, string? Subtitle);
+internal record CreatePetShareRequest(string PetPayloadJson);
+internal record PetShareDto(string Token, string OwnerName, DateTime CreatedAtUtc);
+internal record PetShareViewDto(string Token, string OwnerName, string PetPayloadJson, DateTime CreatedAtUtc);

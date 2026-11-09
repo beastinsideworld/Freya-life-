@@ -19,6 +19,11 @@
             {{ badgeCounts()[tab.badgeTarget] }}
           </button>
         }
+        @if (tab.id === 'chat' && chatUnreadCount()) {
+          <span class="nav-badge" [attr.aria-label]="chatUnreadCount() + ' messages non lus'">
+            {{ chatUnreadCount() > 99 ? '99+' : chatUnreadCount() }}
+          </span>
+        }
       </a>
     }
   </aside>
@@ -41,19 +46,34 @@
   }
 
   <nav class="bottom-nav" aria-label="Navigation mobile">
-    @for (tab of visibleTabs(); track tab.id) {
-      <a
-        [routerLink]="tab.path"
-        routerLinkActive="active"
-        [routerLinkActiveOptions]="tab.path === '/' ? { exact: true } : { exact: false }"
-        [attr.aria-label]="tab.label"
-        (click)="onNavClick(tab.badgeTarget)"
-      >
-        <span class="ico" aria-hidden="true">{{ tab.icon }}</span>
-        @if (tab.badgeTarget && badgeCounts()[tab.badgeTarget]) {
-          <span class="dot-badge">{{ badgeCounts()[tab.badgeTarget] }}</span>
+    <div class="bottom-nav-rail">
+      @for (tab of visibleTabs(); track tab.id; let last = $last) {
+        <a
+          class="bottom-link"
+          [routerLink]="tab.path"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="tab.path === '/' ? { exact: true } : { exact: false }"
+          [attr.aria-label]="tab.label"
+          (click)="onNavClick(tab.badgeTarget)"
+        >
+          <span class="active-ring" aria-hidden="true"></span>
+          <span class="ico-wrap" aria-hidden="true">
+            <app-nav-icon [name]="tab.id" />
+          </span>
+          <span class="nav-label">{{ tab.label }}</span>
+          @if (tab.badgeTarget && badgeCounts()[tab.badgeTarget]) {
+            <span class="dot-badge">{{ badgeCounts()[tab.badgeTarget] }}</span>
+          }
+          @if (tab.id === 'chat' && chatUnreadCount()) {
+            <span class="dot-badge" [attr.aria-label]="chatUnreadCount() + ' messages non lus'">
+              {{ chatUnreadCount() > 99 ? '99+' : chatUnreadCount() }}
+            </span>
+          }
+        </a>
+        @if (!last) {
+          <span class="nav-divider" aria-hidden="true"></span>
         }
-      </a>
-    }
+      }
+    </div>
   </nav>
 </div>

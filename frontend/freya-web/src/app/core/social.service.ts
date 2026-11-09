@@ -26,6 +26,7 @@ export interface ConversationSummary {
   lastMessage: string | null;
   lastMessageAtUtc: string | null;
   peerAvatarUrl: string | null;
+  unreadCount?: number;
 }
 
 export interface ChatMessage {
@@ -75,5 +76,12 @@ export class SocialService {
 
   sendMessage(conversationId: string, body: string) {
     return this.http.post<ChatMessage>(`${this.base}/chat/conversations/${conversationId}/messages`, { body });
+  }
+
+  markConversationRead(conversationId: string) {
+    return this.http.post<{ unreadCount: number }>(
+      `${this.base}/chat/conversations/${conversationId}/read`,
+      {}
+    );
   }
 }

@@ -1,20 +1,25 @@
-import { Component, OnDestroy, OnInit, effect, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ChatUnreadService } from '../../core/chat-unread.service';
 import {
   ChatMessage,
   ConversationSummary,
   Friend,
   SocialService
 } from '../../core/social.service';
+import { NavIconComponent } from '../../shared/nav-icon/nav-icon.component';
 
 @Component({
   selector: 'app-chat',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, NavIconComponent],
   templateUrl: './chat.component.html',
   styleUrl: './chat.component.scss'
 })
 export class ChatComponent implements OnInit, OnDestroy {
+  private readonly social = inject(SocialService);
+  private readonly chatUnread = inject(ChatUnreadService);
+
   readonly conversations = signal<ConversationSummary[]>([]);
   readonly friends = signal<Friend[]>([]);
   readonly messages = signal<ChatMessage[]>([]);
@@ -27,7 +32,7 @@ export class ChatComponent implements OnInit, OnDestroy {
   draft = '';
   private pollTimer: number | null = null;
 
-  constructor(private readonly social: SocialService) {
+  constructor() {
     effect(() => {
       const selected = this.selected();
       if (selected) {
@@ -52,6 +57,7 @@ export class ChatComponent implements OnInit, OnDestroy {
     this.social.conversations().subscribe({
       next: (list) => {
         this.conversations.set(list);
+        this.chatUnread.applyConversations(list);
         this.loading.set(false);
       },
       error: () => {
@@ -66,8 +72,12 @@ export class ChatComponent implements OnInit, OnDestroy {
   }
 
   openConversation(item: ConversationSummary): void {
-    this.selected.set(item);
+    this.selected.set({ ...item, unreadCount: 0 });
     this.view.set('thread');
+    this.conversations.update((list) =>
+      list.map((c) => (c.id === item.id ? { ...c, unreadCount: 0 } : c))
+    );
+    this.chatUnread.markConversationRead(item.id);
     this.loadMessages(item.id);
   }
 
@@ -139,7 +149,11 @@ export class ChatComponent implements OnInit, OnDestroy {
 
   private loadMessages(conversationId: string): void {
     this.social.messages(conversationId).subscribe({
-      next: (list) => this.messages.set(list),
+      next: (list) => {
+        this.messages.set(list);
+        // GET messages marque déjà la conversation comme lue côté API
+        this.chatUnread.refresh();
+      },
       error: () => this.error.set('Impossible de charger les messages.')
     });
   }

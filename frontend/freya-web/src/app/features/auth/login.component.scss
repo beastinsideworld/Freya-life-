@@ -48,7 +48,7 @@ button {
 }
 
 button {
-  background: linear-gradient(180deg, #a33445, var(--accent-deep));
+  background: var(--grad-btn);
   border-color: #b04555;
   box-shadow: var(--shadow-glow);
   color: #fff7f2;

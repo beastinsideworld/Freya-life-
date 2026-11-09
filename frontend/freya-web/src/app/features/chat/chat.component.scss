@@ -50,7 +50,7 @@
   width: 2.5rem;
   height: 2.5rem;
   border-radius: 50%;
-  background: linear-gradient(180deg, #a33445, var(--accent-deep));
+  background: var(--grad-btn);
   color: #fff7f2;
   font-family: var(--font-display);
   background-position: center;
@@ -85,6 +85,26 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.when-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.35rem;
+}
+
+.unread-badge {
+  min-width: 1.15rem;
+  height: 1.15rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff7f2;
+  font-size: 0.7rem;
+  line-height: 1.15rem;
+  text-align: center;
+  font-weight: 700;
 }
 
 .friend-start-list li {
@@ -146,7 +166,7 @@
 .message-list li.mine {
   align-self: flex-end;
   margin-left: auto;
-  background: linear-gradient(180deg, #a33445, var(--accent-deep));
+  background: var(--grad-btn);
   color: #fff7f2;
 }
 

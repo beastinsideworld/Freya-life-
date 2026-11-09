@@ -16,6 +16,7 @@ import {
 import { Friend, SocialService } from '../../core/social.service';
 import { createId } from '../../core/id';
 import { environment } from '../../../environments/environment';
+import { NavIconComponent } from '../../shared/nav-icon/nav-icon.component';
 
 type FinanceTab = 'synthese' | 'mouvements' | 'projets';
 type MoveFilter = 'all' | 'income' | 'expense';
@@ -52,7 +53,7 @@ const CATEGORY_ICONS: Record<string, string> = {
 @Component({
   selector: 'app-budget',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, NavIconComponent],
   templateUrl: './budget.component.html',
   styleUrl: './budget.component.scss'
 })

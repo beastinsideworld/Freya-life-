@@ -31,6 +31,7 @@ import {
 } from '../../core/trip-local';
 import { DatePickerComponent } from '../../shared/date-picker/date-picker.component';
 import { ImagePickerComponent } from '../../shared/image-picker/image-picker.component';
+import { NavIconComponent } from '../../shared/nav-icon/nav-icon.component';
 
 type TripTab = 'mes' | 'inspirations' | 'budget';
 type DetailSection = 'outils' | 'checklist' | 'budget' | 'infos';
@@ -57,7 +58,7 @@ interface TripDetail {
 @Component({
   selector: 'app-voyages',
   standalone: true,
-  imports: [FormsModule, DatePickerComponent, ImagePickerComponent],
+  imports: [FormsModule, DatePickerComponent, ImagePickerComponent, NavIconComponent],
   templateUrl: './voyages.component.html',
   styleUrl: './voyages.component.scss'
 })

@@ -22,7 +22,7 @@
   width: 3rem;
   height: 3rem;
   border-radius: 50%;
-  background: linear-gradient(180deg, #a33445, var(--accent-deep));
+  background: var(--grad-btn);
   color: #fff7f2;
   font-family: var(--font-display);
   font-size: 1.35rem;
@@ -125,7 +125,7 @@
   width: 2.2rem;
   height: 2.2rem;
   border-radius: 50%;
-  background: linear-gradient(180deg, #a33445, var(--accent-deep));
+  background: var(--grad-btn);
   color: #fff7f2;
   font-family: var(--font-display);
   background-position: center;
@@ -216,6 +216,28 @@
   display: flex;
   flex-direction: column;
   gap: 0.45rem;
+  touch-action: pan-y;
+  user-select: none;
+}
+
+.nav-tab-list.reordering {
+  cursor: grabbing;
+}
+
+.nav-tab-item {
+  border-radius: 0.85rem;
+  transition: transform 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease;
+}
+
+.nav-tab-item.dragging {
+  opacity: 0.72;
+  transform: scale(1.02);
+  box-shadow: 0 0 18px rgba(196, 77, 95, 0.35);
+}
+
+.nav-tab-item.drop-target .nav-tab-toggle {
+  border-color: rgba(255, 160, 175, 0.55);
+  background: rgba(196, 77, 95, 0.18);
 }
 
 .nav-tab-toggle {
@@ -227,7 +249,6 @@
   border: 1px solid var(--border);
   border-radius: 0.85rem;
   background: rgba(10, 4, 7, 0.75);
-  cursor: pointer;
 }
 
 .nav-tab-label {
@@ -237,12 +258,42 @@
   min-width: 0;
 }
 
+.drag-hint {
+  color: var(--muted);
+  letter-spacing: -0.12em;
+  font-size: 0.95rem;
+  opacity: 0.75;
+}
+
 .nav-tab-ico {
   width: 1.5rem;
   text-align: center;
 }
 
-.nav-tab-toggle input {
+.nav-tab-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex: 0 0 auto;
+}
+
+.order-btn {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  line-height: 1;
+  padding: 0;
+}
+
+.order-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.nav-tab-controls input {
   width: 1.1rem;
   height: 1.1rem;
   accent-color: var(--accent);

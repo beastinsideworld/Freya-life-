@@ -9,7 +9,8 @@ public record ConversationDto(
     int PeerFriendCode,
     string? LastMessage,
     DateTime? LastMessageAtUtc,
-    string? PeerAvatarUrl);
+    string? PeerAvatarUrl,
+    int UnreadCount = 0);
 public record ChatMessageDto(Guid Id, string SenderId, string Body, DateTime SentAtUtc, bool Mine);
 public record SendMessageRequest(string Body);
 public record StartConversationRequest(string PeerUserId);

@@ -12,6 +12,7 @@ import {
   searchCatalog
 } from '../../core/grocery-catalog';
 import { ImagePickerComponent } from '../../shared/image-picker/image-picker.component';
+import { NavIconComponent } from '../../shared/nav-icon/nav-icon.component';
 
 type Tab = 'semaine' | 'courses' | 'recettes';
 
@@ -56,7 +57,7 @@ interface Recipe {
 @Component({
   selector: 'app-repas',
   standalone: true,
-  imports: [FormsModule, ImagePickerComponent],
+  imports: [FormsModule, ImagePickerComponent, NavIconComponent],
   templateUrl: './repas.component.html',
   styleUrl: './repas.component.scss'
 })

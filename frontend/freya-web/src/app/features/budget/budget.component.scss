@@ -377,7 +377,7 @@
 }
 
 .filter-pills button.active {
-  background: linear-gradient(180deg, #a33445 0%, var(--accent-deep) 100%);
+  background: var(--grad-btn);
   color: #fff7f2;
   box-shadow: var(--shadow-glow);
 }
@@ -583,7 +583,7 @@
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, #a33445, #ff9aa8);
+  background: linear-gradient(90deg, var(--accent-mid), #ff9aa8);
 }
 
 .project-meta {

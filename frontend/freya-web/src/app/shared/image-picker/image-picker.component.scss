@@ -4,9 +4,14 @@
   gap: 0.55rem;
 }
 
-.photo-label {
+.photo-label,
+.photo-busy {
   color: var(--muted);
   font-size: 0.86rem;
+}
+
+.photo-busy {
+  margin: 0;
 }
 
 .photo-preview {

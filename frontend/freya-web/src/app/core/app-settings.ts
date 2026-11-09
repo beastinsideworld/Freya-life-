@@ -1,5 +1,5 @@
 import { ThemeId, applyTheme, isThemeId } from './themes';
-import { NavTabId, isNavTabId } from './nav-tabs';
+import { NavTabId, isNavTabId, normalizeNavTabOrder } from './nav-tabs';
 
 export interface AppSettings {
   /** Si false, aucun popup de rappel des tâches non faites. */
@@ -10,6 +10,8 @@ export interface AppSettings {
   themeId: ThemeId;
   /** Onglets masqués dans la navigation (hors Accueil / Paramètres). */
   hiddenNavTabs: NavTabId[];
+  /** Ordre des onglets déplaçables (barre du bas / menu). */
+  navTabOrder: NavTabId[];
 }
 
 const SETTINGS_KEY = 'freya.settings.v1';
@@ -20,7 +22,8 @@ const DEFAULT_SETTINGS: AppSettings = {
   reminderEnabled: true,
   reminderTime: '20:00',
   themeId: 'freya',
-  hiddenNavTabs: []
+  hiddenNavTabs: [],
+  navTabOrder: []
 };
 
 function normalizeHiddenTabs(value: unknown): NavTabId[] {
@@ -39,7 +42,8 @@ export function loadSettings(): AppSettings {
         ? String(parsed.reminderTime)
         : DEFAULT_SETTINGS.reminderTime,
       themeId: isThemeId(parsed.themeId) ? parsed.themeId : DEFAULT_SETTINGS.themeId,
-      hiddenNavTabs: normalizeHiddenTabs(parsed.hiddenNavTabs)
+      hiddenNavTabs: normalizeHiddenTabs(parsed.hiddenNavTabs),
+      navTabOrder: normalizeNavTabOrder(parsed.navTabOrder)
     };
   } catch {
     return { ...DEFAULT_SETTINGS };

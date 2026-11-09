@@ -1,6 +1,6 @@
 <section class="page parametres">
   <header class="hero">
-    <div class="icon" aria-hidden="true">⚙</div>
+    <div class="icon" aria-hidden="true"><app-nav-icon name="parametres" /></div>
     <h1>Paramètres</h1>
     <p class="sub">Compte, amis, notifications et apparence</p>
   </header>
@@ -262,21 +262,53 @@
     </header>
 
     <div class="theme-modal-body">
-      <p class="cat-desc">Choisis les onglets visibles dans la navigation. Accueil et Paramètres restent toujours affichés.</p>
-      <ul class="nav-tab-list">
-        @for (tab of toggleableTabs; track tab.id) {
-          <li>
-            <label class="nav-tab-toggle">
+      <p class="cat-desc">
+        Choisis les onglets visibles, puis réordonne-les avec les flèches ou un appui long (glisser).
+        Accueil et Paramètres restent fixés aux extrémités.
+      </p>
+      <ul
+        class="nav-tab-list"
+        [class.reordering]="!!draggingTabId()"
+        (pointerup)="onTabPointerUp()"
+        (pointercancel)="onTabPointerCancel()"
+      >
+        @for (tab of orderedToggleableTabs(); track tab.id) {
+          <li
+            class="nav-tab-item"
+            [class.dragging]="draggingTabId() === tab.id"
+            [class.drop-target]="dragOverTabId() === tab.id && draggingTabId() !== tab.id"
+            (pointerdown)="onTabPointerDown(tab.id, $event)"
+            (pointerenter)="onTabPointerEnter(tab.id)"
+          >
+            <div class="nav-tab-toggle">
               <span class="nav-tab-label">
+                <span class="drag-hint" aria-hidden="true">⋮⋮</span>
                 <span class="nav-tab-ico" aria-hidden="true">{{ tab.icon }}</span>
                 {{ tab.label }}
               </span>
-              <input
-                type="checkbox"
-                [checked]="isNavTabVisible(tab.id)"
-                (change)="toggleNavTab(tab.id, $any($event.target).checked)"
-              >
-            </label>
+              <div class="nav-tab-controls">
+                <button
+                  type="button"
+                  class="order-btn"
+                  (click)="moveNavTab(tab.id, -1)"
+                  [disabled]="!canMoveUp(tab.id)"
+                  aria-label="Monter"
+                >↑</button>
+                <button
+                  type="button"
+                  class="order-btn"
+                  (click)="moveNavTab(tab.id, 1)"
+                  [disabled]="!canMoveDown(tab.id)"
+                  aria-label="Descendre"
+                >↓</button>
+                <input
+                  type="checkbox"
+                  [checked]="isNavTabVisible(tab.id)"
+                  (change)="toggleNavTab(tab.id, $any($event.target).checked)"
+                  [attr.aria-label]="'Afficher ' + tab.label"
+                >
+              </div>
+            </div>
           </li>
         }
       </ul>

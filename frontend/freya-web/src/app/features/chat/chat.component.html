@@ -1,7 +1,7 @@
 <section class="page chat-page">
   @if (view() === 'list') {
     <header class="hero">
-      <div class="icon" aria-hidden="true">💬</div>
+      <div class="icon" aria-hidden="true"><app-nav-icon name="chat" /></div>
       <h1>Chat</h1>
       <p class="sub">Parle avec tes amis ajoutés via leur ID</p>
     </header>
@@ -39,7 +39,12 @@
                   <strong>{{ item.peerDisplayName }}</strong>
                   <span class="preview">{{ item.lastMessage || 'Nouvelle conversation' }}</span>
                 </span>
-                <span class="when">{{ formatTime(item.lastMessageAtUtc) }}</span>
+                <span class="when-col">
+                  <span class="when">{{ formatTime(item.lastMessageAtUtc) }}</span>
+                  @if (item.unreadCount) {
+                    <span class="unread-badge">{{ item.unreadCount > 99 ? '99+' : item.unreadCount }}</span>
+                  }
+                </span>
               </button>
             </li>
           }

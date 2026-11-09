@@ -1,21 +1,25 @@
 import { Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { IdeaCaptureService, BadgeTarget } from '../core/idea-capture';
+import { ChatUnreadService } from '../core/chat-unread.service';
 import { NavPrefsService } from '../core/nav-prefs.service';
 import { IdeaCaptureComponent } from '../shared/idea-capture/idea-capture.component';
+import { NavIconComponent } from '../shared/nav-icon/nav-icon.component';
 
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, IdeaCaptureComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, IdeaCaptureComponent, NavIconComponent],
   templateUrl: './shell.component.html',
   styleUrl: './shell.component.scss'
 })
 export class ShellComponent {
   private readonly ideas = inject(IdeaCaptureService);
   private readonly navPrefs = inject(NavPrefsService);
+  private readonly chatUnread = inject(ChatUnreadService);
 
   readonly badgeCounts = this.ideas.badgeCountByTarget;
+  readonly chatUnreadCount = this.chatUnread.unreadTotal;
   readonly visibleBadges = this.ideas.visibleBadges;
   readonly visibleTabs = this.navPrefs.visibleTabs;
 

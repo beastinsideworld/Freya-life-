@@ -2,6 +2,7 @@ import { Component, OnInit, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { createId } from '../../core/id';
 import { environment } from '../../../environments/environment';
+import { NavIconComponent } from '../../shared/nav-icon/nav-icon.component';
 
 type TeleCategory = 'audiovisuel' | 'jeu' | 'manga' | 'activite';
 type MediaType = 'film' | 'serie' | 'docu';
@@ -30,7 +31,7 @@ const TELE_KEY_LEGACY = 'freya.tele.items';
 @Component({
   selector: 'app-tele',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, NavIconComponent],
   templateUrl: './tele.component.html',
   styleUrl: './tele.component.scss'
 })

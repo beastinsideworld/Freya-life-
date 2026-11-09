@@ -12,6 +12,35 @@ export interface PetReminders {
   weight: boolean;
 }
 
+export interface HeatCycle {
+  id: string;
+  startDate: string;
+  endDate: string;
+  durationDays: number;
+}
+
+export interface PetHeatTracking {
+  enabled: boolean;
+  /** Espacement approximatif entre deux chaleurs (jours). */
+  intervalDays: number;
+  cycles: HeatCycle[];
+}
+
+export const DEFAULT_HEAT_TRACKING: PetHeatTracking = {
+  enabled: true,
+  intervalDays: 180,
+  cycles: []
+};
+
+export const HEAT_INTERVAL_PRESETS: Array<{ label: string; days: number }> = [
+  { label: '1 mois', days: 30 },
+  { label: '2 mois', days: 60 },
+  { label: '3 mois', days: 90 },
+  { label: '4 mois', days: 120 },
+  { label: '6 mois', days: 180 },
+  { label: '12 mois', days: 365 }
+];
+
 export interface Pet {
   id: string;
   name: string;
@@ -22,13 +51,19 @@ export interface Pet {
   photoEmoji: string;
   chip: string | null;
   insurance: boolean;
+  insuranceName: string | null;
+  vaccines: string | null;
+  treatments: string | null;
+  medicalHistory: string | null;
   foodBrand: string | null;
   mealsPerDay: number;
   mealGrams: number;
+  mealSchedule: string | null;
   weightKg: number;
   weightDeltaKg: number;
   notes: string | null;
   reminders: PetReminders;
+  heatTracking: PetHeatTracking;
 }
 
 export interface PetTask {
@@ -49,6 +84,8 @@ export interface PetExpense {
   date: string;
 }
 
+export type AppointmentKind = 'manual' | 'heat';
+
 export interface PetAppointment {
   id: string;
   petId: string;
@@ -59,6 +96,9 @@ export interface PetAppointment {
   notes: string | null;
   done: boolean;
   icon: string;
+  kind?: AppointmentKind;
+  /** Fin prévue pour une chaleur (ISO). */
+  endDate?: string | null;
 }
 
 export interface PetsState {
@@ -78,9 +118,92 @@ const DEFAULT_REMINDERS: PetReminders = {
   weight: true
 };
 
-function todayIso(): string {
+export function todayIso(): string {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+export function addDaysIso(iso: string, days: number): string {
+  const d = new Date(`${iso}T12:00:00`);
+  d.setDate(d.getDate() + days);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+export function daysBetween(startIso: string, endIso: string): number {
+  const a = new Date(`${startIso}T12:00:00`).getTime();
+  const b = new Date(`${endIso}T12:00:00`).getTime();
+  if (Number.isNaN(a) || Number.isNaN(b)) return 0;
+  return Math.max(1, Math.round((b - a) / 86400000) + 1);
+}
+
+function normalizeHeatTracking(raw: Partial<PetHeatTracking> | null | undefined): PetHeatTracking {
+  const cycles = Array.isArray(raw?.cycles)
+    ? raw!.cycles.map((c) => ({
+        id: c.id || createId(),
+        startDate: c.startDate,
+        endDate: c.endDate,
+        durationDays: c.durationDays || daysBetween(c.startDate, c.endDate)
+      }))
+    : [];
+  return {
+    enabled: raw?.enabled !== false,
+    intervalDays: Math.max(7, Number(raw?.intervalDays || DEFAULT_HEAT_TRACKING.intervalDays)),
+    cycles: cycles.sort((a, b) => b.startDate.localeCompare(a.startDate))
+  };
+}
+
+function normalizePet(raw: Partial<Pet> & Pick<Pet, 'id' | 'name'>): Pet {
+  return {
+    id: raw.id,
+    name: raw.name,
+    sex: raw.sex === 'M' ? 'M' : 'F',
+    species: raw.species || 'Animal',
+    breed: raw.breed || '—',
+    birthDate: raw.birthDate || todayIso(),
+    photoEmoji: raw.photoEmoji || '🐾',
+    chip: raw.chip ?? null,
+    insurance: !!raw.insurance,
+    insuranceName: raw.insuranceName ?? null,
+    vaccines: raw.vaccines ?? null,
+    treatments: raw.treatments ?? null,
+    medicalHistory: raw.medicalHistory ?? null,
+    foodBrand: raw.foodBrand ?? null,
+    mealsPerDay: Number(raw.mealsPerDay || 0),
+    mealGrams: Number(raw.mealGrams || 0),
+    mealSchedule: raw.mealSchedule ?? null,
+    weightKg: Number(raw.weightKg || 0),
+    weightDeltaKg: Number(raw.weightDeltaKg || 0),
+    notes: raw.notes ?? null,
+    reminders: { ...DEFAULT_REMINDERS, ...(raw.reminders || {}) },
+    heatTracking: normalizeHeatTracking(raw.heatTracking)
+  };
+}
+
+export function predictHeatCycles(
+  tracking: PetHeatTracking,
+  count = 3
+): Array<{ startDate: string; endDate: string; durationDays: number }> {
+  if (!tracking.enabled || !tracking.cycles.length) return [];
+  const last = [...tracking.cycles].sort((a, b) => b.startDate.localeCompare(a.startDate))[0];
+  const avgDuration = Math.round(
+    tracking.cycles.reduce((s, c) => s + (c.durationDays || daysBetween(c.startDate, c.endDate)), 0) /
+      tracking.cycles.length
+  );
+  const duration = Math.max(1, avgDuration || last.durationDays || 7);
+  const interval = Math.max(7, tracking.intervalDays || 180);
+  const out: Array<{ startDate: string; endDate: string; durationDays: number }> = [];
+  let cursor = last.startDate;
+  const today = todayIso();
+  for (let i = 0; i < count + 6 && out.length < count; i++) {
+    cursor = addDaysIso(cursor, interval);
+    if (cursor < today) continue;
+    out.push({
+      startDate: cursor,
+      endDate: addDaysIso(cursor, duration - 1),
+      durationDays: duration
+    });
+  }
+  return out;
 }
 
 function demoState(): PetsState {
@@ -90,7 +213,7 @@ function demoState(): PetsState {
   const m = String(new Date().getMonth() + 1).padStart(2, '0');
   const today = todayIso();
 
-  return {
+  const base: PetsState = {
     monthlyBudget: 400,
     pets: [
       {
@@ -103,13 +226,30 @@ function demoState(): PetsState {
         photoEmoji: '🐕',
         chip: '250269801234567',
         insurance: true,
+        insuranceName: 'SantéVet',
+        vaccines: 'CHPPi + Lepto à jour',
+        treatments: 'Antiparasitaire mensuel',
+        medicalHistory: null,
         foodBrand: 'Pro Plan Medium Adult',
         mealsPerDay: 2,
         mealGrams: 160,
+        mealSchedule: 'matin et soir',
         weightKg: 25,
         weightDeltaKg: -0.2,
         notes: null,
-        reminders: { ...DEFAULT_REMINDERS }
+        reminders: { ...DEFAULT_REMINDERS },
+        heatTracking: {
+          enabled: true,
+          intervalDays: 180,
+          cycles: [
+            {
+              id: createId(),
+              startDate: `${y}-08-10`,
+              endDate: `${y}-08-20`,
+              durationDays: 11
+            }
+          ]
+        }
       },
       {
         id: freyaId,
@@ -121,13 +261,19 @@ function demoState(): PetsState {
         photoEmoji: '🐱',
         chip: null,
         insurance: false,
+        insuranceName: null,
+        vaccines: null,
+        treatments: null,
+        medicalHistory: null,
         foodBrand: 'Croquettes chat adult',
         mealsPerDay: 2,
         mealGrams: 40,
+        mealSchedule: null,
         weightKg: 3.8,
         weightDeltaKg: 0.1,
         notes: null,
-        reminders: { ...DEFAULT_REMINDERS }
+        reminders: { ...DEFAULT_REMINDERS },
+        heatTracking: { ...DEFAULT_HEAT_TRACKING, intervalDays: 21, cycles: [] }
       }
     ],
     tasks: [
@@ -242,6 +388,11 @@ function demoState(): PetsState {
       }
     ]
   };
+
+  return {
+    ...base,
+    appointments: withSyncedHeatAppointments(base.pets, base.appointments)
+  };
 }
 
 function emptyState(): PetsState {
@@ -272,16 +423,43 @@ function loadState(): PetsState {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(seeded));
       return seeded;
     }
+    const pets = (parsed.pets ?? []).map((p) => normalizePet(p));
+    const appointments = withSyncedHeatAppointments(pets, parsed.appointments ?? []);
     return {
-      pets: parsed.pets ?? [],
+      pets,
       tasks: parsed.tasks ?? [],
       expenses: parsed.expenses ?? [],
-      appointments: parsed.appointments ?? [],
+      appointments,
       monthlyBudget: Number(parsed.monthlyBudget || 400)
     };
   } catch {
     return environment.useDemoData ? demoState() : emptyState();
   }
+}
+
+function buildHeatAppointments(pet: Pet): PetAppointment[] {
+  if (pet.sex !== 'F' || !pet.heatTracking?.enabled) return [];
+  return predictHeatCycles(pet.heatTracking, 3).map((cycle) => ({
+    id: createId(),
+    petId: pet.id,
+    title: `Chaleurs probables – ${pet.name}`,
+    date: cycle.startDate,
+    endDate: cycle.endDate,
+    time: null,
+    place: null,
+    notes: `Prévision basée sur un espacement de ${pet.heatTracking.intervalDays} jours (durée ~${cycle.durationDays} j).`,
+    done: false,
+    icon: '💗',
+    kind: 'heat' as const
+  }));
+}
+
+function withSyncedHeatAppointments(pets: Pet[], appointments: PetAppointment[]): PetAppointment[] {
+  const kept = appointments.filter((a) => a.kind !== 'heat');
+  const generated = pets.flatMap((p) => buildHeatAppointments(p));
+  return [...kept, ...generated].sort((a, b) =>
+    `${a.date}${a.time ?? ''}`.localeCompare(`${b.date}${b.time ?? ''}`)
+  );
 }
 
 @Injectable({ providedIn: 'root' })
@@ -321,23 +499,78 @@ export class PetsStore {
   }
 
   upsertPet(pet: Pet): void {
+    const normalized = normalizePet(pet);
     this.patch((s) => {
-      const exists = s.pets.some((p) => p.id === pet.id);
+      const exists = s.pets.some((p) => p.id === normalized.id);
+      const pets = exists
+        ? s.pets.map((p) => (p.id === normalized.id ? normalized : p))
+        : [...s.pets, normalized];
       return {
         ...s,
-        pets: exists ? s.pets.map((p) => (p.id === pet.id ? pet : p)) : [...s.pets, pet]
+        pets,
+        appointments: withSyncedHeatAppointments(pets, s.appointments)
       };
     });
   }
 
+  setHeatInterval(petId: string, intervalDays: number): void {
+    const pet = this.petById(petId);
+    if (!pet) return;
+    this.upsertPet({
+      ...pet,
+      heatTracking: {
+        ...pet.heatTracking,
+        enabled: true,
+        intervalDays: Math.max(7, intervalDays)
+      }
+    });
+  }
+
+  addHeatCycle(petId: string, startDate: string, endDate: string): void {
+    const pet = this.petById(petId);
+    if (!pet || !startDate || !endDate || endDate < startDate) return;
+    const cycle: HeatCycle = {
+      id: createId(),
+      startDate,
+      endDate,
+      durationDays: daysBetween(startDate, endDate)
+    };
+    this.upsertPet({
+      ...pet,
+      heatTracking: {
+        ...pet.heatTracking,
+        enabled: true,
+        cycles: [cycle, ...pet.heatTracking.cycles]
+      }
+    });
+  }
+
+  removeHeatCycle(petId: string, cycleId: string): void {
+    const pet = this.petById(petId);
+    if (!pet) return;
+    this.upsertPet({
+      ...pet,
+      heatTracking: {
+        ...pet.heatTracking,
+        cycles: pet.heatTracking.cycles.filter((c) => c.id !== cycleId)
+      }
+    });
+  }
+
   removePet(id: string): void {
-    this.patch((s) => ({
-      ...s,
-      pets: s.pets.filter((p) => p.id !== id),
-      tasks: s.tasks.filter((t) => t.petId !== id),
-      expenses: s.expenses.filter((e) => e.petId !== id),
-      appointments: s.appointments.filter((a) => a.petId !== id)
-    }));
+    this.patch((s) => {
+      const pets = s.pets.filter((p) => p.id !== id);
+      return {
+        ...s,
+        pets,
+        tasks: s.tasks.filter((t) => t.petId !== id),
+        expenses: s.expenses.filter((e) => e.petId !== id),
+        appointments: withSyncedHeatAppointments(
+          pets,
+          s.appointments.filter((a) => a.petId !== id)
+        )
+      };
+    });
   }
 
   toggleTask(id: string): void {

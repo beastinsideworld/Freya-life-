@@ -1,0 +1,521 @@
+<section class="page sport-page">
+  <header class="hero sport-hero">
+    <div class="icon" aria-hidden="true"><app-nav-icon name="sport" /></div>
+    <h1>Sport</h1>
+    <p class="sub">Entraînement • Nutrition • Suivi</p>
+  </header>
+
+  <div class="seg sport-tabs" role="tablist" aria-label="Sections sport">
+    <button type="button" role="tab" [class.active]="tab() === 'suivi'" (click)="setTab('suivi')">
+      <span aria-hidden="true">🎯</span> Objectif &amp; suivi
+    </button>
+    <button type="button" role="tab" [class.active]="tab() === 'entrainement'" (click)="setTab('entrainement')">
+      <span class="tab-ico" aria-hidden="true"><app-nav-icon name="sport" /></span> Entraînement
+    </button>
+    <button type="button" role="tab" [class.active]="tab() === 'progression'" (click)="setTab('progression')">
+      <span aria-hidden="true">📊</span> Progression
+    </button>
+  </div>
+
+  @if (tab() === 'suivi') {
+    <section class="panel goal-card">
+      <div class="goal-media" aria-hidden="true"><app-nav-icon name="sport" /></div>
+      <div class="goal-body">
+        <header class="card-head">
+          <h2>Mon objectif</h2>
+          <button type="button" class="ghost-link" (click)="openGoalForm()">✎ Modifier</button>
+        </header>
+        <strong class="goal-title">{{ store.goal().title }}</strong>
+        <p class="muted">
+          {{ numberFr(store.goal().weightKg, 1) }} kg aujourd’hui
+          · cible {{ numberFr(store.goal().weightMinKg, 0) }} – {{ numberFr(store.goal().weightMaxKg, 0) }} kg
+        </p>
+        <p class="muted">
+          {{ store.goal().startLabel }} – {{ store.goal().endLabel }}
+          · {{ activityLabel(store.goal().activity) }}
+        </p>
+        <div class="goal-kcal-row">
+          <span>Dépense ~ <strong>{{ numberFr(store.goal().tdeeKcal) }}</strong> kcal</span>
+          <span>À manger <strong>{{ numberFr(store.goal().targetKcal) }}</strong> kcal</span>
+        </div>
+        <div class="progress-track" aria-hidden="true">
+          <span class="progress-fill" [style.width.%]="store.goal().progressPct"></span>
+        </div>
+        <p class="progress-label">{{ store.goal().progressPct }} %</p>
+      </div>
+    </section>
+
+    <section class="panel">
+      <header class="card-head">
+        <h2>Nutrition du jour</h2>
+        <button type="button" class="ghost-link">Voir le détail ›</button>
+      </header>
+      <div class="nutrition-row">
+        <div class="ring" [style.background]="ringStyle(kcalRing())" aria-hidden="true">
+          <div class="ring-hole">
+            <span class="flame">🔥</span>
+            <strong>{{ numberFr(store.current().kcal) }}</strong>
+            <em>/ {{ numberFr(store.targets().kcal) }} kcal</em>
+          </div>
+        </div>
+        <ul class="macro-list">
+          <li>
+            <div class="macro-head"><span>Protéines</span><strong>{{ store.current().proteinG }} / {{ store.targets().proteinG }} g</strong></div>
+            <div class="progress-track thin"><span class="progress-fill" [style.width]="barWidth(store.current().proteinG, store.targets().proteinG)"></span></div>
+          </li>
+          <li>
+            <div class="macro-head"><span>Glucides</span><strong>{{ store.current().carbsG }} / {{ store.targets().carbsG }} g</strong></div>
+            <div class="progress-track thin soft"><span class="progress-fill" [style.width]="barWidth(store.current().carbsG, store.targets().carbsG)"></span></div>
+          </li>
+          <li>
+            <div class="macro-head"><span>Lipides</span><strong>{{ store.current().fatG }} / {{ store.targets().fatG }} g</strong></div>
+            <div class="progress-track thin violet"><span class="progress-fill" [style.width]="barWidth(store.current().fatG, store.targets().fatG)"></span></div>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="panel">
+      <header class="card-head">
+        <h2>Mes repas du jour</h2>
+        <button type="button" class="btn small">Ajouter un repas +</button>
+      </header>
+      <ul class="meal-list">
+        @for (meal of store.meals(); track meal.id) {
+          <li>
+            <span class="meal-emoji" aria-hidden="true">{{ meal.emoji }}</span>
+            <div class="meal-main">
+              <strong>{{ meal.slot }}</strong>
+              <span>{{ meal.title }}</span>
+              <em>P {{ meal.proteinG }} · G {{ meal.carbsG }} · L {{ meal.fatG }}</em>
+            </div>
+            <strong class="meal-kcal">{{ meal.kcal }} kcal</strong>
+          </li>
+        }
+      </ul>
+    </section>
+
+    <section class="panel">
+      <header class="card-head">
+        <h2>Objectif d’entraînement (semaine)</h2>
+        <button type="button" class="ghost-link">Voir le programme ›</button>
+      </header>
+      <div class="week-goal-row">
+        <div class="ring sm" [style.background]="ringStyle(weekRing())" aria-hidden="true">
+          <div class="ring-hole">
+            <strong>{{ store.weeklyGoal().done }}/{{ store.weeklyGoal().target }}</strong>
+            <em>séances</em>
+          </div>
+        </div>
+        <ul class="week-breakdown">
+          <li>
+            <span>Musculation</span>
+            <strong>{{ store.weeklyGoal().musculationDone }} / {{ store.weeklyGoal().musculationTarget }}</strong>
+            @if (store.weeklyGoal().musculationDone >= store.weeklyGoal().musculationTarget) {
+              <span class="ok">✓</span>
+            }
+          </li>
+          <li>
+            <span>Course</span>
+            <strong>{{ store.weeklyGoal().courseDone }} / {{ store.weeklyGoal().courseTarget }}</strong>
+          </li>
+          <li>
+            <span>Vélo</span>
+            <strong>{{ store.weeklyGoal().veloDone }} / {{ store.weeklyGoal().veloTarget }}</strong>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <div class="split-cards">
+      @if (store.selectedSession(); as session) {
+        <section class="panel session-teaser">
+          <p class="eyebrow">Séance du jour</p>
+          <strong>{{ session.title }}</strong>
+          <div class="tag-row">
+            @for (tag of session.tags; track tag) {
+              <span class="tag">{{ tag }}</span>
+            }
+          </div>
+          <p class="muted">Durée ~ {{ formatDuration(session.durationMin) }} · {{ session.seriesTotal }} séries</p>
+          <button type="button" class="btn primary wide" (click)="setTab('entrainement')">▶ Commencer la séance</button>
+        </section>
+      }
+
+      <section class="panel weight-teaser">
+        <p class="eyebrow">Poids</p>
+        <strong class="weight-now">{{ numberFr(store.currentWeight(), 1) }} kg</strong>
+        <em [class.pos]="store.weightDelta7d() <= 0" [class.neg]="store.weightDelta7d() > 0">
+          {{ deltaLabel(store.weightDelta7d()) }} (7 jours)
+        </em>
+        <svg class="mini-chart" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true">
+          <polyline [attr.points]="weightPolyline()" fill="none" stroke="currentColor" stroke-width="2" />
+        </svg>
+        <button type="button" class="ghost-link" (click)="setTab('progression')">Voir l’évolution ›</button>
+      </section>
+    </div>
+
+    <section class="panel">
+      <h2 class="quick-title">Accès rapides</h2>
+      <div class="quick-grid">
+        <button type="button"><span aria-hidden="true">🍎</span> Ajouter un repas</button>
+        <button type="button" (click)="setTab('entrainement')"><span aria-hidden="true">＋</span> Nouvelle séance</button>
+        <button type="button"><span aria-hidden="true">📅</span> Modifier le programme</button>
+      </div>
+    </section>
+  }
+
+  @if (tab() === 'entrainement') {
+    <section class="panel">
+      <header class="card-head">
+        <h2>Ma semaine d’entraînement</h2>
+      </header>
+      <div class="week-scroller" role="list">
+        @for (day of store.weekDays(); track day.date) {
+          <button
+            type="button"
+            class="day-card"
+            role="listitem"
+            [class.active]="store.selectedDate() === day.date"
+            [class.done]="day.completed"
+            (click)="store.selectDate(day.date)"
+          >
+            @if (day.completed) {
+              <span class="day-check" aria-hidden="true">✓</span>
+            }
+            <strong>{{ day.label }}</strong>
+            <span class="day-ico" aria-hidden="true">{{ kindIcon(day.kind) }}</span>
+            <span class="day-title">{{ day.title }}</span>
+            <em>{{ day.detail }}</em>
+          </button>
+        }
+      </div>
+    </section>
+
+    @if (store.selectedSession(); as session) {
+      <section class="panel session-hero">
+        <p class="eyebrow">Séance du jour</p>
+        <h2>{{ session.title }}</h2>
+        <div class="tag-row">
+          @for (tag of session.tags; track tag) {
+            <span class="tag">{{ tag }}</span>
+          }
+        </div>
+        <div class="stat-grid">
+          <div>
+            <span>⏱ Durée estimée</span>
+            <strong>{{ formatDuration(session.durationMin) }}</strong>
+          </div>
+          <div>
+            <span>📚 Exercices</span>
+            <strong>{{ session.exerciseCount }}</strong>
+          </div>
+          <div>
+            <span>🔥 Dépense estimée</span>
+            <strong>~ {{ session.kcalEstimate }} kcal</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <header class="card-head">
+          <h2>Exercices de la séance</h2>
+          <button type="button" class="ghost-link">✎ Modifier la séance</button>
+        </header>
+        <ul class="exercise-list">
+          @for (ex of session.exercises; track ex.id) {
+            <li [class.done]="ex.done">
+              <span class="ex-emoji" aria-hidden="true">{{ ex.emoji }}</span>
+              <div class="ex-main">
+                <strong>{{ ex.name }}</strong>
+                <span class="muscle">{{ ex.muscle }}</span>
+                <div class="ex-meta">
+                  <span>{{ ex.sets }} × {{ ex.reps }}</span>
+                  <span>{{ ex.loadKg != null ? ex.loadKg + ' kg' : '—' }}</span>
+                  <span>{{ formatRest(ex.restSec) }}</span>
+                  <span class="rpe">RPE {{ ex.rpe }}</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                class="check"
+                [class.on]="ex.done"
+                (click)="store.toggleExercise(session.id, ex.id)"
+                [attr.aria-label]="ex.done ? 'Marquer non fait' : 'Marquer fait'"
+              >{{ ex.done ? '✓' : '' }}</button>
+            </li>
+          } @empty {
+            <li class="empty-row">Aucun exercice pour cette séance.</li>
+          }
+        </ul>
+        <div class="session-actions">
+          <button type="button" class="btn">+ Ajouter un exercice</button>
+          <button type="button" class="btn primary" (click)="store.completeSession(session.id)">▶ Terminer la séance</button>
+        </div>
+      </section>
+
+      <section class="panel summary-card">
+        <h2>Résumé de la séance</h2>
+        <div class="summary-grid">
+          <div><span>Durée</span><strong>{{ formatDuration(session.durationMin) }}</strong></div>
+          <div><span>Séries totales</span><strong>{{ session.seriesTotal }}</strong></div>
+          <div><span>Volume estimé</span><strong>~ {{ numberFr(session.volumeKg) }} kg</strong></div>
+          <div><span>Dépense estimée</span><strong>~ {{ session.kcalEstimate }} kcal</strong></div>
+        </div>
+      </section>
+    } @else {
+      <section class="panel">
+        <p class="empty">Repos ce jour-là. Choisis un autre jour ou ajoute une séance.</p>
+      </section>
+    }
+  }
+
+  @if (tab() === 'progression') {
+    <div class="filters">
+      <label>
+        Période
+        <select [ngModel]="period()" (ngModelChange)="period.set($event)" name="period">
+          <option>1 mois</option>
+          <option>3 mois</option>
+          <option>6 mois</option>
+        </select>
+      </label>
+      <label>
+        Sport
+        <select [ngModel]="sportFilter()" (ngModelChange)="sportFilter.set($event)" name="sportFilter">
+          <option>Tous les sports</option>
+          <option>Musculation</option>
+          <option>Course</option>
+        </select>
+      </label>
+    </div>
+
+    <section class="panel">
+      <header class="card-head">
+        <h2>Évolution du poids</h2>
+        <span class="pill">{{ deltaLabel(store.weightDeltaPeriod()) }}</span>
+      </header>
+      <div class="weight-summary">
+        <strong>{{ numberFr(store.currentWeight(), 1) }} kg</strong>
+        <em [class.pos]="store.weightDeltaPeriod() <= 0">{{ deltaLabel(store.weightDeltaPeriod()) }} ({{ period() }})</em>
+      </div>
+      <svg class="big-chart" viewBox="0 0 100 48" preserveAspectRatio="none" aria-hidden="true">
+        <polyline [attr.points]="weightPolyline()" fill="none" stroke="currentColor" stroke-width="1.8" />
+        @for (p of weightPoints(); track p.date) {
+          <circle [attr.cx]="p.x" [attr.cy]="p.y" r="1.4" />
+        }
+      </svg>
+      <div class="chart-labels">
+        <span>{{ store.weightHistory()[0]?.label }}</span>
+        <span>{{ store.weightHistory()[store.weightHistory().length - 1]?.label }}</span>
+      </div>
+    </section>
+
+    <section class="panel">
+      <header class="card-head">
+        <h2>Records personnels</h2>
+      </header>
+      <ul class="records-list">
+        @for (rec of store.records(); track rec.id) {
+          <li>
+            <span class="rec-emoji" aria-hidden="true">{{ rec.emoji }}</span>
+            <div>
+              <strong>{{ rec.name }}</strong>
+              <span>{{ rec.value }}</span>
+            </div>
+            <em class="pr">PR</em>
+          </li>
+        }
+      </ul>
+    </section>
+
+    <section class="panel">
+      <header class="card-head">
+        <h2>Progression des charges</h2>
+        <select class="inline-select" [ngModel]="loadExercise()" (ngModelChange)="loadExercise.set($event)" name="loadExercise">
+          <option>Développé couché</option>
+          <option>Squat</option>
+          <option>Soulevé de terre</option>
+        </select>
+      </header>
+      <div class="bars">
+        @for (point of store.loadProgress(); track point.label) {
+          <div class="bar-col">
+            <span class="bar" [style.height.%]="(point.kg / loadMax()) * 100"></span>
+            <em>{{ point.label }}</em>
+          </div>
+        }
+      </div>
+    </section>
+
+    <section class="panel">
+      <header class="card-head">
+        <h2>Volume d’entraînement</h2>
+        <span class="pill">{{ store.volumeTotal() }} séries</span>
+      </header>
+      <p class="muted">Séries / semaine</p>
+      <div class="bars stacked">
+        @for (week of store.volumeWeeks(); track week.label) {
+          <div class="bar-col">
+            <div class="stack" [style.height.%]="((week.musculation + week.course + week.autres) / volumeMax()) * 100">
+              <span class="seg-muscu" [style.flex-grow]="week.musculation"></span>
+              <span class="seg-run" [style.flex-grow]="week.course"></span>
+              <span class="seg-other" [style.flex-grow]="week.autres"></span>
+            </div>
+            <em>{{ week.label }}</em>
+          </div>
+        }
+      </div>
+      <ul class="legend">
+        <li><i class="muscu"></i> Musculation</li>
+        <li><i class="run"></i> Course</li>
+        <li><i class="other"></i> Autres</li>
+      </ul>
+    </section>
+
+    <section class="panel">
+      <header class="card-head">
+        <h2>Régularité</h2>
+      </header>
+      <div class="week-goal-row">
+        <div class="ring sm" [style.background]="ringStyle(regularityRing())" aria-hidden="true">
+          <div class="ring-hole">
+            <strong>{{ store.regularityPct() }}%</strong>
+          </div>
+        </div>
+        <ul class="week-breakdown">
+          <li><span>Séances prévues</span><strong>{{ store.plannedSessions() }}</strong></li>
+          <li><span>Séances réalisées</span><strong>{{ store.doneSessions() }}</strong></li>
+          <li><span>Taux de régularité</span><strong>{{ store.regularityPct() }} %</strong></li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="panel">
+      <header class="card-head">
+        <h2>Nutrition (moyenne / jour)</h2>
+      </header>
+      <div class="nutrition-row compact">
+        <div class="avg-kcal">
+          <strong>{{ numberFr(store.avgNutrition().kcal) }} kcal</strong>
+          <em class="pos">+ {{ numberFr(store.avgNutrition().kcal - store.avgTargets().kcal) }} kcal</em>
+        </div>
+        <ul class="macro-list">
+          <li>
+            <div class="macro-head"><span>Protéines</span><strong>{{ store.avgNutrition().proteinG }} / {{ store.avgTargets().proteinG }} g</strong></div>
+            <div class="progress-track thin"><span class="progress-fill" [style.width]="barWidth(store.avgNutrition().proteinG, store.avgTargets().proteinG)"></span></div>
+          </li>
+          <li>
+            <div class="macro-head"><span>Glucides</span><strong>{{ store.avgNutrition().carbsG }} / {{ store.avgTargets().carbsG }} g</strong></div>
+            <div class="progress-track thin soft"><span class="progress-fill" [style.width]="barWidth(store.avgNutrition().carbsG, store.avgTargets().carbsG)"></span></div>
+          </li>
+          <li>
+            <div class="macro-head"><span>Lipides</span><strong>{{ store.avgNutrition().fatG }} / {{ store.avgTargets().fatG }} g</strong></div>
+            <div class="progress-track thin violet"><span class="progress-fill" [style.width]="barWidth(store.avgNutrition().fatG, store.avgTargets().fatG)"></span></div>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="panel bilan-card">
+      <h2>Bilan sur {{ period() }}</h2>
+      <div class="bilan-grid">
+        <div>
+          <strong>{{ deltaLabel(store.weightDeltaPeriod()) }}</strong>
+          <span>Poids</span>
+        </div>
+        <div>
+          <strong>+ 15 kg</strong>
+          <span>Développé (100 → 115)</span>
+        </div>
+        <div>
+          <strong>+ 36 %</strong>
+          <span>Volume (124 → 168)</span>
+        </div>
+        <div>
+          <strong>{{ store.regularityPct() }} %</strong>
+          <span>Régularité ({{ store.doneSessions() }}/{{ store.plannedSessions() }})</span>
+        </div>
+      </div>
+    </section>
+  }
+</section>
+
+@if (goalFormOpen()) {
+  <div class="modal-backdrop" (click)="closeGoalForm()" role="presentation"></div>
+  <div class="modal form-modal goal-modal" role="dialog" aria-modal="true" aria-labelledby="goal-form-title">
+    <header class="modal-head">
+      <h2 id="goal-form-title">Modifier mon objectif</h2>
+      <button type="button" class="modal-close" (click)="closeGoalForm()" aria-label="Fermer">×</button>
+    </header>
+
+    <div class="form-grid">
+      <fieldset class="goal-type-field">
+        <legend>Objectif</legend>
+        <div class="goal-type-list">
+          @for (opt of goalTypes; track opt.value) {
+            <button
+              type="button"
+              class="goal-type-btn"
+              [class.active]="draftType === opt.value"
+              (click)="draftType = opt.value; onDraftChange()"
+            >
+              <strong>{{ opt.label }}</strong>
+              <span>{{ opt.hint }}</span>
+            </button>
+          }
+        </div>
+      </fieldset>
+
+      <label class="field">Sexe
+        <select [(ngModel)]="draftSex" name="goalSex" (ngModelChange)="onDraftChange()">
+          <option value="F">Femme</option>
+          <option value="M">Homme</option>
+        </select>
+      </label>
+      <label class="field">Âge
+        <input type="number" min="14" max="90" [(ngModel)]="draftAge" name="goalAge" (ngModelChange)="onDraftChange()">
+      </label>
+      <label class="field">Taille (cm)
+        <input type="number" min="120" max="230" [(ngModel)]="draftHeight" name="goalHeight" (ngModelChange)="onDraftChange()">
+      </label>
+      <label class="field">Poids du jour (kg)
+        <input [(ngModel)]="draftWeight" name="goalWeight" inputmode="decimal" placeholder="76,0" (ngModelChange)="onDraftChange()">
+      </label>
+      <label class="field wide">Niveau d’activité
+        <select [(ngModel)]="draftActivity" name="goalActivity" (ngModelChange)="onDraftChange()">
+          @for (opt of activityOptions; track opt.value) {
+            <option [value]="opt.value">{{ opt.label }}</option>
+          }
+        </select>
+      </label>
+      <label class="field">Poids cible min (kg)
+        <input [(ngModel)]="draftWeightMin" name="goalMin" inputmode="decimal">
+      </label>
+      <label class="field">Poids cible max (kg)
+        <input [(ngModel)]="draftWeightMax" name="goalMax" inputmode="decimal">
+      </label>
+      <label class="field">Début
+        <input [(ngModel)]="draftStart" name="goalStart" placeholder="Nov. 2026">
+      </label>
+      <label class="field">Fin
+        <input [(ngModel)]="draftEnd" name="goalEnd" placeholder="Janv. 2027">
+      </label>
+
+      <div class="calc-preview wide">
+        <h3>Calcul automatique</h3>
+        <ul>
+          <li><span>Métabolisme de base (BMR)</span><strong>{{ numberFr(livePreview().bmr) }} kcal</strong></li>
+          <li><span>Dépense journalière (TDEE)</span><strong>{{ numberFr(livePreview().tdee) }} kcal</strong></li>
+          <li><span>Calories à manger / jour</span><strong>{{ numberFr(livePreview().targetKcal) }} kcal</strong></li>
+          <li><span>Protéines</span><strong>{{ livePreview().macros.proteinG }} g</strong></li>
+          <li><span>Glucides</span><strong>{{ livePreview().macros.carbsG }} g</strong></li>
+          <li><span>Lipides</span><strong>{{ livePreview().macros.fatG }} g</strong></li>
+        </ul>
+        <p class="hint">Formule Mifflin–St Jeor × activité, puis ajustement selon l’objectif.</p>
+      </div>
+
+      <button type="button" class="btn primary wide" (click)="saveGoal()">Enregistrer l’objectif</button>
+    </div>
+  </div>
+}

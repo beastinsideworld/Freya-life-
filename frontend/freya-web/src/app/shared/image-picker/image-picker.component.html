@@ -42,4 +42,8 @@
     (change)="onFileSelected($event)"
     hidden
   >
+
+  @if (busy()) {
+    <p class="photo-busy">Compression de la photo…</p>
+  }
 </div>

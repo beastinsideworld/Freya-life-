@@ -21,6 +21,7 @@ import { FamilyService } from '../../core/family.service';
 import { isFrenchHoliday } from '../../core/french-holidays';
 import { DatePickerComponent } from '../../shared/date-picker/date-picker.component';
 import { environment } from '../../../environments/environment';
+import { NavIconComponent } from '../../shared/nav-icon/nav-icon.component';
 
 interface MonthCell {
   day: number | null;
@@ -43,7 +44,7 @@ interface DayCol {
 @Component({
   selector: 'app-planning',
   standalone: true,
-  imports: [FormsModule, DatePickerComponent],
+  imports: [FormsModule, DatePickerComponent, NavIconComponent],
   templateUrl: './planning.component.html',
   styleUrl: './planning.component.scss'
 })

@@ -13,11 +13,12 @@ import {
   applyTheme,
   findTheme
 } from '../../core/themes';
+import { NavIconComponent } from '../../shared/nav-icon/nav-icon.component';
 
 @Component({
   selector: 'app-parametres',
   standalone: true,
-  imports: [FormsModule, ImagePickerComponent],
+  imports: [FormsModule, ImagePickerComponent, NavIconComponent],
   templateUrl: './parametres.component.html',
   styleUrl: './parametres.component.scss'
 })
@@ -30,9 +31,19 @@ export class ParametresComponent implements OnInit {
   readonly selectedThemeId = signal<ThemeId>('freya');
   readonly currentTheme = computed(() => findTheme(this.selectedThemeId()));
   readonly hiddenNavTabs = signal<NavTabId[]>([]);
+  readonly navTabOrder = signal<NavTabId[]>([]);
+  readonly orderedToggleableTabs = computed(() =>
+    this.navTabOrder()
+      .map((id) => this.toggleableTabs.find((tab) => tab.id === id))
+      .filter((tab): tab is (typeof TOGGLEABLE_NAV_TABS)[number] => !!tab)
+  );
   readonly visibleToggleableCount = computed(
     () => this.toggleableTabs.filter((tab) => !this.hiddenNavTabs().includes(tab.id)).length
   );
+  readonly draggingTabId = signal<NavTabId | null>(null);
+  readonly dragOverTabId = signal<NavTabId | null>(null);
+  private longPressTimer: number | null = null;
+  private longPressId: NavTabId | null = null;
   readonly profile = signal<UserProfile | null>(null);
   readonly friends = signal<Friend[]>([]);
   readonly families = signal<FamilySummary[]>([]);
@@ -66,6 +77,8 @@ export class ParametresComponent implements OnInit {
     this.reminderTime = settings.reminderTime;
     this.selectedThemeId.set(settings.themeId);
     this.hiddenNavTabs.set(settings.hiddenNavTabs ?? []);
+    this.navTabOrder.set(settings.navTabOrder ?? []);
+    this.navPrefs.refresh();
     this.loadProfile();
     this.loadFriends();
     this.loadFamilies();
@@ -275,6 +288,9 @@ export class ParametresComponent implements OnInit {
   }
 
   closeNavTabsModal(): void {
+    this.clearLongPress();
+    this.draggingTabId.set(null);
+    this.dragOverTabId.set(null);
     this.navTabsModalOpen.set(false);
   }
 
@@ -289,6 +305,80 @@ export class ParametresComponent implements OnInit {
     this.hiddenNavTabs.set(next);
     this.persistSettings();
     this.navPrefs.setHidden(next);
+  }
+
+  moveNavTab(id: NavTabId, direction: -1 | 1): void {
+    const list = [...this.navTabOrder()];
+    const index = list.indexOf(id);
+    if (index < 0) return;
+    const target = index + direction;
+    if (target < 0 || target >= list.length) return;
+    [list[index], list[target]] = [list[target], list[index]];
+    this.applyOrder(list);
+  }
+
+  canMoveUp(id: NavTabId): boolean {
+    return this.navTabOrder().indexOf(id) > 0;
+  }
+
+  canMoveDown(id: NavTabId): boolean {
+    const list = this.navTabOrder();
+    return list.indexOf(id) >= 0 && list.indexOf(id) < list.length - 1;
+  }
+
+  onTabPointerDown(id: NavTabId, event: PointerEvent): void {
+    if ((event.target as HTMLElement | null)?.closest('input,button')) return;
+    this.clearLongPress();
+    this.longPressId = id;
+    this.longPressTimer = window.setTimeout(() => {
+      if (this.longPressId !== id) return;
+      this.draggingTabId.set(id);
+      this.dragOverTabId.set(id);
+      if (navigator.vibrate) navigator.vibrate(18);
+    }, 420);
+  }
+
+  onTabPointerEnter(id: NavTabId): void {
+    if (!this.draggingTabId() || this.draggingTabId() === id) return;
+    this.dragOverTabId.set(id);
+  }
+
+  onTabPointerUp(): void {
+    const from = this.draggingTabId();
+    const to = this.dragOverTabId();
+    this.clearLongPress();
+    if (from && to && from !== to) {
+      const list = [...this.navTabOrder()];
+      const fromIndex = list.indexOf(from);
+      const toIndex = list.indexOf(to);
+      if (fromIndex >= 0 && toIndex >= 0) {
+        list.splice(fromIndex, 1);
+        list.splice(toIndex, 0, from);
+        this.applyOrder(list);
+      }
+    }
+    this.draggingTabId.set(null);
+    this.dragOverTabId.set(null);
+  }
+
+  onTabPointerCancel(): void {
+    this.clearLongPress();
+    this.draggingTabId.set(null);
+    this.dragOverTabId.set(null);
+  }
+
+  private applyOrder(list: NavTabId[]): void {
+    this.navTabOrder.set(list);
+    this.navPrefs.setOrder(list);
+    this.persistSettings();
+  }
+
+  private clearLongPress(): void {
+    if (this.longPressTimer != null) {
+      window.clearTimeout(this.longPressTimer);
+      this.longPressTimer = null;
+    }
+    this.longPressId = null;
   }
 
   selectTheme(themeId: ThemeId): void {
@@ -309,7 +399,8 @@ export class ParametresComponent implements OnInit {
       reminderEnabled: this.reminderEnabled,
       reminderTime: this.reminderTime || '20:00',
       themeId: this.selectedThemeId(),
-      hiddenNavTabs: this.hiddenNavTabs()
+      hiddenNavTabs: this.hiddenNavTabs(),
+      navTabOrder: this.navTabOrder()
     };
     saveSettings(settings);
   }
