@@ -1,5 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { resolveAssetUrl } from '../../core/asset-url';
 import {
   ACTIVITY_OPTIONS,
   ActivityLevel,
@@ -29,6 +30,7 @@ import {
 export class SportComponent {
   readonly store = inject(SportStore);
   readonly icons = MUSCU_ICON;
+  readonly assetUrl = resolveAssetUrl;
   readonly muscuIcon = muscuIcon;
   readonly exerciseIconSrc = exerciseIconSrc;
   readonly kindIconSrc = kindIconSrc;

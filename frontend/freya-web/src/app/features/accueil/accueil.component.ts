@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { environment } from '../../../environments/environment';
+import { resolveAssetUrl } from '../../core/asset-url';
 import { createId } from '../../core/id';
 import { CalendarEvent, EventsService } from '../../core/api/events.service';
 import {
@@ -263,7 +264,7 @@ export class AccueilComponent implements OnInit, OnDestroy {
 
   weatherIconSrc(iconKey: string | undefined | null): string | null {
     if (!iconKey || !this.isAngeTheme()) return null;
-    return `assets/themes/ange/meteo/${iconKey}.png`;
+    return resolveAssetUrl(`assets/themes/ange/meteo/${iconKey}.png`);
   }
 
   closeReminderPopup(): void {

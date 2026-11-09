@@ -86,22 +86,22 @@
 }
 
 :root[data-theme='ange'] .theme-module--planning {
-  background-image: url('/assets/themes/ange/planning.png');
+  background-image: url('../../public/assets/themes/ange/planning.png');
 }
 :root[data-theme='ange'] .theme-module--repas {
-  background-image: url('/assets/themes/ange/repas.png');
+  background-image: url('../../public/assets/themes/ange/repas.png');
 }
 :root[data-theme='ange'] .theme-module--voyage {
-  background-image: url('/assets/themes/ange/voyage.png');
+  background-image: url('../../public/assets/themes/ange/voyage.png');
 }
 :root[data-theme='ange'] .theme-module--sport {
-  background-image: url('/assets/themes/ange/sport.png');
+  background-image: url('../../public/assets/themes/ange/sport.png');
 }
 :root[data-theme='ange'] .theme-module--finances {
-  background-image: url('/assets/themes/ange/finances.png');
+  background-image: url('../../public/assets/themes/ange/finances.png');
 }
 :root[data-theme='ange'] .theme-module--animaux {
-  background-image: url('/assets/themes/ange/animaux.png');
+  background-image: url('../../public/assets/themes/ange/animaux.png');
 }
 
 /* Démon — textes clairs + voile sombre */
@@ -120,27 +120,27 @@
 }
 
 :root[data-theme='demon'] .theme-module--planning {
-  background-image: url('/assets/themes/demon/planning.png');
+  background-image: url('../../public/assets/themes/demon/planning.png');
 }
 :root[data-theme='demon'] .theme-module--repas {
-  background-image: url('/assets/themes/demon/repas.png');
+  background-image: url('../../public/assets/themes/demon/repas.png');
 }
 :root[data-theme='demon'] .theme-module--voyage {
-  background-image: url('/assets/themes/demon/voyage.png');
+  background-image: url('../../public/assets/themes/demon/voyage.png');
 }
 :root[data-theme='demon'] .theme-module--sport {
-  background-image: url('/assets/themes/demon/sport.png');
+  background-image: url('../../public/assets/themes/demon/sport.png');
 }
 :root[data-theme='demon'] .theme-module--finances {
-  background-image: url('/assets/themes/demon/finances.png');
+  background-image: url('../../public/assets/themes/demon/finances.png');
 }
 :root[data-theme='demon'] .theme-module--animaux {
-  background-image: url('/assets/themes/demon/animaux.png');
+  background-image: url('../../public/assets/themes/demon/animaux.png');
 }
 
 /* Héros Accueil Démon — bandeau (Ange géré par theme-ange-headers) */
 :root[data-theme='demon'] .page.accueil > .hero {
-  background-image: url('/assets/themes/demon/bandeau.png');
+  background-image: url('../../public/assets/themes/demon/bandeau.png');
   background-size: cover;
   background-position: center;
 }
@@ -162,7 +162,7 @@
 
 @mixin theme-page-hero-bg($theme, $selector, $file) {
   :root[data-theme='#{$theme}'] #{$selector} > .hero {
-    background-image: url('/assets/themes/#{$theme}/#{$file}');
+    background-image: url('../../public/assets/themes/#{$theme}/#{$file}');
     background-size: cover;
     background-position: center;
   }

@@ -75,6 +75,11 @@ jobs:
         working-directory: frontend/freya-web/dist/freya-web/browser
         run: cp index.html 404.html
 
+      - name: Chemins assets (base-href GitHub Pages)
+        working-directory: frontend/freya-web/dist/freya-web/browser
+        run: |
+          find . -name '*.css' -print0 | xargs -0 sed -i 's|url(/assets/|url(/Freya-life/assets/|g'
+
       - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3

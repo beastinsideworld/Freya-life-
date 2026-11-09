@@ -1,4 +1,5 @@
 import { afterNextRender, Component, computed, input, signal } from '@angular/core';
+import { resolveAssetUrl } from '../../core/asset-url';
 import { NAV_ANGE_ICON } from '../../core/theme-ange-icons';
 import { NavTabId } from '../../core/nav-tabs';
 
@@ -68,9 +69,10 @@ export class NavIconComponent {
     this.themeTick();
     const id = this.name();
     const theme = document.documentElement.getAttribute('data-theme');
-    if (theme === 'ange') {
-      return NAV_ANGE_ICON[id] ?? NAV_ANGE_ICON.accueil;
-    }
-    return NAV_ICON_SRC[id] ?? NAV_ICON_SRC.accueil;
+    const raw =
+      theme === 'ange'
+        ? (NAV_ANGE_ICON[id] ?? NAV_ANGE_ICON.accueil)
+        : (NAV_ICON_SRC[id] ?? NAV_ICON_SRC.accueil);
+    return resolveAssetUrl(raw);
   });
 }

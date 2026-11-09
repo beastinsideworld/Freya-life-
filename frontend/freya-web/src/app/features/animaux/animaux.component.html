@@ -2,7 +2,7 @@
   @if (!selectedPet()) {
     <header class="hero animaux-hero">
       <div class="icon" aria-hidden="true">
-        <img class="theme-ico" [src]="icons.patte" alt="" draggable="false" />
+        <img class="theme-ico" [src]="assetUrl(icons.patte)" alt="" draggable="false" />
       </div>
       <h1>Animaux</h1>
       <p class="sub">Le suivi complet de tes compagnons</p>
@@ -10,15 +10,15 @@
 
     <div class="seg pets-tabs" role="tablist" aria-label="Sections animaux">
       <button type="button" role="tab" [class.active]="tab() === 'accueil'" (click)="setTab('accueil')">
-        <img class="theme-ico theme-ico--tab" [src]="icons.patte" alt="" aria-hidden="true" draggable="false" />
+        <img class="theme-ico theme-ico--tab" [src]="assetUrl(icons.patte)" alt="" aria-hidden="true" draggable="false" />
         Accueil
       </button>
       <button type="button" role="tab" [class.active]="tab() === 'depenses'" (click)="setTab('depenses')">
-        <img class="theme-ico theme-ico--tab" [src]="icons.bourse" alt="" aria-hidden="true" draggable="false" />
+        <img class="theme-ico theme-ico--tab" [src]="assetUrl(icons.bourse)" alt="" aria-hidden="true" draggable="false" />
         Dépenses
       </button>
       <button type="button" role="tab" [class.active]="tab() === 'rendezvous'" (click)="setTab('rendezvous')">
-        <img class="theme-ico theme-ico--tab" [src]="icons.calendrier" alt="" aria-hidden="true" draggable="false" />
+        <img class="theme-ico theme-ico--tab" [src]="assetUrl(icons.calendrier)" alt="" aria-hidden="true" draggable="false" />
         Rendez-vous
       </button>
     </div>
@@ -54,7 +54,7 @@
     <section class="panel">
       <header class="card-head">
         <h2>
-          <img class="theme-ico theme-ico--inline" [src]="icons.calendrier" alt="" aria-hidden="true" draggable="false" />
+          <img class="theme-ico theme-ico--inline" [src]="assetUrl(icons.calendrier)" alt="" aria-hidden="true" draggable="false" />
           Prochain rendez-vous
         </h2>
       </header>
@@ -77,7 +77,7 @@
     <section class="panel">
       <header class="card-head">
         <h2>
-          <img class="theme-ico theme-ico--inline" [src]="icons.bourse" alt="" aria-hidden="true" draggable="false" />
+          <img class="theme-ico theme-ico--inline" [src]="assetUrl(icons.bourse)" alt="" aria-hidden="true" draggable="false" />
           Dépenses du mois
         </h2>
       </header>
@@ -108,15 +108,15 @@
       </div>
       <div class="mini-actions">
         <button type="button" (click)="openSection('sante')">
-          <img class="theme-ico theme-ico--tab" [src]="icons.soin" alt="" aria-hidden="true" draggable="false" />
+          <img class="theme-ico theme-ico--tab" [src]="assetUrl(icons.soin)" alt="" aria-hidden="true" draggable="false" />
           Santé
         </button>
         <button type="button" (click)="openSection('poids')">
-          <img class="theme-ico theme-ico--tab" [src]="icons.patte" alt="" aria-hidden="true" draggable="false" />
+          <img class="theme-ico theme-ico--tab" [src]="assetUrl(icons.patte)" alt="" aria-hidden="true" draggable="false" />
           Poids
         </button>
         <button type="button" (click)="setTab('rendezvous')">
-          <img class="theme-ico theme-ico--tab" [src]="icons.calendrier" alt="" aria-hidden="true" draggable="false" />
+          <img class="theme-ico theme-ico--tab" [src]="assetUrl(icons.calendrier)" alt="" aria-hidden="true" draggable="false" />
           Rendez-vous
         </button>
       </div>
@@ -126,7 +126,7 @@
     </section>
 
     <button type="button" class="panel menu-card" (click)="openSection('identite')">
-      <span class="row-ico" aria-hidden="true"><img class="theme-ico" [src]="icons.patte" alt="" draggable="false" /></span>
+      <span class="row-ico" aria-hidden="true"><img class="theme-ico" [src]="assetUrl(icons.patte)" alt="" draggable="false" /></span>
       <span class="row-main">
         <strong>Identité</strong>
         <span>Puce : {{ pet.chip || '—' }} · Assurance : {{ pet.insurance ? (pet.insuranceName || 'Oui') : 'Non' }}</span>
@@ -135,7 +135,7 @@
     </button>
 
     <button type="button" class="panel menu-card" (click)="openSection('sante')">
-      <span class="row-ico" aria-hidden="true"><img class="theme-ico" [src]="icons.soin" alt="" draggable="false" /></span>
+      <span class="row-ico" aria-hidden="true"><img class="theme-ico" [src]="assetUrl(icons.soin)" alt="" draggable="false" /></span>
       <span class="row-main">
         <strong>Santé</strong>
         <span>{{ healthSummary(pet) }}</span>
@@ -144,7 +144,7 @@
     </button>
 
     <button type="button" class="panel menu-card" (click)="openSection('alimentation')">
-      <span class="row-ico" aria-hidden="true"><img class="theme-ico" [src]="icons.gamelle" alt="" draggable="false" /></span>
+      <span class="row-ico" aria-hidden="true"><img class="theme-ico" [src]="assetUrl(icons.gamelle)" alt="" draggable="false" /></span>
       <span class="row-main">
         <strong>Alimentation</strong>
         <span>{{ foodSummary(pet) }}</span>
@@ -153,7 +153,7 @@
     </button>
 
     <button type="button" class="panel menu-card" (click)="openSection('poids')">
-      <span class="row-ico" aria-hidden="true"><img class="theme-ico" [src]="icons.patte" alt="" draggable="false" /></span>
+      <span class="row-ico" aria-hidden="true"><img class="theme-ico" [src]="assetUrl(icons.patte)" alt="" draggable="false" /></span>
       <span class="row-main">
         <strong>Poids</strong>
         <span>
@@ -169,7 +169,7 @@
     </button>
 
     <button type="button" class="panel menu-card" (click)="openSection('notes')">
-      <span class="row-ico" aria-hidden="true"><img class="theme-ico" [src]="icons.calendrier" alt="" draggable="false" /></span>
+      <span class="row-ico" aria-hidden="true"><img class="theme-ico" [src]="assetUrl(icons.calendrier)" alt="" draggable="false" /></span>
       <span class="row-main">
         <strong>Notes & suivi</strong>
         <span>{{ pet.notes || 'Comportement, éducation, observations' }}</span>
@@ -179,7 +179,7 @@
 
     @if (pet.sex === 'F') {
       <button type="button" class="panel menu-card" (click)="openSection('chaleurs')">
-        <span class="row-ico" aria-hidden="true"><img class="theme-ico" [src]="icons.soin" alt="" draggable="false" /></span>
+        <span class="row-ico" aria-hidden="true"><img class="theme-ico" [src]="assetUrl(icons.soin)" alt="" draggable="false" /></span>
         <span class="row-main">
           <strong>Chaleurs</strong>
           <span>{{ heatSummary(pet) }}</span>
@@ -191,7 +191,7 @@
     <section class="panel">
       <header class="card-head">
         <h2>
-          <img class="theme-ico theme-ico--inline" [src]="icons.vaccin" alt="" aria-hidden="true" draggable="false" />
+          <img class="theme-ico theme-ico--inline" [src]="assetUrl(icons.vaccin)" alt="" aria-hidden="true" draggable="false" />
           Rappels personnalisés
         </h2>
       </header>
@@ -358,7 +358,7 @@
         </div>
         <ul class="detail-meta">
           <li>
-            <img class="theme-ico theme-ico--inline" [src]="icons.calendrier" alt="" aria-hidden="true" draggable="false" />
+            <img class="theme-ico theme-ico--inline" [src]="assetUrl(icons.calendrier)" alt="" aria-hidden="true" draggable="false" />
             {{ formatDate(appt.date) }}
           </li>
           @if (appt.endDate) {
@@ -372,7 +372,7 @@
           }
           @if (appt.kind === 'heat') {
             <li>
-              <img class="theme-ico theme-ico--inline" [src]="icons.soin" alt="" aria-hidden="true" draggable="false" />
+              <img class="theme-ico theme-ico--inline" [src]="assetUrl(icons.soin)" alt="" aria-hidden="true" draggable="false" />
               Prévision de chaleurs
             </li>
           }

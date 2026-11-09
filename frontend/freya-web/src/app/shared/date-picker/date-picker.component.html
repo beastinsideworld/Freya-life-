@@ -1,7 +1,7 @@
 <div class="date-picker" [class.open]="open()" [class.disabled]="disabled()">
   <button type="button" class="trigger" (click)="toggle()" [disabled]="disabled()">
     <span class="value" [class.placeholder]="!value()">{{ displayValue() }}</span>
-    <img class="ico" src="/assets/themes/ange/icone-calendrier.png" alt="" aria-hidden="true" />
+    <img class="ico" src="assets/themes/ange/icone-calendrier.png" alt="" aria-hidden="true" />
   </button>
 
   @if (open()) {

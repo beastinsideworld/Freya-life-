@@ -16,6 +16,7 @@ import {
 import { Friend, SocialService } from '../../core/social.service';
 import { createId } from '../../core/id';
 import { environment } from '../../../environments/environment';
+import { resolveAssetUrl } from '../../core/asset-url';
 import { FINANCE_ICON, financeEmojiIconSrc } from '../../core/theme-ange-icons';
 
 type FinanceTab = 'synthese' | 'mouvements' | 'projets';
@@ -59,6 +60,7 @@ const CATEGORY_ICONS: Record<string, string> = {
 })
 export class BudgetComponent implements OnInit {
   readonly icons = FINANCE_ICON;
+  readonly assetUrl = resolveAssetUrl;
   readonly financeEmojiIconSrc = financeEmojiIconSrc;
   readonly loading = signal(false);
   readonly saving = signal(false);

@@ -18,7 +18,7 @@
     <button type="button" class="share-btn" (click)="openShare()" aria-label="Partager mon budget">Partager</button>
 
     <div class="icon" aria-hidden="true">
-      <img class="theme-ico" [src]="icons.portefeuille" alt="" draggable="false" />
+      <img class="theme-ico" [src]="assetUrl(icons.portefeuille)" alt="" draggable="false" />
     </div>
     <h1>Finances</h1>
     <p class="sub">Gère ton budget, tes comptes et tes projets</p>
@@ -26,15 +26,15 @@
 
   <div class="seg finance-tabs" role="tablist" aria-label="Sections finances">
     <button type="button" role="tab" [class.active]="tab() === 'synthese'" (click)="setTab('synthese')">
-      <img class="theme-ico theme-ico--tab" [src]="icons.graphique" alt="" aria-hidden="true" draggable="false" />
+      <img class="theme-ico theme-ico--tab" [src]="assetUrl(icons.graphique)" alt="" aria-hidden="true" draggable="false" />
       <span>Synthèse</span>
     </button>
     <button type="button" role="tab" [class.active]="tab() === 'mouvements'" (click)="setTab('mouvements')">
-      <img class="theme-ico theme-ico--tab" [src]="icons.transfert" alt="" aria-hidden="true" draggable="false" />
+      <img class="theme-ico theme-ico--tab" [src]="assetUrl(icons.transfert)" alt="" aria-hidden="true" draggable="false" />
       <span>Mouvements</span>
     </button>
     <button type="button" role="tab" [class.active]="tab() === 'projets'" (click)="setTab('projets')">
-      <img class="theme-ico theme-ico--tab" [src]="icons.cible" alt="" aria-hidden="true" draggable="false" />
+      <img class="theme-ico theme-ico--tab" [src]="assetUrl(icons.cible)" alt="" aria-hidden="true" draggable="false" />
       <span>Projets</span>
     </button>
   </div>
@@ -50,7 +50,7 @@
       <section class="panel sim-card">
         <header class="card-head">
           <h2>
-            <img class="theme-ico theme-ico--inline" [src]="icons.calendrier" alt="" aria-hidden="true" draggable="false" />
+            <img class="theme-ico theme-ico--inline" [src]="assetUrl(icons.calendrier)" alt="" aria-hidden="true" draggable="false" />
             Simulation du mois
           </h2>
         </header>
