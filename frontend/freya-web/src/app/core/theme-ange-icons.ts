@@ -1,3 +1,19 @@
+import { NavTabId } from './nav-tabs';
+
+/** Icônes barre du bas — thème Ange (Design theme / Ange / icone barre du bas). */
+export const NAV_ANGE_ICON: Record<NavTabId, string> = {
+  accueil: '/assets/nav/ange/accueil.png',
+  planning: '/assets/nav/ange/planning.png',
+  repas: '/assets/nav/ange/repas.png',
+  voyages: '/assets/nav/ange/voyages.png',
+  tele: '/assets/nav/ange/tele.png',
+  chat: '/assets/nav/ange/chat.png',
+  budget: '/assets/nav/ange/budget.png',
+  sport: '/assets/nav/ange/sport.png',
+  animaux: '/assets/nav/ange/animaux.png',
+  parametres: '/assets/nav/ange/parametres.png'
+};
+
 /** Icônes Ange — Finance (Design theme / Ange / finance). */
 export const FINANCE_ICON = {
   graphique: '/assets/themes/ange/finance/graphique.png',

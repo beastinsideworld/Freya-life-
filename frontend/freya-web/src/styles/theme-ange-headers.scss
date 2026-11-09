@@ -42,12 +42,13 @@
 :root[data-theme='ange'] .page.accueil > .hero {
   border-radius: var(--radius);
   text-shadow: none;
-  min-height: 9.5rem;
+  min-height: 10.5rem;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   text-align: center;
+  padding-bottom: 0.75rem;
   @include ange-fond('accueil.png', 0.22);
 
   &::after {
@@ -68,6 +69,22 @@
     margin: 0.45rem auto 0;
     color: #4a3f35;
     text-align: center;
+  }
+
+  > .hero-date.meta-pill {
+    margin-top: auto;
+    min-height: 2.35rem;
+    padding: 0.45rem 1rem;
+    color: #4a3f35;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border: 1.5px solid color-mix(in srgb, #d8b981 70%, white);
+    border-radius: var(--radius-pill);
+    background: rgba(255, 253, 248, 0.88);
+    box-shadow:
+      0 4px 14px rgba(74, 63, 53, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.75);
+    text-shadow: none;
   }
 
   > .family-scope {
@@ -132,14 +149,6 @@
     color: #4a3f35;
     text-shadow: 0 1px 0 rgba(255, 253, 248, 0.65);
   }
-}
-
-/* Date du jour */
-:root[data-theme='ange'] .page.accueil > .top-meta .meta-pill {
-  min-height: 2.6rem;
-  color: #4a3f35;
-  @include ange-fond('accueil.png', 0.35);
-  background-position: center 40%;
 }
 
 /* Événement */

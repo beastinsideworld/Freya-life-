@@ -10,6 +10,53 @@
   position: relative;
 }
 
+.theme-ico {
+  width: 1.35rem;
+  height: 1.35rem;
+  object-fit: contain;
+  display: block;
+  pointer-events: none;
+  user-select: none;
+}
+
+.theme-ico--tab {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+.theme-ico--inline {
+  width: 1.15rem;
+  height: 1.15rem;
+  display: inline-block;
+  vertical-align: -0.22rem;
+}
+
+.budget-page > .hero .icon {
+  width: 2.3rem;
+  height: 2.3rem;
+}
+
+.budget-page > .hero .icon .theme-ico {
+  width: 100%;
+  height: 100%;
+}
+
+.row-ico .theme-ico {
+  width: 1.45rem;
+  height: 1.45rem;
+}
+
+.row-ico.lg .theme-ico {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+.card-head h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
 .scope-select {
   position: absolute;
   top: 0.85rem;

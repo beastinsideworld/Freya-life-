@@ -8,6 +8,18 @@
 
 .accueil > .hero {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-bottom: 0.85rem;
+}
+
+.hero-date {
+  margin: auto auto 0;
+  max-width: calc(100% - 1.25rem);
+  text-align: center;
+  text-transform: capitalize;
+  white-space: nowrap;
 }
 
 .family-scope {
@@ -748,8 +760,6 @@
     grid-template-areas:
       'hero hero'
       'trip trip'
-      'meta meta'
-      'modules modules'
       'composer composer'
       'tasks meals'
       'week week';
@@ -759,8 +769,6 @@
 
   .accueil > .hero { grid-area: hero; }
   .accueil > .trip-banner { grid-area: trip; }
-  .accueil > .top-meta { grid-area: meta; }
-  .accueil > .theme-modules { grid-area: modules; }
   .accueil > .composer { grid-area: composer; z-index: 40; }
   .accueil > .tasks { grid-area: tasks; z-index: 1; }
   .accueil > .meals { grid-area: meals; z-index: 1; }

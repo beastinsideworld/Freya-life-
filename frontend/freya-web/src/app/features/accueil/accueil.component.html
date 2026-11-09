@@ -18,6 +18,7 @@
     <div class="icon" aria-hidden="true"><app-nav-icon name="accueil" /></div>
     <h1>Accueil</h1>
     <p class="sub">Ta journée en un coup d’œil</p>
+    <p class="hero-date meta-pill">{{ dateLabel() }} · {{ time() }}</p>
   </header>
 
   @if (nextTrip(); as trip) {
@@ -27,37 +28,6 @@
       <span class="trip-count">{{ countdown(trip.daysUntil) }}</span>
     </a>
   }
-
-  <div class="top-meta">
-    <p class="meta-pill">{{ dateLabel() }} · {{ time() }}</p>
-  </div>
-
-  <nav class="theme-modules" aria-label="Raccourcis">
-    <a class="theme-module theme-module--planning" routerLink="/planning">
-      <span class="theme-module__ico" aria-hidden="true"><app-nav-icon name="planning" /></span>
-      <h2 class="theme-module__label">Planning</h2>
-    </a>
-    <a class="theme-module theme-module--repas" routerLink="/repas">
-      <span class="theme-module__ico" aria-hidden="true"><app-nav-icon name="repas" /></span>
-      <h2 class="theme-module__label">Repas</h2>
-    </a>
-    <a class="theme-module theme-module--voyage" routerLink="/voyages">
-      <span class="theme-module__ico" aria-hidden="true"><app-nav-icon name="voyages" /></span>
-      <h2 class="theme-module__label">Voyage</h2>
-    </a>
-    <a class="theme-module theme-module--sport" routerLink="/sport">
-      <span class="theme-module__ico" aria-hidden="true"><app-nav-icon name="sport" /></span>
-      <h2 class="theme-module__label">Sport</h2>
-    </a>
-    <a class="theme-module theme-module--finances" routerLink="/budget">
-      <span class="theme-module__ico" aria-hidden="true"><app-nav-icon name="budget" /></span>
-      <h2 class="theme-module__label">Finances</h2>
-    </a>
-    <a class="theme-module theme-module--animaux" routerLink="/animaux">
-      <span class="theme-module__ico" aria-hidden="true"><app-nav-icon name="animaux" /></span>
-      <h2 class="theme-module__label">Animaux</h2>
-    </a>
-  </nav>
 
   <section class="panel composer" aria-label="Nouvel événement">
     <label class="field field-title">Événement

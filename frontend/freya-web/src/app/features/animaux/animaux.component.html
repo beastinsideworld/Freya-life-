@@ -1,15 +1,26 @@
 <section class="page animaux-page">
   @if (!selectedPet()) {
     <header class="hero animaux-hero">
-      <div class="icon" aria-hidden="true"><app-nav-icon name="animaux" /></div>
+      <div class="icon" aria-hidden="true">
+        <img class="theme-ico" [src]="icons.patte" alt="" draggable="false" />
+      </div>
       <h1>Animaux</h1>
       <p class="sub">Le suivi complet de tes compagnons</p>
     </header>
 
     <div class="seg pets-tabs" role="tablist" aria-label="Sections animaux">
-      <button type="button" role="tab" [class.active]="tab() === 'accueil'" (click)="setTab('accueil')">Accueil</button>
-      <button type="button" role="tab" [class.active]="tab() === 'depenses'" (click)="setTab('depenses')">Dépenses</button>
-      <button type="button" role="tab" [class.active]="tab() === 'rendezvous'" (click)="setTab('rendezvous')">Rendez-vous</button>
+      <button type="button" role="tab" [class.active]="tab() === 'accueil'" (click)="setTab('accueil')">
+        <img class="theme-ico theme-ico--tab" [src]="icons.patte" alt="" aria-hidden="true" draggable="false" />
+        Accueil
+      </button>
+      <button type="button" role="tab" [class.active]="tab() === 'depenses'" (click)="setTab('depenses')">
+        <img class="theme-ico theme-ico--tab" [src]="icons.bourse" alt="" aria-hidden="true" draggable="false" />
+        Dépenses
+      </button>
+      <button type="button" role="tab" [class.active]="tab() === 'rendezvous'" (click)="setTab('rendezvous')">
+        <img class="theme-ico theme-ico--tab" [src]="icons.calendrier" alt="" aria-hidden="true" draggable="false" />
+        Rendez-vous
+      </button>
     </div>
   }
 
@@ -23,7 +34,9 @@
         @for (pet of pets(); track pet.id) {
           <li class="pet-list-item">
             <button type="button" class="pet-row" (click)="openPet(pet)">
-              <span class="avatar" aria-hidden="true">{{ pet.photoEmoji }}</span>
+              <span class="avatar" aria-hidden="true">
+                <img class="theme-ico" [src]="petAvatarIconSrc(pet.species, pet.photoEmoji)" alt="" draggable="false" />
+              </span>
               <span class="row-main">
                 <strong>{{ pet.name }} <em class="sex">{{ sexSymbol(pet.sex) }}</em></strong>
                 <span>{{ pet.species }} • {{ store.ageLabel(pet) }}</span>
@@ -40,11 +53,16 @@
 
     <section class="panel">
       <header class="card-head">
-        <h2><span aria-hidden="true">📅</span> Prochain rendez-vous</h2>
+        <h2>
+          <img class="theme-ico theme-ico--inline" [src]="icons.calendrier" alt="" aria-hidden="true" draggable="false" />
+          Prochain rendez-vous
+        </h2>
       </header>
       @if (nextAppointment(); as appt) {
         <button type="button" class="link-row" (click)="setTab('rendezvous'); selectedApptId.set(appt.id)">
-          <span class="row-ico" aria-hidden="true">{{ appt.icon }}</span>
+          <span class="row-ico" aria-hidden="true">
+            <img class="theme-ico" [src]="animauxEmojiIconSrc(appt.icon)" alt="" draggable="false" />
+          </span>
           <span class="row-main">
             <strong>{{ appt.title }}</strong>
             <span>{{ formatApptWhen(appt) }}</span>
@@ -58,7 +76,10 @@
 
     <section class="panel">
       <header class="card-head">
-        <h2><span aria-hidden="true">🪙</span> Dépenses du mois</h2>
+        <h2>
+          <img class="theme-ico theme-ico--inline" [src]="icons.bourse" alt="" aria-hidden="true" draggable="false" />
+          Dépenses du mois
+        </h2>
       </header>
       <p class="budget-line">{{ money(monthExpenseTotal()) }} / {{ money(monthlyBudget()) }}</p>
       <div class="progress-track" aria-hidden="true">
@@ -77,16 +98,27 @@
 
     <section class="panel profile-card">
       <div class="profile-row">
-        <span class="avatar xl" aria-hidden="true">{{ pet.photoEmoji }}</span>
+        <span class="avatar xl" aria-hidden="true">
+          <img class="theme-ico" [src]="petAvatarIconSrc(pet.species, pet.photoEmoji)" alt="" draggable="false" />
+        </span>
         <div>
           <strong>{{ pet.species }} - {{ pet.breed }}</strong>
           <span>{{ store.ageLabel(pet) }} ({{ store.birthLabel(pet) }})</span>
         </div>
       </div>
       <div class="mini-actions">
-        <button type="button" (click)="openSection('sante')"><span aria-hidden="true">❤</span> Santé</button>
-        <button type="button" (click)="openSection('poids')"><span aria-hidden="true">⚖</span> Poids</button>
-        <button type="button" (click)="setTab('rendezvous')"><span aria-hidden="true">📅</span> Rendez-vous</button>
+        <button type="button" (click)="openSection('sante')">
+          <img class="theme-ico theme-ico--tab" [src]="icons.soin" alt="" aria-hidden="true" draggable="false" />
+          Santé
+        </button>
+        <button type="button" (click)="openSection('poids')">
+          <img class="theme-ico theme-ico--tab" [src]="icons.patte" alt="" aria-hidden="true" draggable="false" />
+          Poids
+        </button>
+        <button type="button" (click)="setTab('rendezvous')">
+          <img class="theme-ico theme-ico--tab" [src]="icons.calendrier" alt="" aria-hidden="true" draggable="false" />
+          Rendez-vous
+        </button>
       </div>
       <button type="button" class="btn primary wide share-btn-main" (click)="openShare(pet)">
         Partager le profil
@@ -94,7 +126,7 @@
     </section>
 
     <button type="button" class="panel menu-card" (click)="openSection('identite')">
-      <span class="row-ico" aria-hidden="true">🪪</span>
+      <span class="row-ico" aria-hidden="true"><img class="theme-ico" [src]="icons.patte" alt="" draggable="false" /></span>
       <span class="row-main">
         <strong>Identité</strong>
         <span>Puce : {{ pet.chip || '—' }} · Assurance : {{ pet.insurance ? (pet.insuranceName || 'Oui') : 'Non' }}</span>
@@ -103,7 +135,7 @@
     </button>
 
     <button type="button" class="panel menu-card" (click)="openSection('sante')">
-      <span class="row-ico" aria-hidden="true">🩺</span>
+      <span class="row-ico" aria-hidden="true"><img class="theme-ico" [src]="icons.soin" alt="" draggable="false" /></span>
       <span class="row-main">
         <strong>Santé</strong>
         <span>{{ healthSummary(pet) }}</span>
@@ -112,7 +144,7 @@
     </button>
 
     <button type="button" class="panel menu-card" (click)="openSection('alimentation')">
-      <span class="row-ico" aria-hidden="true">🥣</span>
+      <span class="row-ico" aria-hidden="true"><img class="theme-ico" [src]="icons.gamelle" alt="" draggable="false" /></span>
       <span class="row-main">
         <strong>Alimentation</strong>
         <span>{{ foodSummary(pet) }}</span>
@@ -121,7 +153,7 @@
     </button>
 
     <button type="button" class="panel menu-card" (click)="openSection('poids')">
-      <span class="row-ico" aria-hidden="true">⚖</span>
+      <span class="row-ico" aria-hidden="true"><img class="theme-ico" [src]="icons.patte" alt="" draggable="false" /></span>
       <span class="row-main">
         <strong>Poids</strong>
         <span>
@@ -137,7 +169,7 @@
     </button>
 
     <button type="button" class="panel menu-card" (click)="openSection('notes')">
-      <span class="row-ico" aria-hidden="true">📝</span>
+      <span class="row-ico" aria-hidden="true"><img class="theme-ico" [src]="icons.calendrier" alt="" draggable="false" /></span>
       <span class="row-main">
         <strong>Notes & suivi</strong>
         <span>{{ pet.notes || 'Comportement, éducation, observations' }}</span>
@@ -147,7 +179,7 @@
 
     @if (pet.sex === 'F') {
       <button type="button" class="panel menu-card" (click)="openSection('chaleurs')">
-        <span class="row-ico" aria-hidden="true">💗</span>
+        <span class="row-ico" aria-hidden="true"><img class="theme-ico" [src]="icons.soin" alt="" draggable="false" /></span>
         <span class="row-main">
           <strong>Chaleurs</strong>
           <span>{{ heatSummary(pet) }}</span>
@@ -158,7 +190,10 @@
 
     <section class="panel">
       <header class="card-head">
-        <h2><span aria-hidden="true">🔔</span> Rappels personnalisés</h2>
+        <h2>
+          <img class="theme-ico theme-ico--inline" [src]="icons.vaccin" alt="" aria-hidden="true" draggable="false" />
+          Rappels personnalisés
+        </h2>
       </header>
       <ul class="toggle-list">
         <li>
@@ -242,7 +277,9 @@
       <ul class="move-list">
         @for (item of scopedExpenses(); track item.id) {
           <li>
-            <span class="row-ico" aria-hidden="true">{{ expenseIcon(item) }}</span>
+            <span class="row-ico" aria-hidden="true">
+              <img class="theme-ico" [src]="animauxEmojiIconSrc(item.category)" alt="" draggable="false" />
+            </span>
             <div class="row-main">
               <strong>{{ item.label }}</strong>
               <span>{{ petName(item.petId) }} · {{ formatDate(item.date, false) }}</span>
@@ -293,7 +330,9 @@
     <div class="appt-stack">
       @for (appt of visibleAppointments(); track appt.id) {
         <button type="button" class="panel appt-card" [class.active]="selectedAppointment()?.id === appt.id" (click)="selectedApptId.set(appt.id)">
-          <span class="row-ico" aria-hidden="true">{{ appt.icon }}</span>
+          <span class="row-ico" aria-hidden="true">
+            <img class="theme-ico" [src]="animauxEmojiIconSrc(appt.icon)" alt="" draggable="false" />
+          </span>
           <span class="row-main">
             <strong>{{ appt.title }}</strong>
             <span>{{ formatApptWhen(appt) }}</span>
@@ -312,11 +351,16 @@
       <section class="panel detail-appt">
         <h2>Détail du rendez-vous</h2>
         <div class="detail-title">
-          <span class="row-ico" aria-hidden="true">{{ appt.icon }}</span>
+          <span class="row-ico" aria-hidden="true">
+            <img class="theme-ico" [src]="animauxEmojiIconSrc(appt.icon)" alt="" draggable="false" />
+          </span>
           <strong>{{ appt.title }}</strong>
         </div>
         <ul class="detail-meta">
-          <li><span aria-hidden="true">📅</span> {{ formatDate(appt.date) }}</li>
+          <li>
+            <img class="theme-ico theme-ico--inline" [src]="icons.calendrier" alt="" aria-hidden="true" draggable="false" />
+            {{ formatDate(appt.date) }}
+          </li>
           @if (appt.endDate) {
             <li><span aria-hidden="true">➡️</span> Fin prévue : {{ formatIsoFr(appt.endDate) }}</li>
           }
@@ -327,7 +371,10 @@
             <li><span aria-hidden="true">📍</span> {{ appt.place }}</li>
           }
           @if (appt.kind === 'heat') {
-            <li><span aria-hidden="true">💗</span> Prévision de chaleurs</li>
+            <li>
+              <img class="theme-ico theme-ico--inline" [src]="icons.soin" alt="" aria-hidden="true" draggable="false" />
+              Prévision de chaleurs
+            </li>
           }
         </ul>
         <div class="notes-box">

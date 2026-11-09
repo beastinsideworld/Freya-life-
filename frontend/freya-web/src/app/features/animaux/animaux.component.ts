@@ -15,7 +15,7 @@ import {
 } from '../../core/pets.store';
 import { PetShareService } from '../../core/pet-share.service';
 import { createId } from '../../core/id';
-import { NavIconComponent } from '../../shared/nav-icon/nav-icon.component';
+import { ANIMAUX_ICON, animauxEmojiIconSrc, petAvatarIconSrc } from '../../core/theme-ange-icons';
 
 type PetsTab = 'accueil' | 'depenses' | 'rendezvous';
 type ExpenseScope = 'mois' | 'annee' | 'animal';
@@ -26,11 +26,14 @@ type DateField = 'birth' | 'heatStart' | 'heatEnd' | 'expense' | 'appt';
 @Component({
   selector: 'app-animaux',
   standalone: true,
-  imports: [FormsModule, NavIconComponent],
+  imports: [FormsModule],
   templateUrl: './animaux.component.html',
   styleUrl: './animaux.component.scss'
 })
 export class AnimauxComponent {
+  readonly icons = ANIMAUX_ICON;
+  readonly animauxEmojiIconSrc = animauxEmojiIconSrc;
+  readonly petAvatarIconSrc = petAvatarIconSrc;
   readonly tab = signal<PetsTab>('accueil');
   readonly selectedPetId = signal<string | null>(null);
   readonly detailSection = signal<DetailSection | null>(null);

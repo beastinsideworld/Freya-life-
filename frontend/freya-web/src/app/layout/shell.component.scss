@@ -103,6 +103,12 @@
   filter: drop-shadow(0 0 6px color-mix(in srgb, var(--champagne) 28%, transparent));
 }
 
+:host-context([data-theme='ange']) .ico-wrap {
+  width: 2.05rem;
+  height: 2.05rem;
+  filter: drop-shadow(0 1px 6px rgba(216, 185, 129, 0.45));
+}
+
 .nav-label {
   max-width: 100%;
   overflow: hidden;
