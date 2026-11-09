@@ -823,9 +823,9 @@ export class AccueilComponent implements OnInit, OnDestroy {
           done: !!m.done,
           kcal: Number(m.kcal ?? this.estimateKcal(m.title))
         }));
-        this.meals.set(apiMeals.length ? apiMeals : this.demoMeals());
+        this.meals.set(apiMeals.length ? apiMeals : this.fallbackMeals());
       },
-      error: () => this.meals.set(this.demoMeals())
+      error: () => this.meals.set(this.fallbackMeals())
     });
   }
 
@@ -837,14 +837,14 @@ export class AccueilComponent implements OnInit, OnDestroy {
     const today = toIsoDate(new Date());
     this.http.get<any[]>(`${environment.apiUrl}/trips`).subscribe({
       next: (items) => {
-        const upcoming = (items?.length ? items : this.demoTrips())
+        const upcoming = (items?.length ? items : this.fallbackTrips())
           .map((item) => this.toNextTrip(item))
           .filter((trip) => trip.startDate >= today)
           .sort((a, b) => a.startDate.localeCompare(b.startDate));
         this.nextTrip.set(upcoming[0] ?? null);
       },
       error: () => {
-        const upcoming = this.demoTrips()
+        const upcoming = this.fallbackTrips()
           .map((item) => this.toNextTrip(item))
           .filter((trip) => trip.startDate >= today)
           .sort((a, b) => a.startDate.localeCompare(b.startDate));
@@ -861,6 +861,10 @@ export class AccueilComponent implements OnInit, OnDestroy {
       startDate,
       daysUntil: this.daysUntil(startDate)
     };
+  }
+
+  private fallbackTrips() {
+    return environment.useDemoData ? this.demoTrips() : [];
   }
 
   private demoTrips() {
@@ -916,14 +920,14 @@ export class AccueilComponent implements OnInit, OnDestroy {
 
     this.eventsApi.list(from, to).subscribe({
       next: (items) => {
-        const mapped = (items.length ? items : this.demoWeekEvents(start)).map((e) =>
+        const mapped = (items.length ? items : this.fallbackWeekEvents(start)).map((e) =>
           this.toDayEvent(e, !!doneMap[e.id])
         );
         this.weekDays.set(this.buildWeek(mapped));
       },
       error: () =>
         this.weekDays.set(
-          this.buildWeek(this.demoWeekEvents(start).map((e) => this.toDayEvent(e, !!doneMap[e.id])))
+          this.buildWeek(this.fallbackWeekEvents(start).map((e) => this.toDayEvent(e, !!doneMap[e.id])))
         )
     });
   }
@@ -972,6 +976,10 @@ export class AccueilComponent implements OnInit, OnDestroy {
     };
   }
 
+  private fallbackMeals(): DayMeal[] {
+    return environment.useDemoData ? this.demoMeals() : [];
+  }
+
   private demoMeals(): DayMeal[] {
     return [
       { id: 'demo-breakfast', slot: 'Petit-déjeuner', title: 'Porridge protéiné', done: true, kcal: 380 },
@@ -987,6 +995,10 @@ export class AccueilComponent implements OnInit, OnDestroy {
     if (t.includes('poulet')) return 620;
     if (t.includes('salade')) return 380;
     return 450;
+  }
+
+  private fallbackWeekEvents(start: Date): CalendarEvent[] {
+    return environment.useDemoData ? this.demoWeekEvents(start) : [];
   }
 
   private demoWeekEvents(start: Date): CalendarEvent[] {

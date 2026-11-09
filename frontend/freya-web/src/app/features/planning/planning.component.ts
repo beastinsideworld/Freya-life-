@@ -20,6 +20,7 @@ import { createId } from '../../core/id';
 import { FamilyService } from '../../core/family.service';
 import { isFrenchHoliday } from '../../core/french-holidays';
 import { DatePickerComponent } from '../../shared/date-picker/date-picker.component';
+import { environment } from '../../../environments/environment';
 
 interface MonthCell {
   day: number | null;
@@ -545,7 +546,7 @@ export class PlanningComponent implements OnInit {
   }
 
   blocksFor(date: string): Array<CalendarEvent & { top: number; height: number; tone: string }> {
-    const source = this.events().length ? this.events() : this.demoEvents();
+    const source = this.events().length ? this.events() : this.fallbackEvents();
     return source
       .filter((e) => this.occursOn(e, date))
       .map((e) => {
@@ -614,8 +615,8 @@ export class PlanningComponent implements OnInit {
     const from = toIsoDate(start);
     const to = toIsoDate(this.addDays(start, 6));
     this.eventsApi.list(from, to).subscribe({
-      next: (items) => this.events.set(items.length ? items : this.demoEvents()),
-      error: () => this.events.set(this.demoEvents())
+      next: (items) => this.events.set(items.length ? items : this.fallbackEvents()),
+      error: () => this.events.set(this.fallbackEvents())
     });
   }
 
@@ -630,9 +631,17 @@ export class PlanningComponent implements OnInit {
     const endPad = 6 - ((last.getDay() + 6) % 7);
     const to = toIsoDate(this.addDays(last, endPad));
     this.eventsApi.list(from, to).subscribe({
-      next: (items) => this.monthEvents.set(items.length ? items : this.demoMonthEvents(from, to)),
-      error: () => this.monthEvents.set(this.demoMonthEvents(from, to))
+      next: (items) => this.monthEvents.set(items.length ? items : this.fallbackMonthEvents(from, to)),
+      error: () => this.monthEvents.set(this.fallbackMonthEvents(from, to))
     });
+  }
+
+  private fallbackEvents(): CalendarEvent[] {
+    return environment.useDemoData ? this.demoEvents() : [];
+  }
+
+  private fallbackMonthEvents(from: string, to: string): CalendarEvent[] {
+    return environment.useDemoData ? this.demoMonthEvents(from, to) : [];
   }
 
   private demoEvents(): CalendarEvent[] {
@@ -710,7 +719,7 @@ export class PlanningComponent implements OnInit {
     const offset = (first.getDay() + 6) % 7;
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const today = toIsoDate(new Date());
-    const events = source.length ? source : this.demoEvents();
+    const events = source.length ? source : this.fallbackEvents();
     const cells: MonthCell[] = [];
 
     for (let i = 0; i < offset; i++) {

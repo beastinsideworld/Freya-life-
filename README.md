@@ -69,6 +69,28 @@ App : http://localhost:4200
 3. Ajoute des événements dans **Planning**  
 4. Planifie des repas dans **Repas → Semaine**
 
+## Mise en ligne
+
+Un push sur `master` ou `main` lance `.github/workflows/deploy.yml`.
+
+L’image de l’API part sur `registry.bariserv.net/freya`, avec les étiquettes `latest` et le SHA du commit. Dans le dépôt GitHub, ajoute les secrets `REGISTRY_USERNAME` et `REGISTRY_PASSWORD`. Si le chemin de l’image est différent, ajoute la variable `REGISTRY_IMAGE` avec le nom complet, par exemple `registry.bariserv.net/bari/freya`.
+
+Le site Angular part sur GitHub Pages : `https://beastinsideworld.github.io/Freya-life-/`. Dans les réglages du dépôt, la source des Pages doit être **GitHub Actions**. La variable `API_BASE` (optionnelle) pointe vers l’API ; par défaut `https://freya-life-api.bariserv.net`.
+
+Sur le serveur (réseau Traefik `traefik_proxy` déjà présent) :
+
+L’API publique est `https://freya-life-api.bariserv.net` (zone DNS déjà créée).
+
+```bash
+# .env à côté de compose.prod.yaml
+JWT_KEY=une-cle-secrete-d-au-moins-32-caracteres
+
+podman compose -f compose.prod.yaml pull
+podman compose -f compose.prod.yaml up -d
+```
+
+`API_HOST` vaut par défaut `freya-life-api.bariserv.net`. Variables utiles : `REGISTRY`, `TAG`, `JWT_ISSUER`, `JWT_AUDIENCE`, `CORS_ORIGINS`, `TRAEFIK_CERT_RESOLVER`.
+
 ## Structure
 
 ```

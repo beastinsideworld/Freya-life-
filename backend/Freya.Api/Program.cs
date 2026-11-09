@@ -65,12 +65,21 @@ builder.Services
     });
 builder.Services.AddAuthorization();
 
+var corsOrigins = (builder.Configuration["CORS_ORIGINS"] ?? string.Empty)
+    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+    .Where(o => o.Length > 0)
+    .Concat([
+        "http://localhost:4200",
+        "http://127.0.0.1:4200",
+        "https://beastinsideworld.github.io"
+    ])
+    .Distinct(StringComparer.OrdinalIgnoreCase)
+    .ToArray();
+
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AngularDev", policy =>
-        policy.WithOrigins(
-                "http://localhost:4200",
-                "http://127.0.0.1:4200")
+    options.AddPolicy("FreyaCors", policy =>
+        policy.WithOrigins(corsOrigins)
             .AllowAnyHeader()
             .AllowAnyMethod());
 });
@@ -93,7 +102,7 @@ using (var scope = app.Services.CreateScope())
 app.UseSwagger();
 app.UseSwaggerUI();
 
-app.UseCors("AngularDev");
+app.UseCors("FreyaCors");
 app.UseAuthentication();
 app.UseAuthorization();
 

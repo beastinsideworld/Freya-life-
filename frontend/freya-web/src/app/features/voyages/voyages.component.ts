@@ -247,11 +247,11 @@ export class VoyagesComponent implements OnInit {
     this.http.get<any[]>(`${environment.apiUrl}/trips`).subscribe({
       next: (items) => {
         const mapped = (items ?? []).map((item) => this.syncBudgetFromPrep(this.mapApiTrip(item)));
-        this.trips.set(mapped.length ? mapped : this.demoTrips().map((trip) => this.syncBudgetFromPrep(trip)));
+        this.trips.set(mapped.length ? mapped : this.fallbackTrips());
         this.tryOpenPendingTrip();
       },
       error: () => {
-        this.trips.set(this.demoTrips().map((trip) => this.syncBudgetFromPrep(trip)));
+        this.trips.set(this.fallbackTrips());
         this.tryOpenPendingTrip();
       }
     });
@@ -914,6 +914,12 @@ export class VoyagesComponent implements OnInit {
       budget: extras?.budget ?? demo?.budget ?? this.defaultBudget(),
       prepTools: extras?.prepTools ?? demo?.prepTools ?? {}
     };
+  }
+
+  private fallbackTrips(): TripDetail[] {
+    return environment.useDemoData
+      ? this.demoTrips().map((trip) => this.syncBudgetFromPrep(trip))
+      : [];
   }
 
   private demoTrips(): TripDetail[] {

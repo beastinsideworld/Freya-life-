@@ -1,5 +1,6 @@
 import { Injectable, computed, signal } from '@angular/core';
 import { createId } from './id';
+import { environment } from '../../environments/environment';
 
 export type PetSex = 'F' | 'M';
 export type ExpenseCategory = 'Alimentation' | 'Vétérinaire' | 'Toilettage' | 'Soins / Traitements' | 'Autres';
@@ -243,16 +244,30 @@ function demoState(): PetsState {
   };
 }
 
+function emptyState(): PetsState {
+  return { pets: [], tasks: [], expenses: [], appointments: [], monthlyBudget: 0 };
+}
+
 function loadState(): PetsState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) {
+      if (!environment.useDemoData) return emptyState();
       const seeded = demoState();
       localStorage.setItem(STORAGE_KEY, JSON.stringify(seeded));
       return seeded;
     }
     const parsed = JSON.parse(raw) as PetsState;
     if (!parsed.pets?.length) {
+      if (!environment.useDemoData) {
+        return {
+          pets: [],
+          tasks: parsed.tasks ?? [],
+          expenses: parsed.expenses ?? [],
+          appointments: parsed.appointments ?? [],
+          monthlyBudget: Number(parsed.monthlyBudget || 0)
+        };
+      }
       const seeded = demoState();
       localStorage.setItem(STORAGE_KEY, JSON.stringify(seeded));
       return seeded;
@@ -265,7 +280,7 @@ function loadState(): PetsState {
       monthlyBudget: Number(parsed.monthlyBudget || 400)
     };
   } catch {
-    return demoState();
+    return environment.useDemoData ? demoState() : emptyState();
   }
 }
 

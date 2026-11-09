@@ -15,6 +15,7 @@ import {
 } from '../../core/budget.service';
 import { Friend, SocialService } from '../../core/social.service';
 import { createId } from '../../core/id';
+import { environment } from '../../../environments/environment';
 
 type FinanceTab = 'synthese' | 'mouvements' | 'projets';
 type MoveFilter = 'all' | 'income' | 'expense';
@@ -628,6 +629,8 @@ export class BudgetComponent implements OnInit {
   }
 
   private ensureDemoSeed(month: BudgetMonth, accounts: BudgetAccount[], projects: BudgetProject[]): void {
+    if (!environment.useDemoData) return;
+
     const emptyMonth =
       Number(month.salary || 0) === 0 &&
       (month.movements?.length ?? 0) === 0 &&
@@ -892,7 +895,7 @@ export class BudgetComponent implements OnInit {
   }
 
   private withDemoHistory(history: HistoryPoint[]): HistoryPoint[] {
-    if (!history.length) return history;
+    if (!environment.useDemoData || !history.length) return history;
     const hasAny = history.some((h) => h.income > 0 || h.expense > 0);
     if (hasAny) return history;
     const income = this.incomeTotal() || this.salairesRecus() || 2066;

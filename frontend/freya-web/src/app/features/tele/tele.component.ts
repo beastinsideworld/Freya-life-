@@ -1,6 +1,7 @@
 import { Component, OnInit, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { createId } from '../../core/id';
+import { environment } from '../../../environments/environment';
 
 type TeleCategory = 'audiovisuel' | 'jeu' | 'manga' | 'activite';
 type MediaType = 'film' | 'serie' | 'docu';
@@ -222,7 +223,7 @@ export class TeleComponent implements OnInit {
       return migrated;
     }
 
-    return this.demoItems();
+    return environment.useDemoData ? this.demoItems() : [];
   }
 
   private readRaw(key: string): any[] {

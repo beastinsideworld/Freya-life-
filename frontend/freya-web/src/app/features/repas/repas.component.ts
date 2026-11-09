@@ -552,9 +552,9 @@ export class RepasComponent implements OnInit {
     this.http.get<{ meals: any[] }>(`${environment.apiUrl}/meals/week`, { params }).subscribe({
       next: (res) => {
         const mapped = (res.meals ?? []).map((m) => this.mapMeal(m));
-        this.meals.set(mapped.length ? mapped : this.demoMeals());
+        this.meals.set(mapped.length ? mapped : this.fallbackMeals());
       },
-      error: () => this.meals.set(this.demoMeals())
+      error: () => this.meals.set(this.fallbackMeals())
     });
   }
 
@@ -571,16 +571,16 @@ export class RepasComponent implements OnInit {
 
   private loadGrocery(): void {
     this.http.get<GroceryItem[]>(`${environment.apiUrl}/grocery`).subscribe({
-      next: (items) => this.grocery.set(items.length ? items : this.demoGrocery()),
-      error: () => this.grocery.set(this.demoGrocery())
+      next: (items) => this.grocery.set(items.length ? items : this.fallbackGrocery()),
+      error: () => this.grocery.set(this.fallbackGrocery())
     });
   }
 
   private loadRecipes(): void {
     this.http.get<any[]>(`${environment.apiUrl}/recipes`).subscribe({
       next: (items) =>
-        this.recipes.set(items.length ? items.map((item) => this.mapRecipe(item)) : this.demoRecipes()),
-      error: () => this.recipes.set(this.demoRecipes())
+        this.recipes.set(items.length ? items.map((item) => this.mapRecipe(item)) : this.fallbackRecipes()),
+      error: () => this.recipes.set(this.fallbackRecipes())
     });
   }
 
@@ -629,6 +629,18 @@ export class RepasComponent implements OnInit {
       ingredients: [] as RecipeIngredient[],
       kcal: 450 as number | null
     };
+  }
+
+  private fallbackMeals(): MealRow[] {
+    return environment.useDemoData ? this.demoMeals() : [];
+  }
+
+  private fallbackGrocery(): GroceryItem[] {
+    return environment.useDemoData ? this.demoGrocery() : [];
+  }
+
+  private fallbackRecipes(): Recipe[] {
+    return environment.useDemoData ? this.demoRecipes() : [];
   }
 
   private demoMeals(): MealRow[] {

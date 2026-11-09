@@ -1,3 +1,5 @@
+import { environment } from '../../environments/environment';
+
 export type RepeatMode = 'once' | 'daily' | 'weekly' | 'monthly';
 
 export interface ObjectiveItem {
@@ -80,6 +82,8 @@ export function loadObjectives(): ObjectiveItem[] {
     /* ignore */
   }
 
+  if (!environment.useDemoData) return [];
+
   return [
     { id: 'obj-1', title: 'Courir 5 km', date: '2026-11-03', repeat: 'weekly', done: false },
     { id: 'obj-2', title: 'Lire 20 pages', date: today, repeat: 'daily', done: false },
@@ -111,6 +115,8 @@ export function loadRooms(): HabitRoom[] {
   } catch {
     /* ignore */
   }
+
+  if (!environment.useDemoData) return [];
 
   return [
     {

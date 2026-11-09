@@ -1,0 +1,50 @@
+name: freya-prod
+
+services:
+  api:
+    image: ${REGISTRY:-registry.bariserv.net}/freya:${TAG:-latest}
+    container_name: freya-prod-api
+    restart: always
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__Default: Data Source=/app/data/freya.db
+      Jwt__Key: ${JWT_KEY:?JWT_KEY requis}
+      Jwt__Issuer: ${JWT_ISSUER:-Freya}
+      Jwt__Audience: ${JWT_AUDIENCE:-Freya}
+      CORS_ORIGINS: ${CORS_ORIGINS:-https://beastinsideworld.github.io}
+    volumes:
+      - freya_data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 40
+      start_period: 15s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik_proxy"
+
+      # HTTPS (443)
+      - "traefik.http.routers.freya-api-prod.rule=Host(`${API_HOST:-freya-life-api.bariserv.net}`)"
+      - "traefik.http.routers.freya-api-prod.entrypoints=websecure"
+      - "traefik.http.routers.freya-api-prod.tls=true"
+      - "traefik.http.routers.freya-api-prod.tls.certresolver=${TRAEFIK_CERT_RESOLVER:-myresolver}"
+      - "traefik.http.services.freya-api-prod.loadbalancer.server.port=8080"
+      - "traefik.http.routers.freya-api-prod.middlewares=${TRAEFIK_RATE_LIMIT_MIDDLEWARE:-rate-limit-global@file}"
+
+      # HTTP (80) → redirection HTTPS
+      - "traefik.http.routers.freya-api-prod-http.rule=Host(`${API_HOST}`)"
+      - "traefik.http.routers.freya-api-prod-http.entrypoints=web"
+      - "traefik.http.routers.freya-api-prod-http.middlewares=${TRAEFIK_HTTPS_REDIRECT_MIDDLEWARE:-redirect-to-https@file}"
+    networks:
+      - freya_internal
+      - traefik_proxy
+
+volumes:
+  freya_data:
+
+networks:
+  freya_internal:
+  traefik_proxy:
+    external: true
