@@ -36,6 +36,7 @@ interface DayCol {
   label: string;
   short: string;
   isToday: boolean;
+  isHoliday: boolean;
 }
 
 @Component({
@@ -314,6 +315,19 @@ export class PlanningComponent implements OnInit {
         );
         this.editingEvent.set(null);
       }
+    });
+  }
+
+  deleteEvent(): void {
+    const current = this.editingEvent();
+    if (!current) return;
+    const removeLocal = () => {
+      this.events.update((list) => list.filter((item) => item.id !== current.id));
+      this.editingEvent.set(null);
+    };
+    this.eventsApi.remove(current.id).subscribe({
+      next: () => removeLocal(),
+      error: () => removeLocal()
     });
   }
 
@@ -683,7 +697,8 @@ export class PlanningComponent implements OnInit {
         date: iso,
         label: `${labels[i]} ${d.getDate()}`,
         short: labels[i],
-        isToday: iso === today
+        isToday: iso === today,
+        isHoliday: isFrenchHoliday(iso)
       };
     });
   }

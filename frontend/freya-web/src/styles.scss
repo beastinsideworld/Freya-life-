@@ -74,8 +74,9 @@ h1, h2, .display {
   max-width: 100%;
   min-width: 0;
   margin: 0 auto;
-  padding: 0 1rem calc(var(--nav-h) + 1.25rem);
+  padding: 0 1rem calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 2rem);
   overflow-x: clip;
+  overflow-y: visible;
 }
 
 .hero {
@@ -281,7 +282,7 @@ h1, h2, .display {
 @media (min-width: 768px) {
   .page {
     max-width: 920px;
-    padding: 0 1.5rem calc(var(--nav-h) + 1.5rem);
+    padding: 0 1.5rem calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 2.25rem);
   }
 
   .hero {

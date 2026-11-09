@@ -1,4 +1,5 @@
 import { ThemeId, applyTheme, isThemeId } from './themes';
+import { NavTabId, isNavTabId } from './nav-tabs';
 
 export interface AppSettings {
   /** Si false, aucun popup de rappel des tâches non faites. */
@@ -7,6 +8,8 @@ export interface AppSettings {
   reminderTime: string;
   /** Identifiant du thème d’apparence. */
   themeId: ThemeId;
+  /** Onglets masqués dans la navigation (hors Accueil / Paramètres). */
+  hiddenNavTabs: NavTabId[];
 }
 
 const SETTINGS_KEY = 'freya.settings.v1';
@@ -16,8 +19,14 @@ const REMINDER_SNOOZED_KEY = 'freya.reminder.snoozed.v1';
 const DEFAULT_SETTINGS: AppSettings = {
   reminderEnabled: true,
   reminderTime: '20:00',
-  themeId: 'freya'
+  themeId: 'freya',
+  hiddenNavTabs: []
 };
+
+function normalizeHiddenTabs(value: unknown): NavTabId[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((item): item is NavTabId => isNavTabId(item) && item !== 'accueil' && item !== 'parametres');
+}
 
 export function loadSettings(): AppSettings {
   try {
@@ -29,7 +38,8 @@ export function loadSettings(): AppSettings {
       reminderTime: /^\d{2}:\d{2}$/.test(String(parsed.reminderTime ?? ''))
         ? String(parsed.reminderTime)
         : DEFAULT_SETTINGS.reminderTime,
-      themeId: isThemeId(parsed.themeId) ? parsed.themeId : DEFAULT_SETTINGS.themeId
+      themeId: isThemeId(parsed.themeId) ? parsed.themeId : DEFAULT_SETTINGS.themeId,
+      hiddenNavTabs: normalizeHiddenTabs(parsed.hiddenNavTabs)
     };
   } catch {
     return { ...DEFAULT_SETTINGS };

@@ -44,4 +44,8 @@ export class EventsService {
   update(id: string, payload: CreateEventPayload) {
     return this.http.put<CalendarEvent>(`${environment.apiUrl}/events/${id}`, payload);
   }
+
+  remove(id: string) {
+    return this.http.delete<void>(`${environment.apiUrl}/events/${id}`);
+  }
 }

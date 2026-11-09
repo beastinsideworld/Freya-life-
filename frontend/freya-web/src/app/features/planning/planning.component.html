@@ -65,7 +65,7 @@
         <div class="corner"></div>
         <div class="days">
           @for (day of days(); track day.date) {
-            <p [class.today]="day.isToday">{{ day.label }}</p>
+            <p [class.today]="day.isToday" [class.holiday]="day.isHoliday">{{ day.label }}</p>
           }
         </div>
         <div class="hours" aria-hidden="true">
@@ -75,7 +75,7 @@
         </div>
         <div class="board">
           @for (day of days(); track day.date) {
-            <div class="col" [class.today]="day.isToday">
+            <div class="col" [class.today]="day.isToday" [class.holiday]="day.isHoliday">
               @for (block of blocksFor(day.date); track block.id) {
                 <article
                   class="block clickable"
@@ -342,7 +342,8 @@
             </label>
           </div>
         }
-        <div class="modal-actions">
+        <div class="modal-actions with-trash">
+          <button type="button" class="btn danger-ghost" (click)="deleteEvent()" aria-label="Supprimer l’événement">🗑</button>
           <button type="button" class="btn" (click)="closeAllEditors()">Annuler</button>
           <button type="submit" class="btn primary">Enregistrer</button>
         </div>

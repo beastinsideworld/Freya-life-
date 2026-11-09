@@ -3,6 +3,8 @@ import { FormsModule } from '@angular/forms';
 import { AppSettings, loadSettings, saveSettings } from '../../core/app-settings';
 import { AuthService } from '../../core/auth/auth.service';
 import { FamilyService, FamilySummary } from '../../core/family.service';
+import { NavPrefsService } from '../../core/nav-prefs.service';
+import { NavTabId, TOGGLEABLE_NAV_TABS } from '../../core/nav-tabs';
 import { Friend, SocialService, UserProfile } from '../../core/social.service';
 import { ImagePickerComponent } from '../../shared/image-picker/image-picker.component';
 import {
@@ -22,9 +24,15 @@ import {
 export class ParametresComponent implements OnInit {
   readonly saved = signal(false);
   readonly themeModalOpen = signal(false);
+  readonly navTabsModalOpen = signal(false);
   readonly themeCategories = THEME_CATEGORIES;
+  readonly toggleableTabs = TOGGLEABLE_NAV_TABS;
   readonly selectedThemeId = signal<ThemeId>('freya');
   readonly currentTheme = computed(() => findTheme(this.selectedThemeId()));
+  readonly hiddenNavTabs = signal<NavTabId[]>([]);
+  readonly visibleToggleableCount = computed(
+    () => this.toggleableTabs.filter((tab) => !this.hiddenNavTabs().includes(tab.id)).length
+  );
   readonly profile = signal<UserProfile | null>(null);
   readonly friends = signal<Friend[]>([]);
   readonly families = signal<FamilySummary[]>([]);
@@ -48,7 +56,8 @@ export class ParametresComponent implements OnInit {
   constructor(
     private readonly auth: AuthService,
     private readonly social: SocialService,
-    private readonly familyApi: FamilyService
+    private readonly familyApi: FamilyService,
+    private readonly navPrefs: NavPrefsService
   ) {}
 
   ngOnInit(): void {
@@ -56,6 +65,7 @@ export class ParametresComponent implements OnInit {
     this.reminderEnabled = settings.reminderEnabled;
     this.reminderTime = settings.reminderTime;
     this.selectedThemeId.set(settings.themeId);
+    this.hiddenNavTabs.set(settings.hiddenNavTabs ?? []);
     this.loadProfile();
     this.loadFriends();
     this.loadFamilies();
@@ -260,21 +270,48 @@ export class ParametresComponent implements OnInit {
     this.themeModalOpen.set(false);
   }
 
+  openNavTabsModal(): void {
+    this.navTabsModalOpen.set(true);
+  }
+
+  closeNavTabsModal(): void {
+    this.navTabsModalOpen.set(false);
+  }
+
+  isNavTabVisible(id: NavTabId): boolean {
+    return !this.hiddenNavTabs().includes(id);
+  }
+
+  toggleNavTab(id: NavTabId, visible: boolean): void {
+    const next = visible
+      ? this.hiddenNavTabs().filter((tabId) => tabId !== id)
+      : [...new Set([...this.hiddenNavTabs(), id])];
+    this.hiddenNavTabs.set(next);
+    this.persistSettings();
+    this.navPrefs.setHidden(next);
+  }
+
   selectTheme(themeId: ThemeId): void {
     this.selectedThemeId.set(themeId);
     applyTheme(themeId);
+    this.persistSettings();
     this.themeModalOpen.set(false);
   }
 
   save(): void {
+    this.persistSettings();
+    this.saved.set(true);
+    window.setTimeout(() => this.saved.set(false), 1800);
+  }
+
+  private persistSettings(): void {
     const settings: AppSettings = {
       reminderEnabled: this.reminderEnabled,
       reminderTime: this.reminderTime || '20:00',
-      themeId: this.selectedThemeId()
+      themeId: this.selectedThemeId(),
+      hiddenNavTabs: this.hiddenNavTabs()
     };
     saveSettings(settings);
-    this.saved.set(true);
-    window.setTimeout(() => this.saved.set(false), 1800);
   }
 
   private saveAvatar(avatarUrl: string | null): void {

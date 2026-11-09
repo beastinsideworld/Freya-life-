@@ -20,6 +20,7 @@ interface MealRow {
   date: string;
   slot: string;
   title: string;
+  recipeId?: string | null;
   kcal?: number | null;
 }
 
@@ -68,6 +69,7 @@ export class RepasComponent implements OnInit {
   readonly recipeQuery = signal('');
   readonly recipeModalOpen = signal(false);
   readonly recipeDetail = signal<Recipe | null>(null);
+  readonly editingRecipeId = signal<string | null>(null);
   readonly recipeSaving = signal(false);
   readonly recipeFormError = signal('');
   readonly articleQuery = signal('');
@@ -132,11 +134,15 @@ export class RepasComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadWeek();
+    this.loadRecipes();
   }
 
   setTab(tab: Tab): void {
     this.tab.set(tab);
-    if (tab === 'semaine') this.loadWeek();
+    if (tab === 'semaine') {
+      this.loadWeek();
+      if (!this.recipes().length) this.loadRecipes();
+    }
     if (tab === 'courses') this.loadGrocery();
     if (tab === 'recettes') this.loadRecipes();
   }
@@ -144,6 +150,37 @@ export class RepasComponent implements OnInit {
   mealAt(dayIndex: number, slot: string): MealRow | undefined {
     const date = this.dateFor(dayIndex);
     return this.meals().find((m) => m.date === date && (m.slot === slot || m.slot === String(this.slots.indexOf(slot))));
+  }
+
+  openMealRecipe(meal: MealRow): void {
+    const byId = meal.recipeId
+      ? this.recipes().find((r) => r.id === String(meal.recipeId))
+      : undefined;
+    if (byId) {
+      this.openRecipeDetail(byId);
+      return;
+    }
+
+    const title = meal.title.trim().toLowerCase();
+    const byTitle = this.recipes().find((r) => {
+      const recipeTitle = r.title.trim().toLowerCase();
+      return recipeTitle === title || title.includes(recipeTitle) || recipeTitle.includes(title);
+    });
+    if (byTitle) {
+      this.openRecipeDetail(byTitle);
+      return;
+    }
+
+    this.openRecipeDetail({
+      id: meal.recipeId || meal.id,
+      title: meal.title,
+      durationMin: 20,
+      difficulty: 'Facile',
+      categories: '',
+      kcal: meal.kcal ?? null,
+      instructions: 'Aucune fiche recette liée pour le moment.',
+      ingredients: []
+    });
   }
 
   quickAdd(dayIndex: number, slot: string): void {
@@ -188,6 +225,7 @@ export class RepasComponent implements OnInit {
 
   openRecipeModal(): void {
     this.recipeDetail.set(null);
+    this.editingRecipeId.set(null);
     this.recipeForm = this.emptyRecipeForm();
     this.draftIngredient = { name: '', quantity: '1', unit: 'g' };
     this.recipeFormError.set('');
@@ -197,6 +235,7 @@ export class RepasComponent implements OnInit {
   closeRecipeModal(): void {
     if (this.recipeSaving()) return;
     this.recipeModalOpen.set(false);
+    this.editingRecipeId.set(null);
     this.recipeFormError.set('');
   }
 
@@ -206,6 +245,29 @@ export class RepasComponent implements OnInit {
 
   closeRecipeDetail(): void {
     this.recipeDetail.set(null);
+  }
+
+  editRecipeFromDetail(): void {
+    const recipe = this.recipeDetail();
+    if (!recipe) return;
+    this.recipeDetail.set(null);
+    this.editingRecipeId.set(recipe.id);
+    const catRaw = (recipe.categories || '').split(/[\s,]+/).find(Boolean) || 'rapide';
+    const matchedCat =
+      this.recipeFormCats.find((c) => c.toLowerCase() === catRaw.toLowerCase()) || 'Rapide';
+    this.recipeForm = {
+      title: recipe.title,
+      durationMin: recipe.durationMin || 20,
+      difficulty: recipe.difficulty || 'Facile',
+      category: matchedCat,
+      instructions: recipe.instructions || '',
+      imageUrl: recipe.imageUrl || '',
+      ingredients: [...(recipe.ingredients ?? [])],
+      kcal: recipe.kcal ?? null
+    };
+    this.draftIngredient = { name: '', quantity: '1', unit: 'g' };
+    this.recipeFormError.set('');
+    this.recipeModalOpen.set(true);
   }
 
   onRecipePhotoSelected(dataUrl: string): void {
@@ -275,29 +337,63 @@ export class RepasComponent implements OnInit {
       kcal
     };
 
-    this.http.post<any>(`${environment.apiUrl}/recipes`, payload).subscribe({
+    const editingId = this.editingRecipeId();
+    const request$ = editingId
+      ? this.http.put<any>(`${environment.apiUrl}/recipes/${editingId}`, payload)
+      : this.http.post<any>(`${environment.apiUrl}/recipes`, payload);
+
+    request$.subscribe({
       next: (recipe) => {
-        this.recipes.update((list) => [this.mapRecipe(recipe, payload.imageUrl), ...list]);
+        const mapped = this.mapRecipe(recipe, payload.imageUrl);
+        if (editingId) {
+          this.recipes.update((list) =>
+            list.map((item) => (item.id === editingId ? { ...mapped, id: editingId } : item))
+          );
+        } else {
+          this.recipes.update((list) => [mapped, ...list]);
+        }
         this.recipeSaving.set(false);
         this.recipeModalOpen.set(false);
+        this.editingRecipeId.set(null);
       },
       error: () => {
-        this.recipes.update((list) => [
-          {
-            id: createId(),
-            title: payload.title,
-            durationMin: payload.durationMin,
-            difficulty: payload.difficulty,
-            categories: payload.categories,
-            imageUrl: payload.imageUrl,
-            instructions: payload.instructions,
-            ingredients: this.recipeForm.ingredients,
-            kcal: payload.kcal
-          },
-          ...list
-        ]);
+        if (editingId) {
+          this.recipes.update((list) =>
+            list.map((item) =>
+              item.id === editingId
+                ? {
+                    ...item,
+                    title: payload.title,
+                    durationMin: payload.durationMin,
+                    difficulty: payload.difficulty,
+                    categories: payload.categories,
+                    imageUrl: payload.imageUrl,
+                    instructions: payload.instructions,
+                    ingredients: this.recipeForm.ingredients,
+                    kcal: payload.kcal
+                  }
+                : item
+            )
+          );
+        } else {
+          this.recipes.update((list) => [
+            {
+              id: createId(),
+              title: payload.title,
+              durationMin: payload.durationMin,
+              difficulty: payload.difficulty,
+              categories: payload.categories,
+              imageUrl: payload.imageUrl,
+              instructions: payload.instructions,
+              ingredients: this.recipeForm.ingredients,
+              kcal: payload.kcal
+            },
+            ...list
+          ]);
+        }
         this.recipeSaving.set(false);
         this.recipeModalOpen.set(false);
+        this.editingRecipeId.set(null);
       }
     });
   }
@@ -453,10 +549,24 @@ export class RepasComponent implements OnInit {
 
   private loadWeek(): void {
     const params = new HttpParams().set('weekStart', this.weekStart);
-    this.http.get<{ meals: MealRow[] }>(`${environment.apiUrl}/meals/week`, { params }).subscribe({
-      next: (res) => this.meals.set((res.meals ?? []).length ? res.meals : this.demoMeals()),
+    this.http.get<{ meals: any[] }>(`${environment.apiUrl}/meals/week`, { params }).subscribe({
+      next: (res) => {
+        const mapped = (res.meals ?? []).map((m) => this.mapMeal(m));
+        this.meals.set(mapped.length ? mapped : this.demoMeals());
+      },
       error: () => this.meals.set(this.demoMeals())
     });
+  }
+
+  private mapMeal(item: any): MealRow {
+    return {
+      id: String(item.id ?? createId()),
+      date: String(item.date ?? ''),
+      slot: String(item.slot ?? ''),
+      title: String(item.title ?? 'Repas'),
+      recipeId: item.recipeId != null ? String(item.recipeId) : null,
+      kcal: item.kcal != null ? Number(item.kcal) : null
+    };
   }
 
   private loadGrocery(): void {

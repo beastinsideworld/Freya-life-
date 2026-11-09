@@ -16,6 +16,8 @@ export interface BudgetMovement {
   amount: number;
   date: string;
   note: string | null;
+  category: string | null;
+  accountName: string | null;
 }
 
 export interface BudgetMonth {
@@ -29,6 +31,27 @@ export interface BudgetMonth {
   canEdit: boolean;
   ownerName: string;
   ownerUserId: string;
+}
+
+export interface BudgetAccount {
+  id: string;
+  label: string;
+  icon: string;
+  balance: number;
+  performancePct: number | null;
+  sortOrder: number;
+}
+
+export interface BudgetProject {
+  id: string;
+  label: string;
+  icon: string;
+  targetAmount: number;
+  savedAmount: number;
+  monthlyContribution: number;
+  archived: boolean;
+  completedOn: string | null;
+  sortOrder: number;
 }
 
 export interface BudgetShare {
@@ -63,9 +86,55 @@ export class BudgetService {
     salary: number;
     note: string | null;
     allocations: Array<{ id?: string; label: string; kind: string; plannedAmount: number }>;
-    movements: Array<{ id?: string; label: string; kind: string; amount: number; date: string; note?: string | null }>;
+    movements: Array<{
+      id?: string;
+      label: string;
+      kind: string;
+      amount: number;
+      date: string;
+      note?: string | null;
+      category?: string | null;
+      accountName?: string | null;
+    }>;
   }) {
     return this.http.put<BudgetMonth>(`${this.base}/budget/month`, payload);
+  }
+
+  accounts(ownerUserId?: string | null) {
+    let params = new HttpParams();
+    if (ownerUserId) params = params.set('ownerUserId', ownerUserId);
+    return this.http.get<BudgetAccount[]>(`${this.base}/budget/accounts`, { params });
+  }
+
+  saveAccounts(accounts: Array<{
+    id?: string;
+    label: string;
+    icon: string;
+    balance: number;
+    performancePct?: number | null;
+    sortOrder: number;
+  }>) {
+    return this.http.put<BudgetAccount[]>(`${this.base}/budget/accounts`, { accounts });
+  }
+
+  projects(ownerUserId?: string | null) {
+    let params = new HttpParams();
+    if (ownerUserId) params = params.set('ownerUserId', ownerUserId);
+    return this.http.get<BudgetProject[]>(`${this.base}/budget/projects`, { params });
+  }
+
+  saveProjects(projects: Array<{
+    id?: string;
+    label: string;
+    icon: string;
+    targetAmount: number;
+    savedAmount: number;
+    monthlyContribution: number;
+    archived: boolean;
+    completedOn?: string | null;
+    sortOrder: number;
+  }>) {
+    return this.http.put<BudgetProject[]>(`${this.base}/budget/projects`, { projects });
   }
 
   shares() {

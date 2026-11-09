@@ -28,6 +28,8 @@ public class FreyaDbContext : IdentityDbContext<AppUser>
     public DbSet<BudgetAllocation> BudgetAllocations => Set<BudgetAllocation>();
     public DbSet<BudgetMovement> BudgetMovements => Set<BudgetMovement>();
     public DbSet<BudgetShare> BudgetShares => Set<BudgetShare>();
+    public DbSet<BudgetAccount> BudgetAccounts => Set<BudgetAccount>();
+    public DbSet<BudgetProject> BudgetProjects => Set<BudgetProject>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -143,6 +145,8 @@ public class FreyaDbContext : IdentityDbContext<AppUser>
             e.Property(x => x.Label).HasMaxLength(120).IsRequired();
             e.Property(x => x.Kind).HasMaxLength(20).IsRequired();
             e.Property(x => x.Note).HasMaxLength(500);
+            e.Property(x => x.Category).HasMaxLength(80);
+            e.Property(x => x.AccountName).HasMaxLength(80);
         });
 
         builder.Entity<BudgetShare>(e =>
@@ -151,6 +155,24 @@ public class FreyaDbContext : IdentityDbContext<AppUser>
             e.HasIndex(x => new { x.OwnerUserId, x.ViewerUserId }).IsUnique();
             e.Property(x => x.OwnerUserId).HasMaxLength(450).IsRequired();
             e.Property(x => x.ViewerUserId).HasMaxLength(450).IsRequired();
+        });
+
+        builder.Entity<BudgetAccount>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => x.UserId);
+            e.Property(x => x.UserId).HasMaxLength(450).IsRequired();
+            e.Property(x => x.Label).HasMaxLength(120).IsRequired();
+            e.Property(x => x.Icon).HasMaxLength(16).IsRequired();
+        });
+
+        builder.Entity<BudgetProject>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => x.UserId);
+            e.Property(x => x.UserId).HasMaxLength(450).IsRequired();
+            e.Property(x => x.Label).HasMaxLength(160).IsRequired();
+            e.Property(x => x.Icon).HasMaxLength(16).IsRequired();
         });
     }
 }

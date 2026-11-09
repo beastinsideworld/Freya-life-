@@ -588,6 +588,37 @@ api.MapPost("/recipes", async (RecipeCreateRequest request, ICurrentUser current
     return Results.Created($"/api/v1/recipes/{entity.Id}", entity);
 }).RequireAuthorization();
 
+api.MapPut("/recipes/{id:guid}", async (Guid id, RecipeCreateRequest request, ICurrentUser current, FreyaDbContext db) =>
+{
+    if (current.UserId is null)
+    {
+        return Results.Unauthorized();
+    }
+
+    if (string.IsNullOrWhiteSpace(request.Title))
+    {
+        return Results.BadRequest(new { message = "Le titre de la recette est requis." });
+    }
+
+    var entity = await db.Recipes.FirstOrDefaultAsync(r => r.Id == id && r.UserId == current.UserId);
+    if (entity is null)
+    {
+        return Results.NotFound(new { message = "Recette introuvable." });
+    }
+
+    entity.Title = request.Title.Trim();
+    entity.DurationMin = request.DurationMin;
+    entity.Difficulty = request.Difficulty ?? "Facile";
+    entity.Categories = request.Categories ?? string.Empty;
+    entity.ImageUrl = request.ImageUrl;
+    entity.Instructions = request.Instructions;
+    entity.Ingredients = request.Ingredients;
+    entity.Kcal = request.Kcal;
+
+    await db.SaveChangesAsync();
+    return Results.Ok(entity);
+}).RequireAuthorization();
+
 api.MapGet("/trips", async (ICurrentUser current, FreyaDbContext db) =>
 {
     if (current.UserId is null)
@@ -1339,7 +1370,7 @@ api.MapGet("/budget/month", async (int? year, int? month, string? ownerUserId, I
     var movements = (canEdit || (share?.ShareMovements ?? false))
         ? entity.Movements
             .OrderByDescending(x => x.Date)
-            .Select(x => new BudgetMovementDto(x.Id, x.Label, x.Kind, x.Amount, x.Date, x.Note))
+            .Select(x => new BudgetMovementDto(x.Id, x.Label, x.Kind, x.Amount, x.Date, x.Note, x.Category, x.AccountName))
             .ToList()
         : [];
 
@@ -1416,7 +1447,9 @@ api.MapPut("/budget/month", async (UpsertBudgetMonthRequest request, ICurrentUse
             Kind = kind,
             Amount = Math.Max(0, item.Amount),
             Date = item.Date,
-            Note = string.IsNullOrWhiteSpace(item.Note) ? null : item.Note.Trim()
+            Note = string.IsNullOrWhiteSpace(item.Note) ? null : item.Note.Trim(),
+            Category = string.IsNullOrWhiteSpace(item.Category) ? null : item.Category.Trim(),
+            AccountName = string.IsNullOrWhiteSpace(item.AccountName) ? null : item.AccountName.Trim()
         });
     }
 
@@ -1430,10 +1463,127 @@ api.MapPut("/budget/month", async (UpsertBudgetMonthRequest request, ICurrentUse
         entity.Salary,
         entity.Note,
         entity.Allocations.Select(a => new BudgetAllocationDto(a.Id, a.Label, a.Kind, a.PlannedAmount)).ToList(),
-        entity.Movements.OrderByDescending(x => x.Date).Select(x => new BudgetMovementDto(x.Id, x.Label, x.Kind, x.Amount, x.Date, x.Note)).ToList(),
+        entity.Movements.OrderByDescending(x => x.Date)
+            .Select(x => new BudgetMovementDto(x.Id, x.Label, x.Kind, x.Amount, x.Date, x.Note, x.Category, x.AccountName))
+            .ToList(),
         true,
         me.DisplayName,
         me.Id));
+}).RequireAuthorization();
+
+api.MapGet("/budget/accounts", async (string? ownerUserId, ICurrentUser current, FreyaDbContext db) =>
+{
+    if (current.UserId is null) return Results.Unauthorized();
+    var ownerId = string.IsNullOrWhiteSpace(ownerUserId) ? current.UserId : ownerUserId.Trim();
+    if (ownerId != current.UserId)
+    {
+        var share = await db.BudgetShares.AsNoTracking()
+            .FirstOrDefaultAsync(s => s.OwnerUserId == ownerId && s.ViewerUserId == current.UserId);
+        if (share is null || !share.ShareAllocations) return Results.Forbid();
+    }
+
+    var accounts = await db.BudgetAccounts.AsNoTracking()
+        .Where(a => a.UserId == ownerId)
+        .OrderBy(a => a.SortOrder)
+        .ThenBy(a => a.Label)
+        .Select(a => new BudgetAccountDto(a.Id, a.Label, a.Icon, a.Balance, a.PerformancePct, a.SortOrder))
+        .ToListAsync();
+    return Results.Ok(accounts);
+}).RequireAuthorization();
+
+api.MapPut("/budget/accounts", async (UpsertBudgetAccountsRequest request, ICurrentUser current, FreyaDbContext db) =>
+{
+    if (current.UserId is null) return Results.Unauthorized();
+    var existing = await db.BudgetAccounts.Where(a => a.UserId == current.UserId).ToListAsync();
+    db.BudgetAccounts.RemoveRange(existing);
+
+    var order = 0;
+    foreach (var item in request.Accounts ?? [])
+    {
+        var label = (item.Label ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(label)) continue;
+        db.BudgetAccounts.Add(new BudgetAccount
+        {
+            Id = item.Id is Guid g && g != Guid.Empty ? g : Guid.NewGuid(),
+            UserId = current.UserId,
+            Label = label,
+            Icon = string.IsNullOrWhiteSpace(item.Icon) ? "💳" : item.Icon.Trim(),
+            Balance = item.Balance,
+            PerformancePct = item.PerformancePct,
+            SortOrder = item.SortOrder > 0 ? item.SortOrder : order
+        });
+        order++;
+    }
+
+    await db.SaveChangesAsync();
+    var result = await db.BudgetAccounts.AsNoTracking()
+        .Where(a => a.UserId == current.UserId)
+        .OrderBy(a => a.SortOrder)
+        .ThenBy(a => a.Label)
+        .Select(a => new BudgetAccountDto(a.Id, a.Label, a.Icon, a.Balance, a.PerformancePct, a.SortOrder))
+        .ToListAsync();
+    return Results.Ok(result);
+}).RequireAuthorization();
+
+api.MapGet("/budget/projects", async (string? ownerUserId, ICurrentUser current, FreyaDbContext db) =>
+{
+    if (current.UserId is null) return Results.Unauthorized();
+    var ownerId = string.IsNullOrWhiteSpace(ownerUserId) ? current.UserId : ownerUserId.Trim();
+    if (ownerId != current.UserId)
+    {
+        var share = await db.BudgetShares.AsNoTracking()
+            .FirstOrDefaultAsync(s => s.OwnerUserId == ownerId && s.ViewerUserId == current.UserId);
+        if (share is null || !share.ShareSavings) return Results.Forbid();
+    }
+
+    var projects = await db.BudgetProjects.AsNoTracking()
+        .Where(p => p.UserId == ownerId)
+        .OrderBy(p => p.Archived)
+        .ThenBy(p => p.SortOrder)
+        .ThenBy(p => p.Label)
+        .Select(p => new BudgetProjectDto(
+            p.Id, p.Label, p.Icon, p.TargetAmount, p.SavedAmount, p.MonthlyContribution, p.Archived, p.CompletedOn, p.SortOrder))
+        .ToListAsync();
+    return Results.Ok(projects);
+}).RequireAuthorization();
+
+api.MapPut("/budget/projects", async (UpsertBudgetProjectsRequest request, ICurrentUser current, FreyaDbContext db) =>
+{
+    if (current.UserId is null) return Results.Unauthorized();
+    var existing = await db.BudgetProjects.Where(p => p.UserId == current.UserId).ToListAsync();
+    db.BudgetProjects.RemoveRange(existing);
+
+    var order = 0;
+    foreach (var item in request.Projects ?? [])
+    {
+        var label = (item.Label ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(label)) continue;
+        db.BudgetProjects.Add(new BudgetProject
+        {
+            Id = item.Id is Guid g && g != Guid.Empty ? g : Guid.NewGuid(),
+            UserId = current.UserId,
+            Label = label,
+            Icon = string.IsNullOrWhiteSpace(item.Icon) ? "🎯" : item.Icon.Trim(),
+            TargetAmount = Math.Max(0, item.TargetAmount),
+            SavedAmount = Math.Max(0, item.SavedAmount),
+            MonthlyContribution = Math.Max(0, item.MonthlyContribution),
+            Archived = item.Archived,
+            CompletedOn = item.CompletedOn,
+            SortOrder = item.SortOrder > 0 ? item.SortOrder : order
+        });
+        order++;
+    }
+
+    await db.SaveChangesAsync();
+    var result = await db.BudgetProjects.AsNoTracking()
+        .Where(p => p.UserId == current.UserId)
+        .OrderBy(p => p.Archived)
+        .ThenBy(p => p.SortOrder)
+        .ThenBy(p => p.Label)
+        .Select(p => new BudgetProjectDto(
+            p.Id, p.Label, p.Icon, p.TargetAmount, p.SavedAmount, p.MonthlyContribution, p.Archived, p.CompletedOn, p.SortOrder))
+        .ToListAsync();
+    return Results.Ok(result);
 }).RequireAuthorization();
 
 api.MapGet("/budget/shares", async (ICurrentUser current, FreyaDbContext db) =>
@@ -1772,6 +1922,61 @@ static async Task EnsureBudgetSchemaAsync(FreyaDbContext db)
     await db.Database.ExecuteSqlRawAsync("""
         CREATE UNIQUE INDEX IF NOT EXISTS "IX_BudgetShares_OwnerUserId_ViewerUserId"
         ON "BudgetShares" ("OwnerUserId", "ViewerUserId");
+        """);
+
+    try
+    {
+        await db.Database.ExecuteSqlRawAsync("""ALTER TABLE "BudgetMovements" ADD COLUMN "Category" TEXT NULL""");
+    }
+    catch
+    {
+        /* column may already exist */
+    }
+
+    try
+    {
+        await db.Database.ExecuteSqlRawAsync("""ALTER TABLE "BudgetMovements" ADD COLUMN "AccountName" TEXT NULL""");
+    }
+    catch
+    {
+        /* column may already exist */
+    }
+
+    await db.Database.ExecuteSqlRawAsync("""
+        CREATE TABLE IF NOT EXISTS "BudgetAccounts" (
+            "Id" TEXT NOT NULL CONSTRAINT "PK_BudgetAccounts" PRIMARY KEY,
+            "UserId" TEXT NOT NULL,
+            "Label" TEXT NOT NULL,
+            "Icon" TEXT NOT NULL,
+            "Balance" TEXT NOT NULL,
+            "PerformancePct" TEXT NULL,
+            "SortOrder" INTEGER NOT NULL
+        );
+        """);
+
+    await db.Database.ExecuteSqlRawAsync("""
+        CREATE INDEX IF NOT EXISTS "IX_BudgetAccounts_UserId"
+        ON "BudgetAccounts" ("UserId");
+        """);
+
+    await db.Database.ExecuteSqlRawAsync("""
+        CREATE TABLE IF NOT EXISTS "BudgetProjects" (
+            "Id" TEXT NOT NULL CONSTRAINT "PK_BudgetProjects" PRIMARY KEY,
+            "UserId" TEXT NOT NULL,
+            "Label" TEXT NOT NULL,
+            "Icon" TEXT NOT NULL,
+            "TargetAmount" TEXT NOT NULL,
+            "SavedAmount" TEXT NOT NULL,
+            "MonthlyContribution" TEXT NOT NULL,
+            "Archived" INTEGER NOT NULL,
+            "CompletedOn" TEXT NULL,
+            "SortOrder" INTEGER NOT NULL
+        );
+        """);
+
+    await db.Database.ExecuteSqlRawAsync("""
+        CREATE INDEX IF NOT EXISTS "IX_BudgetProjects_UserId"
+        ON "BudgetProjects" ("UserId");
         """);
 }
 

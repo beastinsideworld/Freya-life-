@@ -224,6 +224,21 @@
   padding: 0.4rem;
 }
 
+button.cell.filled {
+  width: 100%;
+  display: block;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+button.cell.filled:hover,
+button.cell.filled:focus-visible {
+  border-color: rgba(179, 69, 85, 0.75);
+  box-shadow: var(--shadow-glow);
+}
+
 .cell.filled .thumb {
   height: 2.4rem;
   border-radius: 0.55rem;

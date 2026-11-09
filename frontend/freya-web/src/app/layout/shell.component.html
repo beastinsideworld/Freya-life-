@@ -1,36 +1,26 @@
 <div class="app-frame">
   <aside class="side-nav" aria-label="Navigation bureau">
     <p class="brand">Freya</p>
-    <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Accueil</a>
-    <a routerLink="/planning" routerLinkActive="active" (click)="onNavClick('planning')">
-      Planning
-      @if (badgeCounts().planning) {
-        <button type="button" class="nav-badge" (click)="dismiss('planning', $event)" [attr.aria-label]="badgeCounts().planning + ' nouveautés'">
-          {{ badgeCounts().planning }}
-        </button>
-      }
-    </a>
-    <a routerLink="/repas" routerLinkActive="active">Repas</a>
-    <a routerLink="/voyages" routerLinkActive="active" (click)="onNavClick('voyages')">
-      Voyages
-      @if (badgeCounts().voyages) {
-        <button type="button" class="nav-badge" (click)="dismiss('voyages', $event)" [attr.aria-label]="badgeCounts().voyages + ' nouveautés'">
-          {{ badgeCounts().voyages }}
-        </button>
-      }
-    </a>
-    <a routerLink="/tele" routerLinkActive="active" (click)="onNavClick('tele')">
-      Télé
-      @if (badgeCounts().tele) {
-        <button type="button" class="nav-badge" (click)="dismiss('tele', $event)" [attr.aria-label]="badgeCounts().tele + ' nouveautés'">
-          {{ badgeCounts().tele }}
-        </button>
-      }
-    </a>
-    <a routerLink="/chat" routerLinkActive="active">Chat</a>
-    <a routerLink="/budget" routerLinkActive="active">Budget</a>
-    <a routerLink="/sport" routerLinkActive="active">Sport</a>
-    <a routerLink="/parametres" routerLinkActive="active">Paramètres</a>
+    @for (tab of visibleTabs(); track tab.id) {
+      <a
+        [routerLink]="tab.path"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="tab.path === '/' ? { exact: true } : { exact: false }"
+        (click)="onNavClick(tab.badgeTarget)"
+      >
+        {{ tab.label }}
+        @if (tab.badgeTarget && badgeCounts()[tab.badgeTarget]) {
+          <button
+            type="button"
+            class="nav-badge"
+            (click)="dismiss(tab.badgeTarget, $event)"
+            [attr.aria-label]="badgeCounts()[tab.badgeTarget] + ' nouveautés'"
+          >
+            {{ badgeCounts()[tab.badgeTarget] }}
+          </button>
+        }
+      </a>
+    }
   </aside>
 
   <main class="content">
@@ -51,41 +41,19 @@
   }
 
   <nav class="bottom-nav" aria-label="Navigation mobile">
-    <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" aria-label="Accueil">
-      <span class="ico" aria-hidden="true">⌂</span>
-    </a>
-    <a routerLink="/planning" routerLinkActive="active" aria-label="Planning" (click)="onNavClick('planning')">
-      <span class="ico" aria-hidden="true">▦</span>
-      @if (badgeCounts().planning) {
-        <span class="dot-badge">{{ badgeCounts().planning }}</span>
-      }
-    </a>
-    <a routerLink="/repas" routerLinkActive="active" aria-label="Repas">
-      <span class="ico" aria-hidden="true">🍴</span>
-    </a>
-    <a routerLink="/voyages" routerLinkActive="active" aria-label="Voyages" (click)="onNavClick('voyages')">
-      <span class="ico" aria-hidden="true">✈</span>
-      @if (badgeCounts().voyages) {
-        <span class="dot-badge">{{ badgeCounts().voyages }}</span>
-      }
-    </a>
-    <a routerLink="/tele" routerLinkActive="active" aria-label="Télé" (click)="onNavClick('tele')">
-      <span class="ico" aria-hidden="true">📺</span>
-      @if (badgeCounts().tele) {
-        <span class="dot-badge">{{ badgeCounts().tele }}</span>
-      }
-    </a>
-    <a routerLink="/chat" routerLinkActive="active" aria-label="Chat">
-      <span class="ico" aria-hidden="true">💬</span>
-    </a>
-    <a routerLink="/budget" routerLinkActive="active" aria-label="Budget">
-      <span class="ico" aria-hidden="true">💶</span>
-    </a>
-    <a routerLink="/sport" routerLinkActive="active" aria-label="Sport">
-      <span class="ico" aria-hidden="true">🏃</span>
-    </a>
-    <a routerLink="/parametres" routerLinkActive="active" aria-label="Paramètres">
-      <span class="ico" aria-hidden="true">⚙</span>
-    </a>
+    @for (tab of visibleTabs(); track tab.id) {
+      <a
+        [routerLink]="tab.path"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="tab.path === '/' ? { exact: true } : { exact: false }"
+        [attr.aria-label]="tab.label"
+        (click)="onNavClick(tab.badgeTarget)"
+      >
+        <span class="ico" aria-hidden="true">{{ tab.icon }}</span>
+        @if (tab.badgeTarget && badgeCounts()[tab.badgeTarget]) {
+          <span class="dot-badge">{{ badgeCounts()[tab.badgeTarget] }}</span>
+        }
+      </a>
+    }
   </nav>
 </div>

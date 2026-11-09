@@ -1,0 +1,473 @@
+<section class="page animaux-page">
+  @if (!(tab() === 'animaux' && selectedPet())) {
+    <header class="hero animaux-hero">
+      <div class="icon" aria-hidden="true">🐾</div>
+      <h1>Animaux</h1>
+      <p class="sub">Le suivi complet de tes compagnons</p>
+    </header>
+
+    <div class="seg pets-tabs" role="tablist" aria-label="Sections animaux">
+      <button type="button" role="tab" [class.active]="tab() === 'accueil'" (click)="setTab('accueil')">Accueil</button>
+      <button type="button" role="tab" [class.active]="tab() === 'animaux'" (click)="setTab('animaux')">Mes animaux</button>
+      <button type="button" role="tab" [class.active]="tab() === 'depenses'" (click)="setTab('depenses')">Dépenses</button>
+      <button type="button" role="tab" [class.active]="tab() === 'rendezvous'" (click)="setTab('rendezvous')">Rendez-vous</button>
+    </div>
+  }
+
+  @if (tab() === 'accueil') {
+    <section class="panel">
+      <header class="card-head">
+        <h2>Mes compagnons ({{ pets().length }})</h2>
+        <button type="button" class="icon-btn" (click)="openPetForm()" aria-label="Ajouter un animal">+</button>
+      </header>
+      <ul class="pet-list">
+        @for (pet of pets(); track pet.id) {
+          <li>
+            <button type="button" class="pet-row" (click)="openPet(pet)">
+              <span class="avatar" aria-hidden="true">{{ pet.photoEmoji }}</span>
+              <span class="row-main">
+                <strong>{{ pet.name }} <em class="sex">{{ sexSymbol(pet.sex) }}</em></strong>
+                <span>{{ pet.species }} • {{ store.ageLabel(pet) }}</span>
+              </span>
+              <span class="chev" aria-hidden="true">›</span>
+            </button>
+          </li>
+        } @empty {
+          <li class="empty-row">Aucun animal pour le moment.</li>
+        }
+      </ul>
+    </section>
+
+    <section class="panel">
+      <header class="card-head">
+        <h2><span aria-hidden="true">📅</span> Prochain rendez-vous</h2>
+      </header>
+      @if (nextAppointment(); as appt) {
+        <button type="button" class="link-row" (click)="setTab('rendezvous'); selectedApptId.set(appt.id)">
+          <span class="row-ico" aria-hidden="true">{{ appt.icon }}</span>
+          <span class="row-main">
+            <strong>{{ appt.title }}</strong>
+            <span>{{ formatApptWhen(appt) }}</span>
+          </span>
+          <span class="chev" aria-hidden="true">›</span>
+        </button>
+      } @else {
+        <p class="empty">Aucun rendez-vous à venir.</p>
+      }
+    </section>
+
+    <section class="panel">
+      <header class="card-head">
+        <h2><span aria-hidden="true">🪙</span> Dépenses du mois</h2>
+      </header>
+      <p class="budget-line">{{ money(monthExpenseTotal()) }} / {{ money(monthlyBudget()) }}</p>
+      <div class="progress-track" aria-hidden="true">
+        <span class="progress-fill" [style.width.%]="expensePct()"></span>
+      </div>
+      <p class="budget-pct">{{ expensePct() }} %</p>
+    </section>
+  }
+
+  @if (tab() === 'animaux') {
+    @if (selectedPet(); as pet) {
+      <header class="detail-top">
+        <button type="button" class="back-btn" (click)="backFromPet()" aria-label="Retour">‹</button>
+        <h1>{{ pet.name }} <em class="sex">{{ sexSymbol(pet.sex) }}</em></h1>
+        <button type="button" class="ghost-btn" (click)="store.removePet(pet.id); backFromPet()" aria-label="Supprimer">⋯</button>
+      </header>
+
+      <section class="panel profile-card">
+        <div class="profile-row">
+          <span class="avatar xl" aria-hidden="true">{{ pet.photoEmoji }}</span>
+          <div>
+            <strong>{{ pet.species }} - {{ pet.breed }}</strong>
+            <span>{{ store.ageLabel(pet) }} ({{ store.birthLabel(pet) }})</span>
+          </div>
+        </div>
+        <div class="mini-actions">
+          <button type="button" (click)="openSection('sante')"><span aria-hidden="true">❤</span> Santé</button>
+          <button type="button" (click)="openSection('poids')"><span aria-hidden="true">⚖</span> Poids</button>
+          <button type="button" (click)="setTab('rendezvous')"><span aria-hidden="true">📅</span> Rendez-vous</button>
+        </div>
+      </section>
+
+      <button type="button" class="panel menu-card" (click)="openSection('identite')">
+        <span class="row-ico" aria-hidden="true">🪪</span>
+        <span class="row-main">
+          <strong>Identité</strong>
+          <span>Puce : {{ pet.chip || '—' }} · Assurance : {{ pet.insurance ? 'Oui' : 'Non' }}</span>
+        </span>
+        <span class="chev" aria-hidden="true">›</span>
+      </button>
+
+      <button type="button" class="panel menu-card" (click)="openSection('sante')">
+        <span class="row-ico" aria-hidden="true">🩺</span>
+        <span class="row-main">
+          <strong>Santé</strong>
+          <span>Vaccins, traitements, antécédents</span>
+        </span>
+        <span class="chev" aria-hidden="true">›</span>
+      </button>
+
+      <button type="button" class="panel menu-card" (click)="openSection('alimentation')">
+        <span class="row-ico" aria-hidden="true">🥣</span>
+        <span class="row-main">
+          <strong>Alimentation</strong>
+          <span>
+            {{ pet.foodBrand || 'Non renseigné' }}
+            @if (pet.mealsPerDay) {
+              · {{ pet.mealsPerDay }} repas / jour
+              @if (pet.mealGrams) { • {{ pet.mealGrams }} g }
+            }
+          </span>
+        </span>
+        <span class="chev" aria-hidden="true">›</span>
+      </button>
+
+      <button type="button" class="panel menu-card" (click)="openSection('poids')">
+        <span class="row-ico" aria-hidden="true">⚖</span>
+        <span class="row-main">
+          <strong>Poids</strong>
+          <span>
+            {{ pet.weightKg ? pet.weightKg.toFixed(1).replace('.', ',') + ' kg' : '—' }}
+            @if (pet.weightDeltaKg) {
+              <em [class.pos]="pet.weightDeltaKg < 0" [class.neg]="pet.weightDeltaKg > 0">
+                {{ pet.weightDeltaKg > 0 ? '+' : '' }}{{ pet.weightDeltaKg.toFixed(1).replace('.', ',') }} kg sur 1 mois
+              </em>
+            }
+          </span>
+        </span>
+        <span class="chev" aria-hidden="true">›</span>
+      </button>
+
+      <button type="button" class="panel menu-card" (click)="openSection('notes')">
+        <span class="row-ico" aria-hidden="true">📝</span>
+        <span class="row-main">
+          <strong>Notes & suivi</strong>
+          <span>Comportement, éducation, observations</span>
+        </span>
+        <span class="chev" aria-hidden="true">›</span>
+      </button>
+
+      @if (detailSection() === 'notes') {
+        <section class="panel">
+          <label class="field">Notes
+            <textarea
+              rows="4"
+              [ngModel]="pet.notes || ''"
+              (ngModelChange)="updatePetNotes(pet, $event)"
+              name="petNotes"
+              placeholder="Observations…"
+            ></textarea>
+          </label>
+        </section>
+      }
+
+      <section class="panel">
+        <header class="card-head">
+          <h2><span aria-hidden="true">🔔</span> Rappels personnalisés</h2>
+        </header>
+        <ul class="toggle-list">
+          <li>
+            <span>Traitements</span>
+            <button type="button" class="switch" [class.on]="pet.reminders.treatments" (click)="toggleReminder(pet, 'treatments')" aria-label="Traitements"></button>
+          </li>
+          <li>
+            <span>Vaccins</span>
+            <button type="button" class="switch" [class.on]="pet.reminders.vaccines" (click)="toggleReminder(pet, 'vaccines')" aria-label="Vaccins"></button>
+          </li>
+          <li>
+            <span>Vermifuge / Antiparasitaire</span>
+            <button type="button" class="switch" [class.on]="pet.reminders.vermifuge" (click)="toggleReminder(pet, 'vermifuge')" aria-label="Vermifuge"></button>
+          </li>
+          <li>
+            <span>Rappel poids (mensuel)</span>
+            <button type="button" class="switch" [class.on]="pet.reminders.weight" (click)="toggleReminder(pet, 'weight')" aria-label="Poids"></button>
+          </li>
+        </ul>
+      </section>
+    } @else {
+      <section class="panel">
+        <header class="card-head">
+          <h2>Mes animaux</h2>
+          <button type="button" class="icon-btn" (click)="openPetForm()" aria-label="Ajouter">+</button>
+        </header>
+        <ul class="pet-list">
+          @for (pet of pets(); track pet.id) {
+            <li>
+              <button type="button" class="pet-row" (click)="openPet(pet)">
+                <span class="avatar" aria-hidden="true">{{ pet.photoEmoji }}</span>
+                <span class="row-main">
+                  <strong>{{ pet.name }} <em class="sex">{{ sexSymbol(pet.sex) }}</em></strong>
+                  <span>{{ pet.species }} • {{ store.ageLabel(pet) }}</span>
+                </span>
+                <span class="chev" aria-hidden="true">›</span>
+              </button>
+            </li>
+          } @empty {
+            <li class="empty-row">Ajoute ton premier compagnon.</li>
+          }
+        </ul>
+      </section>
+    }
+  }
+
+  @if (tab() === 'depenses') {
+    <header class="subpage-head">
+      <h1>Dépenses Animaux</h1>
+    </header>
+
+    <div class="seg scope-tabs" role="tablist">
+      <button type="button" [class.active]="expenseScope() === 'mois'" (click)="expenseScope.set('mois')">Mois</button>
+      <button type="button" [class.active]="expenseScope() === 'annee'" (click)="expenseScope.set('annee')">Année</button>
+      <button type="button" [class.active]="expenseScope() === 'animal'" (click)="expenseScope.set('animal')">Par animal</button>
+    </div>
+
+    @if (expenseScope() !== 'annee') {
+      <div class="month-pill">
+        <button type="button" (click)="prevExpenseMonth()" aria-label="Mois précédent">‹</button>
+        <strong>{{ monthLabel() }}</strong>
+        <button type="button" (click)="nextExpenseMonth()" aria-label="Mois suivant">›</button>
+      </div>
+    }
+
+    @if (expenseScope() === 'animal') {
+      <label class="field pet-filter">
+        Animal
+        <select [ngModel]="expensePetFilter()" (ngModelChange)="expensePetFilter.set($event)" name="expensePetFilter">
+          <option value="all">Tous</option>
+          @for (pet of pets(); track pet.id) {
+            <option [value]="pet.id">{{ pet.name }}</option>
+          }
+        </select>
+      </label>
+    }
+
+    <section class="panel breakdown-card">
+      <div class="breakdown">
+        <div class="donut" [style.background]="donutGradient()" aria-hidden="true">
+          <div class="donut-hole">
+            <span>{{ expensePct() }}%</span>
+            <strong>{{ money(scopedExpenseTotal()) }}</strong>
+            <em>/ {{ money(monthlyBudget()) }}</em>
+          </div>
+        </div>
+        <ul class="legend">
+          @for (slice of expenseBreakdown(); track slice.category) {
+            <li>
+              <i [style.background]="slice.color"></i>
+              <span>{{ slice.category }}</span>
+              <strong>{{ money(slice.amount) }}</strong>
+            </li>
+          }
+        </ul>
+      </div>
+    </section>
+
+    <button type="button" class="btn primary wide" (click)="openExpenseForm()">+ Ajouter une dépense</button>
+
+    <section class="panel">
+      <header class="card-head">
+        <h2>Mouvements du mois</h2>
+      </header>
+      <ul class="move-list">
+        @for (item of scopedExpenses(); track item.id) {
+          <li>
+            <span class="row-ico" aria-hidden="true">{{ expenseIcon(item) }}</span>
+            <div class="row-main">
+              <strong>{{ item.label }}</strong>
+              <span>{{ petName(item.petId) }} · {{ formatDate(item.date, false) }}</span>
+            </div>
+            <em class="neg">- {{ money(item.amount) }}</em>
+            <button type="button" class="ghost-btn" (click)="store.removeExpense(item.id)" aria-label="Retirer">×</button>
+          </li>
+        } @empty {
+          <li class="empty-row">Aucune dépense sur cette période.</li>
+        }
+      </ul>
+    </section>
+
+    <section class="panel chart-card">
+      <header class="card-head">
+        <h2>Évolution mensuelle</h2>
+      </header>
+      <div class="bar-chart" role="img" aria-label="Évolution des dépenses">
+        <div class="y-axis" aria-hidden="true">
+          <span>{{ money(historyMax(), 0) }}</span>
+          <span>{{ money(historyMax() / 2, 0) }}</span>
+          <span>0 €</span>
+        </div>
+        <div class="bars">
+          @for (point of expenseHistory(); track point.key) {
+            <div class="bar-col">
+              <span class="bar" [style.height]="barHeight(point.total)"></span>
+              <span class="bar-label">{{ point.label }}</span>
+            </div>
+          }
+        </div>
+      </div>
+    </section>
+  }
+
+  @if (tab() === 'rendezvous') {
+    <header class="subpage-head">
+      <h1>Rendez-vous</h1>
+    </header>
+
+    <div class="seg scope-tabs two" role="tablist">
+      <button type="button" [class.active]="apptFilter() === 'avenir'" (click)="apptFilter.set('avenir')">À venir</button>
+      <button type="button" [class.active]="apptFilter() === 'passes'" (click)="apptFilter.set('passes')">Passés</button>
+    </div>
+
+    <button type="button" class="btn primary wide" (click)="openApptForm()">+ Ajouter un rendez-vous</button>
+
+    <div class="appt-stack">
+      @for (appt of visibleAppointments(); track appt.id) {
+        <button type="button" class="panel appt-card" [class.active]="selectedAppointment()?.id === appt.id" (click)="selectedApptId.set(appt.id)">
+          <span class="row-ico" aria-hidden="true">{{ appt.icon }}</span>
+          <span class="row-main">
+            <strong>{{ appt.title }}</strong>
+            <span>{{ formatApptWhen(appt) }}</span>
+            @if (appt.place) {
+              <span>{{ appt.place }}</span>
+            }
+          </span>
+          <span class="chev" aria-hidden="true">›</span>
+        </button>
+      } @empty {
+        <p class="empty">Aucun rendez-vous {{ apptFilter() === 'avenir' ? 'à venir' : 'passé' }}.</p>
+      }
+    </div>
+
+    @if (selectedAppointment(); as appt) {
+      <section class="panel detail-appt">
+        <h2>Détail du rendez-vous</h2>
+        <div class="detail-title">
+          <span class="row-ico" aria-hidden="true">{{ appt.icon }}</span>
+          <strong>{{ appt.title }}</strong>
+        </div>
+        <ul class="detail-meta">
+          <li><span aria-hidden="true">📅</span> {{ formatDate(appt.date) }}</li>
+          @if (appt.time) {
+            <li><span aria-hidden="true">⏰</span> {{ appt.time }}</li>
+          }
+          @if (appt.place) {
+            <li><span aria-hidden="true">📍</span> {{ appt.place }}</li>
+          }
+        </ul>
+        <div class="notes-box">
+          <p class="notes-label"><span aria-hidden="true">✏</span> Notes</p>
+          <p>{{ appt.notes || 'Aucune note.' }}</p>
+        </div>
+        <div class="detail-actions">
+          @if (!appt.done) {
+            <button type="button" class="btn primary" (click)="markApptDone(appt)">✓ Marquer comme fait</button>
+          }
+          <button type="button" class="btn" (click)="store.removeAppointment(appt.id); selectedApptId.set(null)">Supprimer</button>
+        </div>
+      </section>
+    }
+  }
+</section>
+
+@if (petFormOpen()) {
+  <div class="modal-backdrop" (click)="petFormOpen.set(false)" role="presentation"></div>
+  <div class="modal form-modal" role="dialog" aria-modal="true">
+    <header class="modal-head">
+      <h2>Ajouter un animal</h2>
+      <button type="button" class="modal-close" (click)="petFormOpen.set(false)" aria-label="Fermer">×</button>
+    </header>
+    <div class="form-grid">
+      <label class="field">Nom <input [(ngModel)]="draftPetName" name="petName" placeholder="Isis"></label>
+      <label class="field">Sexe
+        <select [(ngModel)]="draftPetSex" name="petSex">
+          <option value="F">Femelle</option>
+          <option value="M">Mâle</option>
+        </select>
+      </label>
+      <label class="field">Espèce <input [(ngModel)]="draftPetSpecies" name="petSpecies" placeholder="Chien"></label>
+      <label class="field">Race <input [(ngModel)]="draftPetBreed" name="petBreed" placeholder="Berger Australien"></label>
+      <label class="field">Naissance <input type="date" [(ngModel)]="draftPetBirth" name="petBirth"></label>
+      <label class="field">Icône <input [(ngModel)]="draftPetEmoji" name="petEmoji" maxlength="4"></label>
+      <button type="button" class="btn primary" (click)="addPet()">Ajouter</button>
+    </div>
+  </div>
+}
+
+@if (taskFormOpen()) {
+  <div class="modal-backdrop" (click)="taskFormOpen.set(false)" role="presentation"></div>
+  <div class="modal form-modal" role="dialog" aria-modal="true">
+    <header class="modal-head">
+      <h2>Ajouter une tâche</h2>
+      <button type="button" class="modal-close" (click)="taskFormOpen.set(false)" aria-label="Fermer">×</button>
+    </header>
+    <div class="form-grid">
+      <label class="field">Libellé <input [(ngModel)]="draftTaskLabel" name="taskLabel" placeholder="Donner les croquettes"></label>
+      <label class="field">Animal
+        <select [(ngModel)]="draftTaskPetId" name="taskPet">
+          @for (pet of pets(); track pet.id) {
+            <option [value]="pet.id">{{ pet.name }}</option>
+          }
+        </select>
+      </label>
+      <label class="field">Heure <input type="time" [(ngModel)]="draftTaskTime" name="taskTime"></label>
+      <button type="button" class="btn primary" (click)="addTask()">Ajouter</button>
+    </div>
+  </div>
+}
+
+@if (expenseFormOpen()) {
+  <div class="modal-backdrop" (click)="expenseFormOpen.set(false)" role="presentation"></div>
+  <div class="modal form-modal" role="dialog" aria-modal="true">
+    <header class="modal-head">
+      <h2>Ajouter une dépense</h2>
+      <button type="button" class="modal-close" (click)="expenseFormOpen.set(false)" aria-label="Fermer">×</button>
+    </header>
+    <div class="form-grid">
+      <label class="field">Libellé <input [(ngModel)]="draftExpenseLabel" name="expLabel" placeholder="Croquettes"></label>
+      <label class="field">Montant <input type="number" min="0" step="0.01" [(ngModel)]="draftExpenseAmount" name="expAmount"></label>
+      <label class="field">Catégorie
+        <select [(ngModel)]="draftExpenseCategory" name="expCat">
+          @for (cat of categoryOptions; track cat) {
+            <option [value]="cat">{{ cat }}</option>
+          }
+        </select>
+      </label>
+      <label class="field">Animal
+        <select [(ngModel)]="draftExpensePetId" name="expPet">
+          @for (pet of pets(); track pet.id) {
+            <option [value]="pet.id">{{ pet.name }}</option>
+          }
+        </select>
+      </label>
+      <label class="field">Date <input type="date" [(ngModel)]="draftExpenseDate" name="expDate"></label>
+      <button type="button" class="btn primary" (click)="addExpense()">Ajouter</button>
+    </div>
+  </div>
+}
+
+@if (apptFormOpen()) {
+  <div class="modal-backdrop" (click)="apptFormOpen.set(false)" role="presentation"></div>
+  <div class="modal form-modal" role="dialog" aria-modal="true">
+    <header class="modal-head">
+      <h2>Ajouter un rendez-vous</h2>
+      <button type="button" class="modal-close" (click)="apptFormOpen.set(false)" aria-label="Fermer">×</button>
+    </header>
+    <div class="form-grid">
+      <label class="field">Titre <input [(ngModel)]="draftApptTitle" name="apptTitle" placeholder="Vaccin"></label>
+      <label class="field">Animal
+        <select [(ngModel)]="draftApptPetId" name="apptPet">
+          @for (pet of pets(); track pet.id) {
+            <option [value]="pet.id">{{ pet.name }}</option>
+          }
+        </select>
+      </label>
+      <label class="field">Date <input type="date" [(ngModel)]="draftApptDate" name="apptDate"></label>
+      <label class="field">Heure <input type="time" [(ngModel)]="draftApptTime" name="apptTime"></label>
+      <label class="field">Lieu <input [(ngModel)]="draftApptPlace" name="apptPlace" placeholder="Chez le vétérinaire"></label>
+      <label class="field">Notes <textarea rows="3" [(ngModel)]="draftApptNotes" name="apptNotes"></textarea></label>
+      <label class="field">Icône <input [(ngModel)]="draftApptIcon" name="apptIcon" maxlength="4"></label>
+      <button type="button" class="btn primary" (click)="addAppointment()">Ajouter</button>
+    </div>
+  </div>
+}

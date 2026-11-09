@@ -12,6 +12,7 @@ import { SimplePageComponent } from './features/placeholders/simple-page.compone
 import { ParametresComponent } from './features/parametres/parametres.component';
 import { ChatComponent } from './features/chat/chat.component';
 import { BudgetComponent } from './features/budget/budget.component';
+import { AnimauxComponent } from './features/animaux/animaux.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -33,6 +34,7 @@ export const routes: Routes = [
         component: SimplePageComponent,
         data: { title: 'Sport', subtitle: 'Séances, objectifs et suivi sportif à venir.' }
       },
+      { path: 'animaux', component: AnimauxComponent },
       { path: 'parametres', component: ParametresComponent }
     ]
   },

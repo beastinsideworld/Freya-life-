@@ -32,13 +32,13 @@
         </div>
         @for (slot of slots; track slot) {
           @if (mealAt(i, slot); as meal) {
-            <article class="cell filled">
+            <button type="button" class="cell filled" (click)="openMealRecipe(meal)">
               <div class="thumb" aria-hidden="true"></div>
               <p>{{ meal.title }}</p>
               @if (meal.kcal) {
                 <span class="meal-kcal">{{ formatKcal(meal.kcal) }}</span>
               }
-            </article>
+            </button>
           } @else {
             <button type="button" class="cell slot" (click)="quickAdd(i, slot)">+ Ajouter un repas</button>
           }
@@ -208,7 +208,7 @@
       (click)="$event.stopPropagation()"
     >
       <header class="modal-head">
-        <h2 id="recipe-modal-title">Nouvelle recette</h2>
+        <h2 id="recipe-modal-title">{{ editingRecipeId() ? 'Modifier la recette' : 'Nouvelle recette' }}</h2>
         <button type="button" class="modal-close" (click)="closeRecipeModal()" aria-label="Fermer">×</button>
       </header>
 
@@ -365,6 +365,7 @@
       </section>
 
       <div class="modal-actions">
+        <button type="button" class="btn" (click)="editRecipeFromDetail()">Modifier</button>
         <button type="button" class="btn primary" (click)="closeRecipeDetail()">Fermer</button>
       </div>
     </div>

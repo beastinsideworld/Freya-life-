@@ -592,6 +592,28 @@ export class AccueilComponent implements OnInit, OnDestroy {
     });
   }
 
+  deleteEvent(): void {
+    const current = this.editingEvent();
+    if (!current) return;
+
+    const applyLocal = () => {
+      this.editingEvent.set(null);
+      this.events.update((list) => list.filter((item) => item.id !== current.id));
+      this.loadWeekEvents();
+      this.loadTodayTasks();
+    };
+
+    if (current.id.startsWith('demo-')) {
+      applyLocal();
+      return;
+    }
+
+    this.eventsApi.remove(current.id).subscribe({
+      next: () => applyLocal(),
+      error: () => applyLocal()
+    });
+  }
+
   addEvent(): void {
     this.error.set('');
     if (!this.newTitle.trim() || !this.newDate || !this.newTime) {
