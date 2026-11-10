@@ -221,3 +221,42 @@
     font-weight: 800;
   }
 }
+
+:host-context([data-theme='demon']) {
+  .trigger,
+  .nav-btn,
+  .day {
+    background: rgba(20, 16, 21, 0.82);
+    border-color: color-mix(in srgb, #d61c2a 50%, #141015);
+    box-shadow: inset 0 1px 0 rgba(255, 106, 61, 0.08);
+    color: #f2e9e7;
+  }
+
+  .popover {
+    background: rgba(11, 11, 14, 0.92);
+    backdrop-filter: blur(16px);
+    border: 1.5px solid color-mix(in srgb, #d61c2a 55%, #141015);
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.55), 0 0 16px rgba(214, 28, 42, 0.2);
+  }
+
+  .day.selected,
+  .day:hover:not(:disabled) {
+    background: linear-gradient(180deg, #ff6a3d, #d61c2a);
+    border-color: #7a0e17;
+    color: #f2e9e7;
+  }
+
+  .day.today {
+    border-color: #d61c2a;
+    color: #ff6a3d;
+  }
+
+  .weekdays span {
+    color: #f2e9e7;
+  }
+
+  .weekdays span:first-child {
+    color: #ffb8a8;
+    font-weight: 800;
+  }
+}

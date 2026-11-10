@@ -1,0 +1,205 @@
+/* UI kit Démon — verre obsidienne + braise */
+
+:root[data-theme='demon'] {
+  --demon-glass: rgba(20, 16, 21, 0.62);
+  --demon-glass-strong: rgba(35, 12, 18, 0.82);
+  --demon-edge: #d61c2a;
+  --demon-edge-bright: #ff6a3d;
+  --demon-edge-deep: #7a0e17;
+  --demon-border: linear-gradient(135deg, #ff6a3d, #d61c2a 45%, #7a0e17 100%);
+}
+
+:root[data-theme='demon'] .panel,
+:root[data-theme='demon'] .modal,
+:root[data-theme='demon'] .hero {
+  background: var(--demon-glass);
+  backdrop-filter: blur(18px) saturate(1.1);
+  -webkit-backdrop-filter: blur(18px) saturate(1.1);
+  border: 1.5px solid color-mix(in srgb, var(--demon-edge) 55%, #141015);
+  box-shadow:
+    0 10px 32px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(255, 106, 61, 0.08) inset,
+    0 0 18px rgba(214, 28, 42, 0.15);
+}
+
+:root[data-theme='demon'] .panel::before {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 106, 61, 0.1),
+    inset 0 0 0 1px rgba(122, 14, 23, 0.2);
+}
+
+/* Accueil — le verre ne remplace pas les fonds (images dans theme-demon-headers) */
+:root[data-theme='demon'] .page.accueil > .hero,
+:root[data-theme='demon'] .page.accueil > .trip-banner,
+:root[data-theme='demon'] .page.accueil > .composer,
+:root[data-theme='demon'] .page.accueil > .tasks,
+:root[data-theme='demon'] .page.accueil > .meals,
+:root[data-theme='demon'] .page.accueil > .week {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+:root[data-theme='demon'] .page.accueil > .composer.panel::before,
+:root[data-theme='demon'] .page.accueil > .tasks.panel::before,
+:root[data-theme='demon'] .page.accueil > .meals.panel::before,
+:root[data-theme='demon'] .page.accueil > .week.panel::before {
+  box-shadow: none;
+}
+
+:root[data-theme='demon'] .hero {
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(74, 13, 21, 0.55), transparent 55%),
+    var(--demon-glass);
+  border-bottom: 0;
+  margin-bottom: 1rem;
+}
+
+:root[data-theme='demon'] .seg button,
+:root[data-theme='demon'] .chip,
+:root[data-theme='demon'] .btn,
+:root[data-theme='demon'] .meta-pill,
+:root[data-theme='demon'] .field input,
+:root[data-theme='demon'] .field select,
+:root[data-theme='demon'] .field textarea,
+:root[data-theme='demon'] .search input {
+  background: var(--demon-glass-strong);
+  border: 1.5px solid color-mix(in srgb, var(--demon-edge) 50%, #141015);
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 106, 61, 0.08);
+  color: #f2e9e7;
+}
+
+:root[data-theme='demon'] .seg button.active,
+:root[data-theme='demon'] .chip.active,
+:root[data-theme='demon'] .btn.primary {
+  background: linear-gradient(180deg, #8d3a48 0%, #6e1e2c 52%, #4a121c 100%);
+  border-color: #4a121c;
+  color: #f2e9e7;
+  box-shadow:
+    0 0 14px rgba(90, 18, 32, 0.45),
+    inset 0 1px 0 rgba(180, 110, 120, 0.22);
+}
+
+:root[data-theme='demon'] .btn.ghost,
+:root[data-theme='demon'] .ghost-link {
+  background: transparent;
+  border: 1.5px solid color-mix(in srgb, #6e1e2c 70%, #141015);
+  color: #c47a84;
+  box-shadow: none;
+}
+
+:root[data-theme='demon'] .btn.ghost:hover,
+:root[data-theme='demon'] .ghost-link:hover {
+  background: var(--demon-glass);
+  border-color: var(--demon-edge);
+}
+
+:root[data-theme='demon'] .field input:focus,
+:root[data-theme='demon'] .field select:focus,
+:root[data-theme='demon'] .field textarea:focus,
+:root[data-theme='demon'] .search input:focus {
+  border-color: var(--demon-edge);
+  box-shadow:
+    0 0 0 2px rgba(214, 28, 42, 0.28),
+    0 0 14px rgba(255, 106, 61, 0.22);
+}
+
+:root[data-theme='demon'] .meta-pill {
+  color: var(--demon-edge-bright);
+}
+
+:root[data-theme='demon'] .progress-track {
+  background: color-mix(in srgb, var(--demon-edge) 22%, #141015);
+}
+
+:root[data-theme='demon'] .progress-fill {
+  background: linear-gradient(90deg, var(--demon-edge-bright), var(--demon-edge-deep));
+  box-shadow: 0 0 10px rgba(214, 28, 42, 0.4);
+}
+
+:root[data-theme='demon'] input[type='checkbox'],
+:root[data-theme='demon'] input[type='radio'] {
+  accent-color: var(--demon-edge);
+}
+
+:root[data-theme='demon'] a {
+  color: var(--demon-edge-bright);
+}
+
+:root[data-theme='demon'] .modal {
+  background: rgba(11, 11, 14, 0.88);
+}
+
+:root[data-theme='demon'] .modal-close {
+  background: var(--demon-glass-strong);
+  border-color: color-mix(in srgb, var(--demon-edge) 50%, #141015);
+  color: #f2e9e7;
+}
+
+:root[data-theme='demon'] .bottom-nav-rail {
+  background: rgba(20, 16, 21, 0.78);
+  border: 1.5px solid color-mix(in srgb, var(--demon-edge) 55%, #141015);
+  box-shadow:
+    0 10px 28px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 106, 61, 0.08) inset,
+    0 0 20px rgba(214, 28, 42, 0.2);
+  backdrop-filter: blur(18px) saturate(1.15);
+  -webkit-backdrop-filter: blur(18px) saturate(1.15);
+}
+
+:root[data-theme='demon'] .bottom-link,
+:root[data-theme='demon'] .nav-label {
+  color: var(--demon-edge-bright);
+}
+
+:root[data-theme='demon'] .bottom-link.active .nav-label {
+  color: #f2e9e7;
+  text-shadow: 0 0 8px rgba(214, 28, 42, 0.45);
+}
+
+:root[data-theme='demon'] .bottom-link.active .active-ring {
+  border-color: var(--demon-edge);
+  box-shadow:
+    0 0 12px rgba(214, 28, 42, 0.45),
+    inset 0 0 10px rgba(255, 106, 61, 0.2);
+}
+
+:root[data-theme='demon'] .bottom-link.active .active-ring::before,
+:root[data-theme='demon'] .bottom-link.active .active-ring::after {
+  background: #230c12;
+  box-shadow: 0 0 10px 2px rgba(214, 28, 42, 0.65);
+}
+
+:root[data-theme='demon'] .ico-wrap {
+  filter: drop-shadow(0 0 6px rgba(214, 28, 42, 0.4));
+}
+
+:root[data-theme='demon'] .nav-divider {
+  background: linear-gradient(
+    180deg,
+    transparent,
+    color-mix(in srgb, var(--demon-edge) 45%, transparent),
+    transparent
+  );
+}
+
+:root[data-theme='demon'] .dot-badge,
+:root[data-theme='demon'] .nav-badge {
+  background: linear-gradient(180deg, #8d3a48, #6e1e2c);
+  color: #f2e9e7;
+}
+
+@media (min-width: 1024px) {
+  :root[data-theme='demon'] .side-nav {
+    background: linear-gradient(180deg, rgba(35, 12, 18, 0.85) 0%, rgba(20, 16, 21, 0.8) 100%);
+    border-right: 1.5px solid color-mix(in srgb, var(--demon-edge) 45%, #141015);
+    backdrop-filter: blur(14px);
+  }
+
+  :root[data-theme='demon'] .side-nav a.active {
+    color: #f2e9e7;
+    background: linear-gradient(180deg, #8d3a48 0%, #6e1e2c 55%, #4a121c 100%);
+    border-color: var(--demon-edge-deep);
+  }
+}

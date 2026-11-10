@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { resolveAssetUrl } from '../../core/asset-url';
+import { fantasyFamilleSrc, fantasyWeatherIconSrc } from '../../core/theme-fantasy';
 import { createId } from '../../core/id';
 import { CalendarEvent, EventsService } from '../../core/api/events.service';
 import {
@@ -258,13 +259,18 @@ export class AccueilComponent implements OnInit, OnDestroy {
     return this.weatherDays().find((d) => d.date === date) ?? null;
   }
 
-  isAngeTheme(): boolean {
-    return document.documentElement.getAttribute('data-theme') === 'ange';
+  familleIconSrc(): string | null {
+    return fantasyFamilleSrc();
+  }
+
+  /** Icône « objectif » du thème Démon (finance/cible). Les autres thèmes gardent l’emoji. */
+  objectifIconSrc(): string | null {
+    if (document.documentElement.getAttribute('data-theme') !== 'demon') return null;
+    return resolveAssetUrl('assets/themes/demon/finance/cible.png');
   }
 
   weatherIconSrc(iconKey: string | undefined | null): string | null {
-    if (!iconKey || !this.isAngeTheme()) return null;
-    return resolveAssetUrl(`assets/themes/ange/meteo/${iconKey}.png`);
+    return fantasyWeatherIconSrc(iconKey);
   }
 
   closeReminderPopup(): void {

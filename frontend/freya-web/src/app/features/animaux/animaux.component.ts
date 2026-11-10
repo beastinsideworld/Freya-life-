@@ -16,7 +16,7 @@ import {
 import { PetShareService } from '../../core/pet-share.service';
 import { createId } from '../../core/id';
 import { resolveAssetUrl } from '../../core/asset-url';
-import { ANIMAUX_ICON, animauxEmojiIconSrc, petAvatarIconSrc } from '../../core/theme-ange-icons';
+import { animauxEmojiIconSrc, animauxIconsForTheme, petAvatarIconSrc } from '../../core/theme-ange-icons';
 
 type PetsTab = 'accueil' | 'depenses' | 'rendezvous';
 type ExpenseScope = 'mois' | 'annee' | 'animal';
@@ -32,7 +32,9 @@ type DateField = 'birth' | 'heatStart' | 'heatEnd' | 'expense' | 'appt';
   styleUrl: './animaux.component.scss'
 })
 export class AnimauxComponent {
-  readonly icons = ANIMAUX_ICON;
+  get icons() {
+    return animauxIconsForTheme();
+  }
   readonly assetUrl = resolveAssetUrl;
   readonly animauxEmojiIconSrc = animauxEmojiIconSrc;
   readonly petAvatarIconSrc = petAvatarIconSrc;

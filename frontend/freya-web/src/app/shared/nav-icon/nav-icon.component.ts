@@ -1,6 +1,6 @@
 import { afterNextRender, Component, computed, input, signal } from '@angular/core';
 import { resolveAssetUrl } from '../../core/asset-url';
-import { NAV_ANGE_ICON } from '../../core/theme-ange-icons';
+import { navIconsForFantasyTheme } from '../../core/theme-ange-icons';
 import { NavTabId } from '../../core/nav-tabs';
 
 const NAV_ICON_SRC: Record<NavTabId, string> = {
@@ -46,7 +46,8 @@ const NAV_ICON_SRC: Record<NavTabId, string> = {
         pointer-events: none;
       }
 
-      :host-context([data-theme='ange']) {
+      :host-context([data-theme='ange']),
+      :host-context([data-theme='demon']) {
         max-width: 1.95rem;
         max-height: 1.95rem;
       }
@@ -68,11 +69,10 @@ export class NavIconComponent {
   readonly src = computed(() => {
     this.themeTick();
     const id = this.name();
-    const theme = document.documentElement.getAttribute('data-theme');
-    const raw =
-      theme === 'ange'
-        ? (NAV_ANGE_ICON[id] ?? NAV_ANGE_ICON.accueil)
-        : (NAV_ICON_SRC[id] ?? NAV_ICON_SRC.accueil);
+    const fantasy = navIconsForFantasyTheme();
+    const raw = fantasy
+      ? (fantasy[id] ?? fantasy.accueil)
+      : (NAV_ICON_SRC[id] ?? NAV_ICON_SRC.accueil);
     return resolveAssetUrl(raw);
   });
 }

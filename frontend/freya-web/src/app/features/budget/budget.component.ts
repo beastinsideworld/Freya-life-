@@ -17,7 +17,7 @@ import { Friend, SocialService } from '../../core/social.service';
 import { createId } from '../../core/id';
 import { environment } from '../../../environments/environment';
 import { resolveAssetUrl } from '../../core/asset-url';
-import { FINANCE_ICON, financeEmojiIconSrc } from '../../core/theme-ange-icons';
+import { financeEmojiIconSrc, financeIconsForTheme } from '../../core/theme-ange-icons';
 
 type FinanceTab = 'synthese' | 'mouvements' | 'projets';
 type MoveFilter = 'all' | 'income' | 'expense';
@@ -59,7 +59,9 @@ const CATEGORY_ICONS: Record<string, string> = {
   styleUrl: './budget.component.scss'
 })
 export class BudgetComponent implements OnInit {
-  readonly icons = FINANCE_ICON;
+  get icons() {
+    return financeIconsForTheme();
+  }
   readonly assetUrl = resolveAssetUrl;
   readonly financeEmojiIconSrc = financeEmojiIconSrc;
   readonly loading = signal(false);

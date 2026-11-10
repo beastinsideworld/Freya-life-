@@ -138,27 +138,7 @@
   background-image: url('../../public/assets/themes/demon/animaux.png');
 }
 
-/* Héros Accueil Démon — bandeau (Ange géré par theme-ange-headers) */
-:root[data-theme='demon'] .page.accueil > .hero {
-  background-image: url('../../public/assets/themes/demon/bandeau.png');
-  background-size: cover;
-  background-position: center;
-}
-
-:root[data-theme='demon'] .page.accueil > .hero::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  border-radius: inherit;
-  z-index: 0;
-  background: linear-gradient(180deg, rgba(11, 11, 14, 0.35), rgba(11, 11, 14, 0.72));
-}
-
-:root[data-theme='demon'] .page.accueil > .hero > * {
-  position: relative;
-  z-index: 1;
-}
+/* Héros Accueil Démon — theme-demon-headers.scss */
 
 @mixin theme-page-hero-bg($theme, $selector, $file) {
   :root[data-theme='#{$theme}'] #{$selector} > .hero {
@@ -191,6 +171,18 @@
 
 @include theme-page-hero-bg('demon', '.page.planning', 'planning.png');
 @include theme-page-hero-bg('demon', '.page.repas', 'repas.png');
+
+/* Planning (page) — même illustration que l’accueil, cadrage pour la tête à gauche */
+:root[data-theme='demon'] .page.planning > .hero {
+  background-image: url('../../public/assets/themes/demon/fonds/planning.png');
+  background-position: 34% 30%;
+}
+
+@media (max-width: 640px) {
+  :root[data-theme='demon'] .page.planning > .hero {
+    background-position: 32% 26%;
+  }
+}
 @include theme-page-hero-bg('demon', '.page.voyages', 'voyage.png');
 @include theme-page-hero-bg('demon', '.page.sport-page', 'sport.png');
 @include theme-page-hero-bg('demon', '.page.budget-page', 'finances.png');

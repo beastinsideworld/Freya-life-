@@ -1,8 +1,10 @@
 @use './styles/theme-palettes';
 @use './styles/theme-decorations';
 @use './styles/theme-ange-ui';
+@use './styles/theme-demon-ui';
 @use './styles/theme-category-bgs';
 @use './styles/theme-ange-headers';
+@use './styles/theme-demon-headers';
 
 /* Tokens structurels partagés (typo, rayons) — couleurs via theme-palettes */
 :root {
@@ -549,3 +551,4 @@ input[type='radio'] {
     max-width: 1280px;
   }
 }
+

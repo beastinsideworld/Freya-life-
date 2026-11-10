@@ -1,4 +1,5 @@
 import { resolveAssetUrl } from './asset-url';
+import { activeFantasyTheme } from './theme-fantasy';
 import { NavTabId } from './nav-tabs';
 
 /** Icônes barre du bas — thème Ange (Design theme / Ange / icone barre du bas). */
@@ -14,6 +15,27 @@ export const NAV_ANGE_ICON: Record<NavTabId, string> = {
   animaux: 'assets/nav/ange/animaux.png',
   parametres: 'assets/nav/ange/parametres.png'
 };
+
+/** Icônes barre du bas — thème Démon (Design theme / Demon / icone barre du bas → nav/demon). */
+export const NAV_DEMON_ICON: Record<NavTabId, string> = {
+  accueil: 'assets/nav/demon/accueil.png',
+  planning: 'assets/nav/demon/planning.png',
+  repas: 'assets/nav/demon/repas.png',
+  voyages: 'assets/nav/demon/voyages.png',
+  tele: 'assets/nav/demon/tele.png',
+  chat: 'assets/nav/demon/chat.png',
+  budget: 'assets/nav/demon/budget.png',
+  sport: 'assets/nav/demon/sport.png',
+  animaux: 'assets/nav/demon/animaux.png',
+  parametres: 'assets/nav/demon/parametres.png'
+};
+
+export function navIconsForFantasyTheme(): Record<NavTabId, string> | null {
+  const t = activeFantasyTheme();
+  if (t === 'ange') return NAV_ANGE_ICON;
+  if (t === 'demon') return NAV_DEMON_ICON;
+  return null;
+}
 
 /** Icônes Ange — Finance (Design theme / Ange / finance). */
 export const FINANCE_ICON = {
@@ -43,32 +65,68 @@ export const ANIMAUX_ICON = {
 
 export type AnimauxIconKey = keyof typeof ANIMAUX_ICON;
 
+/** Icônes Démon — Finance. */
+export const FINANCE_ICON_DEMON = {
+  graphique: 'assets/themes/demon/finance/graphique.png',
+  transfert: 'assets/themes/demon/finance/transfert.png',
+  cible: 'assets/themes/demon/finance/cible.png',
+  calendrier: 'assets/themes/demon/finance/calendrier.png',
+  carte: 'assets/themes/demon/finance/carte.png',
+  tirelire: 'assets/themes/demon/finance/tirelire.png',
+  croissance: 'assets/themes/demon/finance/croissance.png',
+  portefeuille: 'assets/themes/demon/finance/portefeuille.png'
+} as const;
+
+/** Icônes Démon — Animaux. */
+export const ANIMAUX_ICON_DEMON = {
+  patte: 'assets/themes/demon/animaux/patte.png',
+  bourse: 'assets/themes/demon/animaux/bourse.png',
+  calendrier: 'assets/themes/demon/animaux/calendrier.png',
+  chien: 'assets/themes/demon/animaux/chien.png',
+  chat: 'assets/themes/demon/animaux/chat.png',
+  vaccin: 'assets/themes/demon/animaux/vaccin.png',
+  gamelle: 'assets/themes/demon/animaux/gamelle.png',
+  soin: 'assets/themes/demon/animaux/soin.png'
+} as const;
+
+export type FinanceIconMap = typeof FINANCE_ICON | typeof FINANCE_ICON_DEMON;
+export type AnimauxIconMap = typeof ANIMAUX_ICON | typeof ANIMAUX_ICON_DEMON;
+
+export function financeIconsForTheme(): FinanceIconMap {
+  return activeFantasyTheme() === 'demon' ? FINANCE_ICON_DEMON : FINANCE_ICON;
+}
+
+export function animauxIconsForTheme(): AnimauxIconMap {
+  return activeFantasyTheme() === 'demon' ? ANIMAUX_ICON_DEMON : ANIMAUX_ICON;
+}
+
 export function financeIcon(key: FinanceIconKey): string {
-  return resolveAssetUrl(FINANCE_ICON[key]);
+  return resolveAssetUrl(financeIconsForTheme()[key]);
 }
 
 export function animauxIcon(key: AnimauxIconKey): string {
-  return resolveAssetUrl(ANIMAUX_ICON[key]);
+  return resolveAssetUrl(animauxIconsForTheme()[key]);
 }
 
 /** Mappe un emoji / libellé finance vers une icône PNG. */
 export function financeEmojiIconSrc(emojiOrLabel: string | null | undefined): string {
+  const icons = financeIconsForTheme();
   const v = (emojiOrLabel || '').trim();
-  let path: string = FINANCE_ICON.portefeuille;
+  let path: string = icons.portefeuille;
   switch (v) {
     case '💳':
     case 'Compte courant':
-      path = FINANCE_ICON.carte;
+      path = icons.carte;
       break;
     case '🐷':
     case '🪙':
     case 'Livret A':
     case 'Épargne perso':
-      path = FINANCE_ICON.tirelire;
+      path = icons.tirelire;
       break;
     case '📈':
     case 'PEA (ETF)':
-      path = FINANCE_ICON.croissance;
+      path = icons.croissance;
       break;
     case '🎯':
     case '🏠':
@@ -76,23 +134,23 @@ export function financeEmojiIconSrc(emojiOrLabel: string | null | undefined): st
     case '🛡':
     case '🚗':
     case '✈':
-      path = FINANCE_ICON.cible;
+      path = icons.cible;
       break;
     case '📅':
     case '🗓':
-      path = FINANCE_ICON.calendrier;
+      path = icons.calendrier;
       break;
     case '📊':
-      path = FINANCE_ICON.graphique;
+      path = icons.graphique;
       break;
     case '⇄':
     case '↓':
     case '↑':
-      path = FINANCE_ICON.transfert;
+      path = icons.transfert;
       break;
     case '💼':
     case 'Salaire':
-      path = FINANCE_ICON.portefeuille;
+      path = icons.portefeuille;
       break;
     case '🛒':
     case 'Alimentation':
@@ -107,60 +165,62 @@ export function financeEmojiIconSrc(emojiOrLabel: string | null | undefined): st
     case 'Aides':
     case 'Activité':
     case 'Avantages':
-      path = FINANCE_ICON.graphique;
+      path = icons.graphique;
       break;
     default:
-      if (/livret|épargne|epargne/i.test(v)) path = FINANCE_ICON.tirelire;
-      else if (/pea|etf|bourse|action/i.test(v)) path = FINANCE_ICON.croissance;
-      else if (/courant|carte|compte/i.test(v)) path = FINANCE_ICON.carte;
+      if (/livret|épargne|epargne/i.test(v)) path = icons.tirelire;
+      else if (/pea|etf|bourse|action/i.test(v)) path = icons.croissance;
+      else if (/courant|carte|compte/i.test(v)) path = icons.carte;
   }
   return resolveAssetUrl(path);
 }
 
 /** Icône compagnon selon espèce / emoji. */
 export function petAvatarIconSrc(species?: string | null, emoji?: string | null): string {
+  const icons = animauxIconsForTheme();
   const s = `${species || ''} ${emoji || ''}`.toLowerCase();
-  let path: string = ANIMAUX_ICON.patte;
-  if (/chat|🐱|🐈|😺|😸/.test(s)) path = ANIMAUX_ICON.chat;
-  else if (/chien|🐶|🐕|🐩/.test(s)) path = ANIMAUX_ICON.chien;
-  else if (/🐱|🐈|😺|😸/.test(emoji || '')) path = ANIMAUX_ICON.chat;
-  else if (/🐶|🐕|🐩/.test(emoji || '')) path = ANIMAUX_ICON.chien;
+  let path: string = icons.patte;
+  if (/chat|🐱|🐈|😺|😸/.test(s)) path = icons.chat;
+  else if (/chien|🐶|🐕|🐩/.test(s)) path = icons.chien;
+  else if (/🐱|🐈|😺|😸/.test(emoji || '')) path = icons.chat;
+  else if (/🐶|🐕|🐩/.test(emoji || '')) path = icons.chien;
   return resolveAssetUrl(path);
 }
 
 /** Mappe catégorie / emoji animaux vers icône PNG. */
 export function animauxEmojiIconSrc(emojiOrLabel: string | null | undefined): string {
+  const icons = animauxIconsForTheme();
   const v = (emojiOrLabel || '').trim();
-  let path: string = ANIMAUX_ICON.patte;
+  let path: string = icons.patte;
   switch (v) {
     case '🥣':
     case 'Alimentation':
-      path = ANIMAUX_ICON.gamelle;
+      path = icons.gamelle;
       break;
     case '🩺':
     case '💊':
     case 'Vétérinaire':
     case 'Soins / Traitements':
-      path = ANIMAUX_ICON.soin;
+      path = icons.soin;
       break;
     case '✂':
     case 'Toilettage':
-      path = ANIMAUX_ICON.patte;
+      path = icons.patte;
       break;
     case '📅':
-      path = ANIMAUX_ICON.calendrier;
+      path = icons.calendrier;
       break;
     case '🪙':
     case '📦':
     case 'Autres':
-      path = ANIMAUX_ICON.bourse;
+      path = icons.bourse;
       break;
     case '❤':
     case '💗':
-      path = ANIMAUX_ICON.soin;
+      path = icons.soin;
       break;
     case '💉':
-      path = ANIMAUX_ICON.vaccin;
+      path = icons.vaccin;
       break;
   }
   return resolveAssetUrl(path);

@@ -1,7 +1,9 @@
 <section class="page accueil">
   <header class="hero">
     <label class="family-scope" [attr.data-short]="familyScopeShort()">
-      <img class="family-scope-ico" src="assets/themes/ange/icone-famille.png" alt="" aria-hidden="true" />
+      @if (familleIconSrc(); as familleIco) {
+        <img class="family-scope-ico" [src]="familleIco" alt="" aria-hidden="true" />
+      }
       <span class="family-scope-label">{{ familyScopeShort() }}</span>
       <select
         [ngModel]="selectedFamilyId()"
@@ -89,7 +91,11 @@
               <li [class.done]="item.done" [class.readonly]="item.mine === false">
                 <span class="time">{{ item.meta }}</span>
                 <div class="task-card">
-                  <span class="task-ico" aria-hidden="true">🎯</span>
+                  @if (objectifIconSrc(); as objectifIco) {
+                    <img class="task-ico-img" [src]="objectifIco" alt="" aria-hidden="true" />
+                  } @else {
+                    <span class="task-ico" aria-hidden="true">🎯</span>
+                  }
                   <span>{{ item.title }}</span>
                 </div>
                 <button

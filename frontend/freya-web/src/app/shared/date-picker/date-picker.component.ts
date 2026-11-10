@@ -1,5 +1,6 @@
-import { Component, ElementRef, HostListener, forwardRef, signal } from '@angular/core';
+import { afterNextRender, Component, ElementRef, HostListener, forwardRef, signal } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { fantasyCalendrierSrc } from '../../core/theme-fantasy';
 
 interface DayCell {
   iso: string | null;
@@ -31,12 +32,22 @@ export class DatePickerComponent implements ControlValueAccessor {
   readonly disabled = signal(false);
 
   readonly weekdays = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+  private readonly themeTick = signal(0);
 
   private onChange: (value: string) => void = () => undefined;
   private onTouched: () => void = () => undefined;
 
   constructor(private readonly host: ElementRef<HTMLElement>) {
     this.refreshCells();
+    afterNextRender(() => {
+      const obs = new MutationObserver(() => this.themeTick.update((n) => n + 1));
+      obs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    });
+  }
+
+  calendrierIconSrc(): string | null {
+    this.themeTick();
+    return fantasyCalendrierSrc();
   }
 
   writeValue(value: string | null): void {

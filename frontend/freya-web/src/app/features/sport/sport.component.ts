@@ -12,8 +12,8 @@ import {
   GoalType,
   kindIcon,
   kindIconSrc,
-  MUSCU_ICON,
   muscuIcon,
+  muscuIconsForTheme,
   pct,
   SportSex,
   SportStore,
@@ -29,7 +29,9 @@ import {
 })
 export class SportComponent {
   readonly store = inject(SportStore);
-  readonly icons = MUSCU_ICON;
+  get icons() {
+    return muscuIconsForTheme();
+  }
   readonly assetUrl = resolveAssetUrl;
   readonly muscuIcon = muscuIcon;
   readonly exerciseIconSrc = exerciseIconSrc;

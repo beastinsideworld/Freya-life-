@@ -1,0 +1,342 @@
+/* Accueil Démon — fonds/ : illustration en fond de carte, voile local pour le texte */
+
+@mixin demon-card($file, $position: center, $scrim) {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background-color: #12080c;
+  background-image: url('../../public/assets/themes/demon/fonds/#{$file}');
+  background-size: cover;
+  background-position: $position;
+  background-repeat: no-repeat;
+  border: 1px solid rgba(214, 28, 42, 0.78);
+  box-shadow:
+    0 0 0 1px rgba(122, 14, 23, 0.9),
+    0 0 18px rgba(214, 28, 42, 0.32),
+    inset 0 0 0 1px rgba(255, 140, 90, 0.16);
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    background: $scrim;
+  }
+
+  > *:not(.family-scope) {
+    position: relative;
+    z-index: 1;
+  }
+}
+
+:root[data-theme='demon'] .idea-fab {
+  border-color: color-mix(in srgb, #d61c2a 60%, #141015);
+  background: linear-gradient(180deg, #8d3a48, #6e1e2c);
+  color: #f2e9e7;
+  box-shadow: 0 0 14px rgba(214, 28, 42, 0.4);
+}
+
+/* En-tête — portail, personnages sur les côtés, texte au centre */
+:root[data-theme='demon'] .page.accueil > .hero {
+  border-radius: var(--radius);
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.75);
+  min-height: 13.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: center;
+  padding: 1.1rem 1rem 0.85rem;
+  @include demon-card(
+    'accueil.png',
+    center top,
+    linear-gradient(
+      180deg,
+      rgba(8, 4, 6, 0.08) 0%,
+      rgba(8, 4, 6, 0.34) 38%,
+      rgba(8, 4, 6, 0.08) 100%
+    )
+  );
+
+  &::after {
+    display: none;
+  }
+
+  > .icon {
+    margin: 0 auto 0.15rem;
+    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.65));
+  }
+
+  > h1 {
+    margin: 0.15rem 0 0;
+    color: #f7ece8;
+    text-align: center;
+    text-shadow: 0 2px 14px rgba(0, 0, 0, 0.8);
+  }
+
+  > .sub {
+    margin: 0.4rem auto 0;
+    color: #f2e9e7;
+    text-align: center;
+    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.75);
+  }
+
+  > .hero-date.meta-pill {
+    margin-top: auto;
+    min-height: 2.35rem;
+    padding: 0.45rem 1rem;
+    color: #f2e9e7;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border: 1px solid rgba(214, 28, 42, 0.55);
+    border-radius: var(--radius-pill);
+    background: rgba(12, 6, 8, 0.55);
+    box-shadow: 0 0 12px rgba(214, 28, 42, 0.2);
+    text-shadow: none;
+  }
+
+  > .family-scope {
+    position: absolute;
+    top: 0.7rem;
+    left: 0.75rem;
+    right: auto;
+    bottom: auto;
+    align-self: flex-start;
+    margin: 0;
+    background: rgba(12, 6, 8, 0.62);
+    border-color: rgba(214, 28, 42, 0.5);
+    color: #f2e9e7;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  }
+}
+
+/* Voyage — cadre ovale, texte à gauche */
+:root[data-theme='demon'] .page.accueil > .trip-banner {
+  min-height: 4.75rem;
+  padding: 0.9rem 1.05rem;
+  border-radius: var(--radius-pill);
+  color: #f2e9e7;
+  @include demon-card(
+    'voyage.png',
+    center 68%,
+    linear-gradient(90deg, rgba(8, 4, 6, 0.5) 0%, rgba(8, 4, 6, 0.16) 58%, rgba(8, 4, 6, 0.05) 100%)
+  );
+
+  .trip-label,
+  strong,
+  .trip-count {
+    color: #f7ece8;
+    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.8);
+  }
+}
+
+/* Événement — figure à droite, champs sur la zone sombre à gauche */
+:root[data-theme='demon'] .page.accueil > .composer {
+  @include demon-card(
+    'evenement.png',
+    72% 8%,
+    linear-gradient(90deg, rgba(8, 4, 6, 0.42) 0%, rgba(8, 4, 6, 0.12) 52%, rgba(8, 4, 6, 0) 100%)
+  );
+
+  > .field {
+    font-size: 0;
+  }
+
+  > .field-title input {
+    font-size: 1.12rem;
+    font-weight: 600;
+    color: #f2e9e7;
+    background: rgba(12, 6, 8, 0.58);
+    border-color: rgba(214, 28, 42, 0.4);
+  }
+
+  > .field-time input,
+  > .field-date app-date-picker .trigger,
+  > .btn.add {
+    background: rgba(12, 6, 8, 0.58);
+    color: #f2e9e7;
+    border-color: rgba(214, 28, 42, 0.4);
+  }
+
+  > .error {
+    grid-column: 1 / -1;
+    color: #ffb8a8;
+  }
+}
+
+/* Tâches — ornements en haut et sur les côtés */
+:root[data-theme='demon'] .page.accueil > .tasks {
+  @include demon-card(
+    'taches.png',
+    center 22%,
+    linear-gradient(
+      180deg,
+      rgba(8, 4, 6, 0.12) 0%,
+      rgba(8, 4, 6, 0.22) 28%,
+      rgba(8, 4, 6, 0.16) 100%
+    )
+  );
+
+  > .section-head h2,
+  h3,
+  .time {
+    color: #f7ece8;
+    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.75);
+  }
+
+  > .section-head > a {
+    color: #ff8a62;
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.7);
+  }
+
+  .task-card {
+    background: rgba(12, 6, 8, 0.48);
+    border-color: rgba(214, 28, 42, 0.35);
+    color: #f2e9e7;
+  }
+
+  .task-ico-img {
+    width: 1.35rem;
+    height: 1.35rem;
+    object-fit: contain;
+    flex: 0 0 auto;
+    filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.55));
+  }
+}
+
+/* Repas — figure à gauche, citadelle à droite */
+:root[data-theme='demon'] .page.accueil > .meals {
+  @include demon-card(
+    'repas.png',
+    center 32%,
+    linear-gradient(
+      180deg,
+      rgba(8, 4, 6, 0.05) 0%,
+      rgba(8, 4, 6, 0.14) 40%,
+      rgba(8, 4, 6, 0.28) 100%
+    )
+  );
+
+  > .section-head h2,
+  .kcal-total {
+    color: #f7ece8;
+    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.75);
+  }
+
+  > .section-head > a {
+    color: #ff8a62;
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.7);
+  }
+
+  .meal-card {
+    background: rgba(12, 6, 8, 0.46);
+    border-color: rgba(214, 28, 42, 0.38);
+  }
+
+  .meal-edit {
+    border-color: rgba(214, 28, 42, 0.45);
+    background: rgba(12, 6, 8, 0.55);
+    color: #ff8a62;
+  }
+
+  .kcal-badge {
+    border-color: rgba(214, 28, 42, 0.4);
+    background: rgba(12, 6, 8, 0.62);
+    color: #f2e9e7;
+  }
+}
+
+/* Planning — figure à gauche, citadelle à droite, jours au centre */
+:root[data-theme='demon'] .page.accueil > .week {
+  @include demon-card(
+    'planning.png',
+    36% 16%,
+    linear-gradient(
+      180deg,
+      rgba(8, 4, 6, 0.08) 0%,
+      rgba(8, 4, 6, 0.16) 36%,
+      rgba(8, 4, 6, 0.22) 100%
+    )
+  );
+
+  > .section-head h2 {
+    color: #f7ece8;
+    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.75);
+  }
+
+  > .section-head > a {
+    color: #ff8a62;
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.7);
+  }
+
+  .week-row article {
+    background: rgba(12, 6, 8, 0.4);
+    border-color: rgba(214, 28, 42, 0.32);
+    box-shadow: inset 0 1px 0 rgba(255, 140, 90, 0.08);
+  }
+
+  .week-row article.today {
+    background: rgba(48, 12, 18, 0.55);
+    border-color: rgba(255, 106, 61, 0.75);
+    box-shadow: 0 0 12px rgba(214, 28, 42, 0.28);
+  }
+
+  .week-row h3 {
+    color: #f7ece8;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0;
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.75);
+  }
+
+  .week-row article:first-child h3 {
+    color: #ffd0c4;
+  }
+
+  .day-num {
+    color: #f2e9e7;
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.7);
+  }
+
+  .day-weather-temp {
+    color: #e4c8c0;
+  }
+
+  .week-row li {
+    color: #f2e9e7;
+    background: rgba(12, 6, 8, 0.5);
+  }
+}
+
+@media (max-width: 640px) {
+  :root[data-theme='demon'] .page.accueil > .hero {
+    min-height: 11.75rem;
+    background-position: center top;
+    padding-inline: 0.75rem;
+  }
+
+  :root[data-theme='demon'] .page.accueil > .composer {
+    background-position: 74% 6%;
+  }
+
+  :root[data-theme='demon'] .page.accueil > .tasks {
+    background-position: center 16%;
+  }
+
+  :root[data-theme='demon'] .page.accueil > .meals {
+    background-position: 42% 28%;
+  }
+
+  :root[data-theme='demon'] .page.accueil > .week {
+    background-position: 34% 14%;
+  }
+
+  :root[data-theme='demon'] .page.accueil > .trip-banner {
+    min-height: 4.25rem;
+    background-position: center 72%;
+  }
+}

@@ -795,7 +795,7 @@ export class SportStore {
   }
 }
 
-/** Icônes Ange muscu (Design theme / Ange / muscu). */
+/** Icônes muscu — thèmes Ange / Démon. */
 export const MUSCU_ICON = {
   haltere: 'assets/themes/ange/muscu/haltere.png',
   kettlebell: 'assets/themes/ange/muscu/kettlebell.png',
@@ -806,10 +806,25 @@ export const MUSCU_ICON = {
   trophee: 'assets/themes/ange/muscu/trophee.png'
 } as const;
 
+export const MUSCU_ICON_DEMON = {
+  haltere: 'assets/themes/demon/muscu/haltere.png',
+  kettlebell: 'assets/themes/demon/muscu/kettlebell.png',
+  banc: 'assets/themes/demon/muscu/banc.png',
+  disques: 'assets/themes/demon/muscu/disques.png',
+  shaker: 'assets/themes/demon/muscu/shaker.png',
+  programme: 'assets/themes/demon/muscu/programme.png',
+  trophee: 'assets/themes/demon/muscu/trophee.png'
+} as const;
+
 export type MuscuIconKey = keyof typeof MUSCU_ICON;
 
+export function muscuIconsForTheme(): typeof MUSCU_ICON | typeof MUSCU_ICON_DEMON {
+  const t = document.documentElement.getAttribute('data-theme');
+  return t === 'demon' ? MUSCU_ICON_DEMON : MUSCU_ICON;
+}
+
 export function muscuIcon(key: MuscuIconKey): string {
-  return resolveAssetUrl(MUSCU_ICON[key]);
+  return resolveAssetUrl(muscuIconsForTheme()[key]);
 }
 
 export function kindIcon(kind: SportKind | null | undefined): string {
@@ -831,22 +846,23 @@ export function kindIcon(kind: SportKind | null | undefined): string {
 
 /** Icône PNG muscu pour le type de séance. */
 export function kindIconSrc(kind: SportKind | null | undefined): string {
-  let path: string = MUSCU_ICON.programme;
+  const icons = muscuIconsForTheme();
+  let path: string = icons.programme;
   switch (kind) {
     case 'musculation':
-      path = MUSCU_ICON.haltere;
+      path = icons.haltere;
       break;
     case 'course':
-      path = MUSCU_ICON.programme;
+      path = icons.programme;
       break;
     case 'velo':
-      path = MUSCU_ICON.kettlebell;
+      path = icons.kettlebell;
       break;
     case 'natation':
-      path = MUSCU_ICON.disques;
+      path = icons.disques;
       break;
     case 'mobilite':
-      path = MUSCU_ICON.shaker;
+      path = icons.shaker;
       break;
   }
   return resolveAssetUrl(path);
@@ -854,28 +870,29 @@ export function kindIconSrc(kind: SportKind | null | undefined): string {
 
 /** Mappe un emoji d’exercice / record vers une icône muscu. */
 export function exerciseIconSrc(emoji: string | null | undefined): string {
-  let path: string = MUSCU_ICON.haltere;
+  const icons = muscuIconsForTheme();
+  let path: string = icons.haltere;
   switch (emoji) {
     case '🏋️':
-      path = MUSCU_ICON.haltere;
+      path = icons.haltere;
       break;
     case '💪':
-      path = MUSCU_ICON.kettlebell;
+      path = icons.kettlebell;
       break;
     case '🦾':
-      path = MUSCU_ICON.disques;
+      path = icons.disques;
       break;
     case '🤸':
-      path = MUSCU_ICON.banc;
+      path = icons.banc;
       break;
     case '🏃':
-      path = MUSCU_ICON.programme;
+      path = icons.programme;
       break;
     case '🥣':
     case '🍗':
     case '🥛':
     case '🐟':
-      path = MUSCU_ICON.shaker;
+      path = icons.shaker;
       break;
   }
   return resolveAssetUrl(path);
