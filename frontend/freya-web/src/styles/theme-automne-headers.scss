@@ -1,0 +1,280 @@
+/* Accueil Automne — cadres feuilles, texte brun sur la lueur ambrée */
+
+$automne-glow: #f6d7b0;
+$automne-ink: #3a1608;
+$automne-ink-soft: #5c2a12;
+
+@mixin automne-card($file, $position: center center, $scrim) {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background-color: #c45c1a;
+  background-image: url('../../public/assets/themes/automne/fonds/#{$file}');
+  background-size: cover;
+  background-position: $position;
+  background-repeat: no-repeat;
+  border: 1.5px solid color-mix(in srgb, #e7b671 55%, #7a380c);
+  box-shadow:
+    0 10px 24px rgba(58, 22, 8, 0.18),
+    inset 0 1px 0 rgba(255, 236, 210, 0.45);
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    background: $scrim;
+  }
+
+  > *:not(.family-scope) {
+    position: relative;
+    z-index: 1;
+  }
+}
+
+@mixin automne-ink {
+  color: #fff6ec;
+  text-shadow:
+    0 0 1px #3a1608,
+    0 1px 3px #3a1608,
+    1px 0 0 #3a1608,
+    -1px 0 0 #3a1608,
+    0 1px 0 #3a1608,
+    0 -1px 0 #3a1608;
+}
+
+:root[data-theme='automne'] .page.accueil > .hero {
+  border-radius: var(--radius);
+  min-height: 14rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 1.1rem 1rem 0.85rem;
+  @include automne-card(
+    'accueil.jpg',
+    center 42%,
+    linear-gradient(180deg, rgba(246, 215, 176, 0.08) 0%, rgba(246, 215, 176, 0.28) 48%, rgba(196, 92, 26, 0.18) 100%)
+  );
+
+  &::after {
+    display: none;
+  }
+
+  > h1 {
+    @include automne-ink;
+    font-weight: 700;
+  }
+
+  > .sub {
+    color: #fff6ec;
+    text-shadow:
+      0 1px 3px #3a1608,
+      1px 0 0 #3a1608,
+      -1px 0 0 #3a1608,
+      0 1px 0 #3a1608,
+      0 -1px 0 #3a1608;
+  }
+
+  > .hero-date.meta-pill,
+  > .family-scope {
+    background: rgba(255, 246, 236, 0.86);
+    border-color: color-mix(in srgb, #c45c1a 45%, white);
+    color: $automne-ink;
+    text-shadow: none;
+  }
+
+  > .family-scope {
+    position: absolute;
+    top: 0.7rem;
+    left: 0.75rem;
+  }
+}
+
+:root[data-theme='automne'] .page.accueil > .trip-banner {
+  min-height: 5rem;
+  padding: 0.9rem 1.05rem;
+  border-radius: var(--radius-pill);
+  color: $automne-ink;
+  @include automne-card(
+    'voyage.jpg',
+    center 55%,
+    linear-gradient(90deg, rgba(255, 246, 236, 0.82) 0%, rgba(246, 215, 176, 0.4) 55%, rgba(246, 215, 176, 0.12) 100%)
+  );
+  background-image: url('../../public/assets/themes/automne/bandeau.jpg');
+
+  .trip-label,
+  strong {
+    color: #fff6ec;
+    font-weight: 700;
+    text-shadow:
+      0 1px 3px #3a1608,
+      1px 0 0 #3a1608,
+      -1px 0 0 #3a1608,
+      0 1px 0 #3a1608,
+      0 -1px 0 #3a1608;
+  }
+
+  .trip-count {
+    color: $automne-ink;
+    background: rgba(255, 246, 236, 0.92);
+    border: 1.5px solid #c45c1a;
+    text-shadow: none;
+  }
+}
+
+:root[data-theme='automne'] .page.accueil > .composer {
+  min-height: 5.4rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0.7rem 0.55rem;
+  @include automne-card(
+    'evenement.jpg',
+    center 46%,
+    linear-gradient(180deg, rgba(58, 22, 8, 0.18) 0%, rgba(246, 215, 176, 0.16) 50%, rgba(58, 22, 8, 0.22) 100%)
+  );
+
+  > .field-title {
+    font-size: 0;
+  }
+
+  > .field-title input,
+  > .field-time input,
+  > .field-date app-date-picker .trigger,
+  > .btn.add {
+    align-self: center;
+    background: rgba(58, 22, 8, 0.72);
+    color: #fff6ec;
+    border-color: color-mix(in srgb, #e7b671 55%, #3a1608);
+  }
+
+  > .field-title input::placeholder {
+    color: rgba(255, 246, 236, 0.72);
+  }
+}
+
+:root[data-theme='automne'] .page.accueil > .tasks {
+  min-height: 11rem;
+  @include automne-card(
+    'taches.jpg',
+    center 40%,
+    linear-gradient(180deg, rgba(246, 215, 176, 0.1) 0%, rgba(246, 215, 176, 0.34) 46%, rgba(196, 92, 26, 0.22) 100%)
+  );
+
+  h2,
+  h3,
+  .time,
+  a {
+    @include automne-ink;
+  }
+
+  .task-card {
+    background: rgba(58, 22, 8, 0.62);
+    border-color: color-mix(in srgb, #e7b671 45%, #3a1608);
+    color: #fff6ec;
+  }
+
+  .task-ico {
+    font-size: 1.05rem;
+    line-height: 1;
+  }
+
+  .task-ico-img {
+    width: 1.05rem;
+    height: 1.05rem;
+    object-fit: contain;
+    flex: 0 0 auto;
+    filter: drop-shadow(0 1px 2px rgba(58, 22, 8, 0.45));
+  }
+}
+
+:root[data-theme='automne'] .page.accueil > .meals {
+  min-height: 11rem;
+  @include automne-card(
+    'repas.jpg',
+    center 42%,
+    linear-gradient(180deg, rgba(246, 215, 176, 0.1) 0%, rgba(246, 215, 176, 0.32) 46%, rgba(196, 92, 26, 0.2) 100%)
+  );
+
+  h2,
+  .kcal-total,
+  a {
+    @include automne-ink;
+  }
+
+  .meal-card,
+  .kcal-badge,
+  .meal-edit {
+    background: rgba(58, 22, 8, 0.62);
+    border-color: color-mix(in srgb, #e7b671 48%, #3a1608);
+    color: #fff6ec;
+  }
+
+  .meal-card h3,
+  .meal-card p,
+  .kcal-total,
+  .kcal-badge {
+    color: #fff6ec;
+    text-shadow: 0 1px 2px rgba(58, 22, 8, 0.65);
+  }
+
+  .meal-ico img {
+    filter: sepia(0.35) saturate(1.6) brightness(1.25) contrast(1.05);
+  }
+}
+
+:root[data-theme='automne'] .page.accueil > .week {
+  min-height: 12rem;
+  @include automne-card(
+    'planning.jpg',
+    center 38%,
+    linear-gradient(180deg, rgba(246, 215, 176, 0.1) 0%, rgba(246, 215, 176, 0.32) 46%, rgba(196, 92, 26, 0.2) 100%)
+  );
+
+  h2,
+  h3,
+  a,
+  .day-num,
+  li {
+    @include automne-ink;
+  }
+
+  .week-row article {
+    background: rgba(58, 22, 8, 0.58);
+    border-color: color-mix(in srgb, #e7b671 42%, #3a1608);
+  }
+
+  .week-row article.today {
+    background: rgba(122, 56, 12, 0.72);
+    border-color: #e7b671;
+  }
+
+  .week-row h3,
+  .day-num,
+  .week-row li,
+  .week-event {
+    color: #fff6ec;
+    text-shadow: 0 1px 2px rgba(58, 22, 8, 0.7);
+  }
+
+  .day-weather-temp {
+    color: #fff6ec;
+    font-weight: 700;
+    background: rgba(58, 22, 8, 0.55);
+    border-radius: 999px;
+    padding: 0.04rem 0.28rem;
+    text-shadow: none;
+  }
+
+  .day-weather-ico-img {
+    filter: drop-shadow(0 1px 2px rgba(58, 22, 8, 0.65));
+  }
+
+  .week-row li {
+    background: rgba(26, 10, 4, 0.45);
+  }
+}

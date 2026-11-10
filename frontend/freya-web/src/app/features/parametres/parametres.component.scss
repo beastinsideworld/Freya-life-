@@ -333,6 +333,7 @@
 .theme-modal {
   width: min(480px, calc(100vw - 1.5rem));
   max-height: min(88vh, 720px);
+  z-index: 60;
 }
 
 .theme-modal-body {
@@ -435,5 +436,19 @@
 @media (min-width: 640px) {
   .theme-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1023px) {
+  .theme-modal {
+    top: auto;
+    bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 0.65rem);
+    transform: translate(-50%, 0);
+    max-height: calc(100dvh - var(--nav-h) - env(safe-area-inset-bottom, 0px) - 1.35rem);
+  }
+
+  .theme-modal-body {
+    max-height: calc(100dvh - var(--nav-h) - env(safe-area-inset-bottom, 0px) - 8rem);
+    padding-bottom: 0.85rem;
   }
 }

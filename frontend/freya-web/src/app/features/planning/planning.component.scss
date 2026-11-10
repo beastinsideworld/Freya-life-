@@ -749,23 +749,27 @@ h2 {
     font-weight: 700;
   }
 
-  .days .holiday {
-    color: #4a6a8a;
-    background: rgba(198, 220, 240, 0.45);
+  .days p.holiday {
+    color: #0c4a56;
+    background: rgba(188, 230, 232, 0.92);
+    font-weight: 700;
+    border-radius: 0.35rem;
+    box-shadow: inset 0 0 0 1px #3d8f9a;
   }
 
-  .days .holiday.today {
-    color: #0a2f52;
-    background: color-mix(in srgb, #8aabd0 26%, #e8f0fa);
+  .days p.holiday.today {
+    color: #06343c;
+    background: color-mix(in srgb, #7ec8ce 48%, #f4fcfc);
+    box-shadow: inset 0 0 0 1.5px #1f6d78;
   }
 
   .col.holiday {
-    background: rgba(198, 220, 240, 0.28);
+    background: rgba(150, 210, 214, 0.32);
   }
 
   .col.holiday.today {
-    background: color-mix(in srgb, #8aabd0 18%, #fffaf8);
-    box-shadow: inset 0 0 18px rgba(107, 140, 174, 0.18);
+    background: color-mix(in srgb, #7ec8ce 28%, #fffaf8);
+    box-shadow: inset 0 0 18px rgba(31, 109, 120, 0.16);
   }
 
   .col.today {
@@ -782,13 +786,14 @@ h2 {
   }
 
   .month-cell.holiday {
-    background: rgba(198, 220, 240, 0.5);
-    color: #4a6a8a;
-    border-color: color-mix(in srgb, #6b8cae 40%, white);
+    background: rgba(188, 230, 232, 0.88);
+    color: #0c4a56;
+    border-color: #3d8f9a;
   }
 
   .month-cell.holiday .day-num {
-    color: #4a6a8a;
+    color: #0c4a56;
+    font-weight: 700;
   }
 
   .month-cell.today {
@@ -803,5 +808,34 @@ h2 {
 
   .month-cell.has .day-num {
     color: #1a4f7a;
+  }
+}
+
+:host-context([data-theme='automne']) {
+  .days p.holiday {
+    color: #ffe7c2;
+    background: rgba(196, 92, 26, 0.62);
+    font-weight: 700;
+    border-radius: 0.35rem;
+  }
+
+  .days p.holiday.today {
+    color: #fff6ec;
+    box-shadow: inset 0 0 0 1px #e7b671;
+  }
+
+  .col.holiday {
+    background: rgba(196, 92, 26, 0.2);
+  }
+
+  .month-cell.holiday {
+    background: rgba(196, 92, 26, 0.42);
+    color: #ffe7c2;
+    border-color: #e7b671;
+  }
+
+  .month-cell.holiday .day-num {
+    color: #ffe7c2;
+    font-weight: 700;
   }
 }

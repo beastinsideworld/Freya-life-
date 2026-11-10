@@ -123,9 +123,16 @@
   filter: drop-shadow(0 1px 6px rgba(107, 140, 174, 0.55));
 }
 
+:host-context([data-theme='automne']) .ico-wrap {
+  width: 2.35rem;
+  height: 2.35rem;
+  filter: drop-shadow(0 1px 6px rgba(224, 112, 48, 0.45));
+}
+
 :host-context([data-theme='ange']) .bottom-link ::ng-deep app-nav-icon,
 :host-context([data-theme='demon']) .bottom-link ::ng-deep app-nav-icon,
 :host-context([data-theme='ete']) .bottom-link ::ng-deep app-nav-icon,
+:host-context([data-theme='automne']) .bottom-link ::ng-deep app-nav-icon,
 :host-context([data-theme='hiver']) .bottom-link ::ng-deep app-nav-icon {
   max-width: 2.3rem;
   max-height: 2.3rem;

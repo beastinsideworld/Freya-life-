@@ -4,11 +4,13 @@
 @use './styles/theme-demon-ui';
 @use './styles/theme-ete-ui';
 @use './styles/theme-hiver-ui';
+@use './styles/theme-automne-ui';
 @use './styles/theme-category-bgs';
 @use './styles/theme-ange-headers';
 @use './styles/theme-demon-headers';
 @use './styles/theme-ete-headers';
 @use './styles/theme-hiver-headers';
+@use './styles/theme-automne-headers';
 
 /* Tokens structurels partagés (typo, rayons) — couleurs via theme-palettes */
 :root {

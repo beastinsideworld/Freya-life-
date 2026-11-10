@@ -10,7 +10,8 @@
 :root[data-theme='ange'] .theme-modules,
 :root[data-theme='demon'] .theme-modules,
 :root[data-theme='ete'] .theme-modules,
-:root[data-theme='hiver'] .theme-modules {
+:root[data-theme='hiver'] .theme-modules,
+:root[data-theme='automne'] .theme-modules {
   display: grid;
 }
 
@@ -207,6 +208,40 @@
   background-image: url('../../public/assets/themes/hiver/animaux.png');
 }
 
+:root[data-theme='automne'] .theme-module {
+  color: #fff5ec;
+  border-color: #c45c1a;
+  background-color: #3d1e02;
+}
+
+:root[data-theme='automne'] .theme-module::before {
+  background: linear-gradient(
+    180deg,
+    rgba(11, 4, 0, 0.12) 0%,
+    rgba(11, 4, 0, 0.38) 48%,
+    rgba(11, 4, 0, 0.72) 100%
+  );
+}
+
+:root[data-theme='automne'] .theme-module--planning {
+  background-image: url('../../public/assets/themes/automne/planning.jpg');
+}
+:root[data-theme='automne'] .theme-module--repas {
+  background-image: url('../../public/assets/themes/automne/repas.jpg');
+}
+:root[data-theme='automne'] .theme-module--voyage {
+  background-image: url('../../public/assets/themes/automne/voyage.jpg');
+}
+:root[data-theme='automne'] .theme-module--sport {
+  background-image: url('../../public/assets/themes/automne/sport.jpg');
+}
+:root[data-theme='automne'] .theme-module--finances {
+  background-image: url('../../public/assets/themes/automne/finances.jpg');
+}
+:root[data-theme='automne'] .theme-module--animaux {
+  background-image: url('../../public/assets/themes/automne/animaux.jpg');
+}
+
 /* Héros Accueil Démon — theme-demon-headers.scss */
 
 @mixin theme-page-hero-bg($theme, $selector, $file) {
@@ -324,6 +359,28 @@
 :root[data-theme='hiver'] .page.budget-page > .hero::after,
 :root[data-theme='hiver'] .page.animaux-page > .hero::after {
   background: linear-gradient(180deg, rgba(216, 230, 244, 0.12), rgba(197, 216, 236, 0.55));
+}
+
+@include theme-page-hero-bg('automne', '.page.repas', 'repas.jpg');
+@include theme-page-hero-bg('automne', '.page.voyages', 'voyage.jpg');
+@include theme-page-hero-bg('automne', '.page.sport-page', 'sport.jpg');
+@include theme-page-hero-bg('automne', '.page.budget-page', 'finances.jpg');
+@include theme-page-hero-bg('automne', '.page.animaux-page', 'animaux.jpg');
+
+:root[data-theme='automne'] .page.planning > .hero {
+  background-image: url('../../public/assets/themes/automne/fonds/planning.jpg');
+  background-size: cover;
+  background-position: center 40%;
+  background-color: #c45c1a;
+}
+
+:root[data-theme='automne'] .page.planning > .hero::after,
+:root[data-theme='automne'] .page.repas > .hero::after,
+:root[data-theme='automne'] .page.voyages > .hero::after,
+:root[data-theme='automne'] .page.sport-page > .hero::after,
+:root[data-theme='automne'] .page.budget-page > .hero::after,
+:root[data-theme='automne'] .page.animaux-page > .hero::after {
+  background: linear-gradient(180deg, rgba(11, 4, 0, 0.2), rgba(11, 4, 0, 0.62));
 }
 
 @media (min-width: 768px) {

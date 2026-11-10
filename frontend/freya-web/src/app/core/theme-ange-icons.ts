@@ -128,6 +128,18 @@ export const FINANCE_ICON_HIVER = {
   portefeuille: 'assets/themes/hiver/finance/portefeuille.png'
 } as const;
 
+/** Icônes Automne — Finance. */
+export const FINANCE_ICON_AUTOMNE = {
+  graphique: 'assets/themes/automne/finance/graphique.png',
+  transfert: 'assets/themes/automne/finance/transfert.png',
+  cible: 'assets/themes/automne/finance/cible.png',
+  calendrier: 'assets/themes/automne/finance/calendrier.png',
+  carte: 'assets/themes/automne/finance/carte.png',
+  tirelire: 'assets/themes/automne/finance/tirelire.png',
+  croissance: 'assets/themes/automne/finance/croissance.png',
+  portefeuille: 'assets/themes/automne/finance/portefeuille.png'
+} as const;
+
 /** Icônes repas (créneaux) — défaut or. */
 export const MEAL_SLOT_ICON = {
   Breakfast: 'assets/meals/petit-dejeuner.png',
@@ -136,7 +148,7 @@ export const MEAL_SLOT_ICON = {
   Dinner: 'assets/meals/diner.png'
 } as const;
 
-/** Icônes repas Hiver — même palette glace, un peu plus blanche. */
+/** Icônes repas Hiver — onglet Repas, fond sombre : trait glace clair. */
 export const MEAL_SLOT_ICON_HIVER = {
   Breakfast: 'assets/themes/hiver/meals/petit-dejeuner.png',
   Lunch: 'assets/themes/hiver/meals/dejeuner.png',
@@ -144,14 +156,22 @@ export const MEAL_SLOT_ICON_HIVER = {
   Dinner: 'assets/themes/hiver/meals/diner.png'
 } as const;
 
+/** Icônes repas Hiver — Accueil, fond neige clair : trait bleu glaçon foncé. */
+export const MEAL_SLOT_ICON_HIVER_ACCUEIL = {
+  Breakfast: 'assets/themes/hiver/meals/accueil/petit-dejeuner.png',
+  Lunch: 'assets/themes/hiver/meals/accueil/dejeuner.png',
+  Snack: 'assets/themes/hiver/meals/accueil/collation.png',
+  Dinner: 'assets/themes/hiver/meals/accueil/diner.png'
+} as const;
+
 export type MealSlotIconKey = keyof typeof MEAL_SLOT_ICON;
 
-export function mealSlotIconsForTheme(): typeof MEAL_SLOT_ICON | typeof MEAL_SLOT_ICON_HIVER {
-  return activeFantasyTheme() === 'hiver' ? MEAL_SLOT_ICON_HIVER : MEAL_SLOT_ICON;
-}
-
-export function mealSlotIcon(slot: MealSlotIconKey): string {
-  return resolveAssetUrl(mealSlotIconsForTheme()[slot]);
+export function mealSlotIcon(slot: MealSlotIconKey, place: 'accueil' | 'page' = 'page'): string {
+  if (activeFantasyTheme() === 'hiver') {
+    const set = place === 'accueil' ? MEAL_SLOT_ICON_HIVER_ACCUEIL : MEAL_SLOT_ICON_HIVER;
+    return resolveAssetUrl(set[slot]);
+  }
+  return resolveAssetUrl(MEAL_SLOT_ICON[slot]);
 }
 
 /** Icônes Hiver — Animaux. */
@@ -164,6 +184,18 @@ export const ANIMAUX_ICON_HIVER = {
   vaccin: 'assets/themes/hiver/animaux/vaccin.webp',
   gamelle: 'assets/themes/hiver/animaux/gamelle.webp',
   soin: 'assets/themes/hiver/animaux/soin.webp'
+} as const;
+
+/** Icônes Automne — Animaux. */
+export const ANIMAUX_ICON_AUTOMNE = {
+  patte: 'assets/themes/automne/animaux/patte.png',
+  bourse: 'assets/themes/automne/animaux/bourse.png',
+  calendrier: 'assets/themes/automne/animaux/calendrier.png',
+  chien: 'assets/themes/automne/animaux/chien.png',
+  chat: 'assets/themes/automne/animaux/chat.png',
+  vaccin: 'assets/themes/automne/animaux/vaccin.png',
+  gamelle: 'assets/themes/automne/animaux/gamelle.png',
+  soin: 'assets/themes/automne/animaux/soin.png'
 } as const;
 
 /** Icônes Été — Animaux. */
@@ -182,18 +214,21 @@ export type FinanceIconMap =
   | typeof FINANCE_ICON
   | typeof FINANCE_ICON_DEMON
   | typeof FINANCE_ICON_ETE
-  | typeof FINANCE_ICON_HIVER;
+  | typeof FINANCE_ICON_HIVER
+  | typeof FINANCE_ICON_AUTOMNE;
 export type AnimauxIconMap =
   | typeof ANIMAUX_ICON
   | typeof ANIMAUX_ICON_DEMON
   | typeof ANIMAUX_ICON_ETE
-  | typeof ANIMAUX_ICON_HIVER;
+  | typeof ANIMAUX_ICON_HIVER
+  | typeof ANIMAUX_ICON_AUTOMNE;
 
 export function financeIconsForTheme(): FinanceIconMap {
   const t = activeFantasyTheme();
   if (t === 'demon') return FINANCE_ICON_DEMON;
   if (t === 'ete') return FINANCE_ICON_ETE;
   if (t === 'hiver') return FINANCE_ICON_HIVER;
+  if (t === 'automne') return FINANCE_ICON_AUTOMNE;
   return FINANCE_ICON;
 }
 
@@ -202,6 +237,7 @@ export function animauxIconsForTheme(): AnimauxIconMap {
   if (t === 'demon') return ANIMAUX_ICON_DEMON;
   if (t === 'ete') return ANIMAUX_ICON_ETE;
   if (t === 'hiver') return ANIMAUX_ICON_HIVER;
+  if (t === 'automne') return ANIMAUX_ICON_AUTOMNE;
   return ANIMAUX_ICON;
 }
 

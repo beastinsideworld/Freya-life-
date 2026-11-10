@@ -114,7 +114,7 @@ const MEAL_SLOTS: Array<{ key: MealSlotKey; slot: string; aliases: string[] }> =
 ];
 
 function mealIconSrc(key: MealSlotKey): string {
-  return mealSlotIcon(MEAL_SLOT_ICON_KEY[key]);
+  return mealSlotIcon(MEAL_SLOT_ICON_KEY[key], 'accueil');
 }
 
 interface WeekDay {
@@ -277,6 +277,7 @@ export class AccueilComponent implements OnInit, OnDestroy {
     if (theme === 'demon') return resolveAssetUrl('assets/themes/demon/finance/cible.png');
     if (theme === 'ete') return resolveAssetUrl('assets/themes/ete/finance/cible.png');
     if (theme === 'hiver') return resolveAssetUrl('assets/themes/hiver/finance/cible.png');
+    if (theme === 'automne') return resolveAssetUrl('assets/themes/automne/finance/cible.png');
     return null;
   }
 

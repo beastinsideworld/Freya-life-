@@ -1,10 +1,10 @@
 import { resolveAssetUrl } from './asset-url';
 
-export type FantasyThemeId = 'ange' | 'demon' | 'ete' | 'hiver';
+export type FantasyThemeId = 'ange' | 'demon' | 'ete' | 'hiver' | 'automne';
 
 export function activeFantasyTheme(): FantasyThemeId | null {
   const t = document.documentElement.getAttribute('data-theme');
-  return t === 'ange' || t === 'demon' || t === 'ete' || t === 'hiver' ? t : null;
+  return t === 'ange' || t === 'demon' || t === 'ete' || t === 'hiver' || t === 'automne' ? t : null;
 }
 
 export function isFantasyTheme(): boolean {
@@ -31,6 +31,9 @@ export function fantasyCalendrierSrc(): string | null {
   if (t === 'hiver') {
     return resolveAssetUrl('assets/themes/hiver/calendrier-fantasy.png');
   }
+  if (t === 'automne') {
+    return resolveAssetUrl('assets/themes/automne/calendrier-fantasy.png');
+  }
   return fantasyThemeIcon(t, 'icone-calendrier.png');
 }
 
@@ -44,6 +47,9 @@ export function fantasyFamilleSrc(): string | null {
   }
   if (t === 'hiver') {
     return resolveAssetUrl('assets/themes/hiver/famille-fantasy.png');
+  }
+  if (t === 'automne') {
+    return resolveAssetUrl('assets/themes/automne/famille-fantasy.png');
   }
   return fantasyThemeIcon(t, 'icone-famille.png');
 }
