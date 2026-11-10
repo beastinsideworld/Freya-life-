@@ -138,6 +138,39 @@
   background-image: url('../../public/assets/themes/demon/animaux.png');
 }
 
+:root[data-theme='ete'] .theme-module {
+  color: #1a4550;
+  border-color: #1aa8b8;
+}
+
+:root[data-theme='ete'] .theme-module::before {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 252, 245, 0.08) 0%,
+    rgba(255, 252, 245, 0.28) 55%,
+    rgba(255, 250, 242, 0.55) 100%
+  );
+}
+
+:root[data-theme='ete'] .theme-module--planning {
+  background-image: url('../../public/assets/themes/ete/Planning.png');
+}
+:root[data-theme='ete'] .theme-module--repas {
+  background-image: url('../../public/assets/themes/ete/repas.png');
+}
+:root[data-theme='ete'] .theme-module--voyage {
+  background-image: url('../../public/assets/themes/ete/voyage.png');
+}
+:root[data-theme='ete'] .theme-module--sport {
+  background-image: url('../../public/assets/themes/ete/sport.png');
+}
+:root[data-theme='ete'] .theme-module--finances {
+  background-image: url('../../public/assets/themes/ete/finances.png');
+}
+:root[data-theme='ete'] .theme-module--animaux {
+  background-image: url('../../public/assets/themes/ete/animaux.png');
+}
+
 /* Héros Accueil Démon — theme-demon-headers.scss */
 
 @mixin theme-page-hero-bg($theme, $selector, $file) {
@@ -187,6 +220,27 @@
 @include theme-page-hero-bg('demon', '.page.sport-page', 'sport.png');
 @include theme-page-hero-bg('demon', '.page.budget-page', 'finances.png');
 @include theme-page-hero-bg('demon', '.page.animaux-page', 'animaux.png');
+
+@include theme-page-hero-bg('ete', '.page.repas', 'repas.png');
+@include theme-page-hero-bg('ete', '.page.voyages', 'voyage.png');
+@include theme-page-hero-bg('ete', '.page.sport-page', 'sport.png');
+@include theme-page-hero-bg('ete', '.page.budget-page', 'finances.png');
+@include theme-page-hero-bg('ete', '.page.animaux-page', 'animaux.png');
+
+:root[data-theme='ete'] .page.planning > .hero {
+  background-image: url('../../public/assets/themes/ete/fonds/planning.png');
+  background-size: cover;
+  background-position: 34% 28%;
+}
+
+:root[data-theme='ete'] .page.planning > .hero::after,
+:root[data-theme='ete'] .page.repas > .hero::after,
+:root[data-theme='ete'] .page.voyages > .hero::after,
+:root[data-theme='ete'] .page.sport-page > .hero::after,
+:root[data-theme='ete'] .page.budget-page > .hero::after,
+:root[data-theme='ete'] .page.animaux-page > .hero::after {
+  background: linear-gradient(180deg, rgba(255, 252, 245, 0.12), rgba(255, 252, 245, 0.48));
+}
 
 :root[data-theme='ange'] .page.planning > .hero::after,
 :root[data-theme='ange'] .page.repas > .hero::after,

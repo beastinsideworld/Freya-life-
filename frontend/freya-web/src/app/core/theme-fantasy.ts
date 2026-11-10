@@ -1,10 +1,10 @@
 import { resolveAssetUrl } from './asset-url';
 
-export type FantasyThemeId = 'ange' | 'demon';
+export type FantasyThemeId = 'ange' | 'demon' | 'ete';
 
 export function activeFantasyTheme(): FantasyThemeId | null {
   const t = document.documentElement.getAttribute('data-theme');
-  return t === 'ange' || t === 'demon' ? t : null;
+  return t === 'ange' || t === 'demon' || t === 'ete' ? t : null;
 }
 
 export function isFantasyTheme(): boolean {
@@ -23,12 +23,22 @@ export function fantasyThemeIcon(theme: FantasyThemeId, file: string): string {
 export function fantasyCalendrierSrc(): string | null {
   const t = activeFantasyTheme();
   if (!t) return null;
+  if (t === 'ete') {
+    return resolveAssetUrl(
+      `assets/themes/ete/${encodeURIComponent('Calendrier tropical doré orné.png')}`
+    );
+  }
   return fantasyThemeIcon(t, 'icone-calendrier.png');
 }
 
 export function fantasyFamilleSrc(): string | null {
   const t = activeFantasyTheme();
   if (!t) return null;
+  if (t === 'ete') {
+    return resolveAssetUrl(
+      `assets/themes/ete/${encodeURIComponent('Icône familiale tropicale ensoleillée-6.png')}`
+    );
+  }
   return fantasyThemeIcon(t, 'icone-famille.png');
 }
 

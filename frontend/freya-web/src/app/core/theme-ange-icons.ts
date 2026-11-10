@@ -89,15 +89,45 @@ export const ANIMAUX_ICON_DEMON = {
   soin: 'assets/themes/demon/animaux/soin.png'
 } as const;
 
-export type FinanceIconMap = typeof FINANCE_ICON | typeof FINANCE_ICON_DEMON;
-export type AnimauxIconMap = typeof ANIMAUX_ICON | typeof ANIMAUX_ICON_DEMON;
+/** Icônes Été — Finance. */
+export const FINANCE_ICON_ETE = {
+  graphique: 'assets/themes/ete/finance/graphique.png',
+  transfert: 'assets/themes/ete/finance/transfert.png',
+  cible: 'assets/themes/ete/finance/cible.png',
+  calendrier: 'assets/themes/ete/finance/calendrier.png',
+  carte: 'assets/themes/ete/finance/carte.png',
+  tirelire: 'assets/themes/ete/finance/tirelire.png',
+  croissance: 'assets/themes/ete/finance/croissance.png',
+  portefeuille: 'assets/themes/ete/finance/portefeuille.png'
+} as const;
+
+/** Icônes Été — Animaux. */
+export const ANIMAUX_ICON_ETE = {
+  patte: 'assets/themes/ete/animaux/patte.png',
+  bourse: 'assets/themes/ete/animaux/bourse.png',
+  calendrier: 'assets/themes/ete/animaux/calendrier.png',
+  chien: 'assets/themes/ete/animaux/chien.png',
+  chat: 'assets/themes/ete/animaux/chat.png',
+  vaccin: 'assets/themes/ete/animaux/vaccin.png',
+  gamelle: 'assets/themes/ete/animaux/gamelle.png',
+  soin: 'assets/themes/ete/animaux/soin.png'
+} as const;
+
+export type FinanceIconMap = typeof FINANCE_ICON | typeof FINANCE_ICON_DEMON | typeof FINANCE_ICON_ETE;
+export type AnimauxIconMap = typeof ANIMAUX_ICON | typeof ANIMAUX_ICON_DEMON | typeof ANIMAUX_ICON_ETE;
 
 export function financeIconsForTheme(): FinanceIconMap {
-  return activeFantasyTheme() === 'demon' ? FINANCE_ICON_DEMON : FINANCE_ICON;
+  const t = activeFantasyTheme();
+  if (t === 'demon') return FINANCE_ICON_DEMON;
+  if (t === 'ete') return FINANCE_ICON_ETE;
+  return FINANCE_ICON;
 }
 
 export function animauxIconsForTheme(): AnimauxIconMap {
-  return activeFantasyTheme() === 'demon' ? ANIMAUX_ICON_DEMON : ANIMAUX_ICON;
+  const t = activeFantasyTheme();
+  if (t === 'demon') return ANIMAUX_ICON_DEMON;
+  if (t === 'ete') return ANIMAUX_ICON_ETE;
+  return ANIMAUX_ICON;
 }
 
 export function financeIcon(key: FinanceIconKey): string {

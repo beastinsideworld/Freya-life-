@@ -121,8 +121,10 @@ h2 {
 }
 
 .days .today {
-  color: #fff;
-  font-weight: 600;
+  color: var(--title, var(--cream, var(--text)));
+  font-weight: 700;
+  background: color-mix(in srgb, var(--accent) 22%, var(--bg-secondary, var(--bg)));
+  border-radius: 0.35rem;
 }
 
 .days .holiday {
@@ -131,7 +133,7 @@ h2 {
 }
 
 .days .holiday.today {
-  color: #e4e4ea;
+  color: var(--title, var(--cream, var(--text)));
 }
 
 .hours {
@@ -643,5 +645,88 @@ h2 {
 
   .month-cell.holiday .day-num {
     color: #c4a8a0;
+  }
+
+  .days .today {
+    color: #f2e9e7;
+    background: color-mix(in srgb, var(--accent) 35%, rgba(12, 6, 8, 0.85));
+  }
+
+  .days .holiday.today {
+    color: #f2e9e7;
+  }
+}
+
+:host-context([data-theme='ete']) {
+  @include planning-fantasy-calendar();
+
+  .days p {
+    color: #1a4550;
+  }
+
+  .days p:first-child {
+    color: #0a5f6e;
+  }
+
+  .days .today {
+    color: #05343d;
+    background: color-mix(in srgb, #1aa8b8 28%, #fffaf2);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, #1aa8b8 45%, white);
+  }
+
+  .days .holiday {
+    color: #5d7c78;
+    background: rgba(198, 239, 234, 0.55);
+  }
+
+  .days .holiday.today {
+    color: #05343d;
+    background: color-mix(in srgb, #1aa8b8 22%, #e5f6f3);
+  }
+
+  .col.holiday {
+    background: rgba(198, 239, 234, 0.35);
+  }
+
+  .col.holiday.today {
+    background: color-mix(in srgb, #1aa8b8 18%, #fffaf2);
+    box-shadow: inset 0 0 18px rgba(26, 168, 184, 0.15);
+  }
+
+  .col.today {
+    background: color-mix(in srgb, #1aa8b8 16%, #fffaf2);
+    box-shadow: inset 0 0 18px rgba(26, 168, 184, 0.12);
+  }
+
+  .month .weekday {
+    color: #0a5f6e;
+  }
+
+  .month .weekday:first-child {
+    color: #05343d;
+  }
+
+  .month-cell.holiday {
+    background: rgba(198, 239, 234, 0.5);
+    color: #5d7c78;
+    border-color: color-mix(in srgb, #1aa8b8 35%, white);
+  }
+
+  .month-cell.holiday .day-num {
+    color: #5d7c78;
+  }
+
+  .month-cell.today {
+    border-color: #1aa8b8;
+    background: color-mix(in srgb, #1aa8b8 14%, #fffaf2);
+  }
+
+  .month-cell.today .day-num {
+    color: #05343d;
+    font-weight: 700;
+  }
+
+  .month-cell.has .day-num {
+    color: #0a5f6e;
   }
 }

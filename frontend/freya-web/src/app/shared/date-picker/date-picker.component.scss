@@ -161,13 +161,15 @@
 }
 
 :host(.icon-only) {
+  width: 100%;
+
   .trigger {
-    width: 2.55rem;
-    min-width: 2.55rem;
-    height: 2.55rem;
-    padding: 0;
+    width: 100%;
+    min-width: 0;
+    height: 3.15rem;
+    padding: 0.35rem;
     justify-content: center;
-    border-radius: 50%;
+    border-radius: var(--radius-pill);
   }
 
   .value {
@@ -179,8 +181,30 @@
   }
 
   .ico {
-    width: 1.55rem;
-    height: 1.55rem;
+    width: 2.15rem;
+    height: 2.15rem;
+  }
+}
+
+@media (min-width: 768px) {
+  :host(.icon-only) .trigger {
+    height: 3.35rem;
+  }
+
+  :host(.icon-only) .ico {
+    width: 2.3rem;
+    height: 2.3rem;
+  }
+}
+
+@media (max-width: 380px) {
+  :host(.icon-only) .trigger {
+    height: 2.95rem;
+  }
+
+  :host(.icon-only) .ico {
+    width: 1.95rem;
+    height: 1.95rem;
   }
 }
 
@@ -258,5 +282,27 @@
   .weekdays span:first-child {
     color: #ffb8a8;
     font-weight: 800;
+  }
+}
+
+:host-context([data-theme='ete']) {
+  .trigger,
+  .nav-btn,
+  .day {
+    background: rgba(255, 252, 245, 0.9);
+    border-color: color-mix(in srgb, #1aa8b8 50%, white);
+    color: #1a4550;
+  }
+
+  .popover {
+    background: rgba(255, 252, 245, 0.96);
+    border: 1.5px solid color-mix(in srgb, #1aa8b8 55%, white);
+  }
+
+  .day.selected,
+  .day:hover:not(:disabled) {
+    background: linear-gradient(180deg, #ffe08a, #f08a4b);
+    border-color: #d46a32;
+    color: #1a3d42;
   }
 }

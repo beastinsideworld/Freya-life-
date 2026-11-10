@@ -816,11 +816,26 @@ export const MUSCU_ICON_DEMON = {
   trophee: 'assets/themes/demon/muscu/trophee.png'
 } as const;
 
+const eteMuscu = (file: string) => `assets/themes/ete/muscu/${encodeURIComponent(file)}`;
+
+/** Icônes Été — noms de fichiers d’origine (Design theme / ETE). */
+export const MUSCU_ICON_ETE = {
+  haltere: eteMuscu('Haltère doré sous le soleil tropical-1.png'),
+  kettlebell: eteMuscu('Kettlebell tropical aux accents dorés-2.png'),
+  banc: eteMuscu('Banc de musculation tropical doré-3.png'),
+  disques: eteMuscu('Emblème fitness tropical aux disques dorés-4.png'),
+  shaker: eteMuscu('Shaker tropical aux fleurs et coquillages.png'),
+  programme: eteMuscu('Programme (2).png'),
+  trophee: 'assets/themes/ete/muscu/trophee.png'
+} as const;
+
 export type MuscuIconKey = keyof typeof MUSCU_ICON;
 
-export function muscuIconsForTheme(): typeof MUSCU_ICON | typeof MUSCU_ICON_DEMON {
+export function muscuIconsForTheme(): typeof MUSCU_ICON | typeof MUSCU_ICON_DEMON | typeof MUSCU_ICON_ETE {
   const t = document.documentElement.getAttribute('data-theme');
-  return t === 'demon' ? MUSCU_ICON_DEMON : MUSCU_ICON;
+  if (t === 'demon') return MUSCU_ICON_DEMON;
+  if (t === 'ete') return MUSCU_ICON_ETE;
+  return MUSCU_ICON;
 }
 
 export function muscuIcon(key: MuscuIconKey): string {

@@ -1,0 +1,229 @@
+/* Accueil Été — fonds/ derrière le contenu */
+
+@mixin ete-card($file, $position: center, $scrim) {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background-color: #fffaf2;
+  background-image: url('../../public/assets/themes/ete/fonds/#{$file}');
+  background-size: cover;
+  background-position: $position;
+  background-repeat: no-repeat;
+  border: 1.5px solid color-mix(in srgb, #1aa8b8 55%, white);
+  box-shadow:
+    0 10px 24px rgba(26, 90, 98, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    background: $scrim;
+  }
+
+  > *:not(.family-scope) {
+    position: relative;
+    z-index: 1;
+  }
+}
+
+:root[data-theme='ete'] .page.accueil > .hero,
+:root[data-theme='ete'] .page.accueil > .trip-banner,
+:root[data-theme='ete'] .page.accueil > .composer,
+:root[data-theme='ete'] .page.accueil > .tasks,
+:root[data-theme='ete'] .page.accueil > .meals,
+:root[data-theme='ete'] .page.accueil > .week {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+:root[data-theme='ete'] .page.accueil > .hero {
+  border-radius: var(--radius);
+  min-height: 13.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  color: #1a4550;
+  @include ete-card(
+    'accueil.png',
+    center top,
+    linear-gradient(180deg, rgba(255, 250, 242, 0.08) 0%, rgba(255, 250, 242, 0.32) 42%, rgba(255, 250, 242, 0.1) 100%)
+  );
+
+  &::after {
+    display: none;
+  }
+
+  > h1,
+  > .sub {
+    color: #1a4550;
+    text-shadow: 0 1px 8px rgba(255, 252, 245, 0.85);
+  }
+
+  > .hero-date.meta-pill,
+  > .family-scope {
+    background: rgba(255, 252, 245, 0.78);
+    border-color: color-mix(in srgb, #1aa8b8 50%, white);
+    color: #1a4550;
+  }
+
+  > .family-scope {
+    position: absolute;
+    top: 0.7rem;
+    left: 0.75rem;
+  }
+}
+
+:root[data-theme='ete'] .page.accueil > .trip-banner {
+  min-height: 4.75rem;
+  color: #073540;
+  @include ete-card(
+    'voyage.png',
+    center 42%,
+    linear-gradient(
+      90deg,
+      rgba(255, 252, 245, 0.88) 0%,
+      rgba(255, 252, 245, 0.72) 42%,
+      rgba(255, 250, 242, 0.35) 72%,
+      rgba(255, 250, 242, 0.18) 100%
+    )
+  );
+  background-image: url('../../public/assets/themes/ete/bandeau.png');
+
+  .trip-label {
+    color: #0a5f6e;
+    font-weight: 700;
+    text-shadow: 0 1px 0 rgba(255, 252, 245, 0.95);
+  }
+
+  strong {
+    color: #05343d;
+    font-weight: 600;
+    text-shadow: 0 1px 6px rgba(255, 252, 245, 0.92);
+  }
+
+  .trip-count {
+    color: #05343d;
+    background: rgba(255, 252, 245, 0.94);
+    border: 1px solid #1aa8b8;
+    font-weight: 600;
+    text-shadow: none;
+    box-shadow: 0 2px 8px rgba(26, 90, 98, 0.12);
+  }
+}
+
+:root[data-theme='ete'] .page.accueil > .composer {
+  align-items: center;
+  padding: 0.45rem 0.35rem;
+  min-height: 4.5rem;
+  @include ete-card(
+    'evenement.png',
+    22% 38%,
+    linear-gradient(
+      90deg,
+      rgba(255, 252, 245, 0.06) 0%,
+      rgba(255, 252, 245, 0.55) 38%,
+      rgba(255, 252, 245, 0.88) 58%,
+      rgba(255, 252, 245, 0.92) 100%
+    )
+  );
+
+  > .field {
+    font-size: 0;
+  }
+
+  > .field-title input {
+    font-size: 1.05rem;
+    font-weight: 600;
+  }
+
+  > .field-title input,
+  > .field-time input,
+  > .field-date app-date-picker .trigger,
+  > .btn.add {
+    background: rgba(255, 252, 245, 0.92);
+    color: #1a4550;
+    border-color: color-mix(in srgb, #1aa8b8 55%, white);
+  }
+
+  > .error {
+    grid-column: 1 / -1;
+    color: #0a5f6e;
+  }
+}
+
+:root[data-theme='ete'] .page.accueil > .tasks {
+  @include ete-card(
+    'taches.png',
+    center 20%,
+    linear-gradient(180deg, rgba(255, 250, 242, 0.12), rgba(255, 250, 242, 0.28))
+  );
+
+  h2,
+  h3,
+  .time,
+  .task-card {
+    color: #1a4550;
+  }
+
+  .task-card {
+    background: rgba(255, 252, 245, 0.62);
+  }
+
+  .task-ico {
+    font-size: 1.05rem;
+    line-height: 1;
+    flex: 0 0 auto;
+  }
+
+  .task-ico-img {
+    width: 1.05rem;
+    height: 1.05rem;
+    object-fit: contain;
+    flex: 0 0 auto;
+    filter: drop-shadow(0 1px 2px rgba(26, 90, 98, 0.2));
+  }
+}
+
+:root[data-theme='ete'] .page.accueil > .meals {
+  @include ete-card(
+    'repas.png',
+    center 30%,
+    linear-gradient(180deg, rgba(255, 250, 242, 0.08), rgba(255, 250, 242, 0.3))
+  );
+
+  h2,
+  .kcal-total {
+    color: #1a4550;
+  }
+
+  .meal-card {
+    background: rgba(255, 252, 245, 0.58);
+  }
+}
+
+:root[data-theme='ete'] .page.accueil > .week {
+  @include ete-card(
+    'planning.png',
+    36% 18%,
+    linear-gradient(180deg, rgba(255, 250, 242, 0.1), rgba(255, 250, 242, 0.26))
+  );
+
+  h2,
+  h3,
+  .day-num {
+    color: #1a4550;
+    text-shadow: 0 1px 6px rgba(255, 252, 245, 0.8);
+  }
+
+  .week-row article {
+    background: rgba(255, 252, 245, 0.5);
+    border-color: color-mix(in srgb, #1aa8b8 40%, white);
+  }
+}

@@ -1,0 +1,84 @@
+/* UI kit Été — sable, lagon, corail */
+
+:root[data-theme='ete'] {
+  --ete-glass: rgba(255, 252, 245, 0.62);
+  --ete-glass-strong: rgba(255, 252, 245, 0.9);
+  --ete-lagoon: #1aa8b8;
+  --ete-sun: #e8b84a;
+  --ete-coral: #f08a4b;
+}
+
+:root[data-theme='ete'] .panel,
+:root[data-theme='ete'] .modal,
+:root[data-theme='ete'] .hero {
+  background: var(--ete-glass);
+  backdrop-filter: blur(16px) saturate(1.08);
+  -webkit-backdrop-filter: blur(16px) saturate(1.08);
+  border: 1.5px solid color-mix(in srgb, var(--ete-lagoon) 55%, white);
+  box-shadow:
+    0 10px 28px rgba(26, 90, 98, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+:root[data-theme='ete'] .seg button,
+:root[data-theme='ete'] .chip,
+:root[data-theme='ete'] .btn,
+:root[data-theme='ete'] .meta-pill,
+:root[data-theme='ete'] .field input,
+:root[data-theme='ete'] .field select,
+:root[data-theme='ete'] .field textarea,
+:root[data-theme='ete'] .search input {
+  background: var(--ete-glass-strong);
+  border: 1.5px solid color-mix(in srgb, var(--ete-lagoon) 45%, white);
+  color: #1a4550;
+}
+
+:root[data-theme='ete'] .seg button.active,
+:root[data-theme='ete'] .chip.active,
+:root[data-theme='ete'] .btn.primary {
+  background: linear-gradient(180deg, #ffe08a 0%, #f08a4b 58%, #e06a4f 100%);
+  border-color: #d46a32;
+  color: #1a3d42;
+  box-shadow: 0 0 14px rgba(240, 138, 75, 0.35);
+}
+
+:root[data-theme='ete'] .btn.ghost,
+:root[data-theme='ete'] .ghost-link {
+  background: transparent;
+  border: 1.5px solid color-mix(in srgb, var(--ete-lagoon) 50%, white);
+  color: #148896;
+}
+
+:root[data-theme='ete'] a {
+  color: #148896;
+}
+
+:root[data-theme='ete'] .bottom-nav-rail {
+  background: rgba(255, 252, 245, 0.82);
+  border: 1.5px solid color-mix(in srgb, var(--ete-lagoon) 50%, white);
+  box-shadow: 0 10px 24px rgba(26, 90, 98, 0.1);
+  backdrop-filter: blur(16px);
+}
+
+:root[data-theme='ete'] .bottom-link,
+:root[data-theme='ete'] .nav-label {
+  color: #148896;
+}
+
+:root[data-theme='ete'] .bottom-link.active .nav-label {
+  color: #1a4550;
+}
+
+:root[data-theme='ete'] .bottom-link.active .active-ring {
+  border-color: var(--ete-coral);
+  box-shadow: 0 0 12px rgba(240, 138, 75, 0.35);
+}
+
+:root[data-theme='ete'] .progress-fill {
+  background: linear-gradient(90deg, #1aa8b8, #e8b84a);
+}
+
+:root[data-theme='ete'] input[type='checkbox'],
+:root[data-theme='ete'] input[type='radio'] {
+  accent-color: #1aa8b8;
+}

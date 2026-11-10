@@ -265,8 +265,10 @@ export class AccueilComponent implements OnInit, OnDestroy {
 
   /** Icône « objectif » du thème Démon (finance/cible). Les autres thèmes gardent l’emoji. */
   objectifIconSrc(): string | null {
-    if (document.documentElement.getAttribute('data-theme') !== 'demon') return null;
-    return resolveAssetUrl('assets/themes/demon/finance/cible.png');
+    const theme = document.documentElement.getAttribute('data-theme');
+    if (theme === 'demon') return resolveAssetUrl('assets/themes/demon/finance/cible.png');
+    if (theme === 'ete') return resolveAssetUrl('assets/themes/ete/finance/cible.png');
+    return null;
   }
 
   weatherIconSrc(iconKey: string | undefined | null): string | null {
