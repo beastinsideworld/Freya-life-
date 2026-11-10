@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { resolveAssetUrl } from '../../core/asset-url';
+import { mealSlotIcon, MealSlotIconKey } from '../../core/theme-ange-icons';
 import { fantasyFamilleSrc, fantasyWeatherIconSrc } from '../../core/theme-fantasy';
 import { createId } from '../../core/id';
 import { CalendarEvent, EventsService } from '../../core/api/events.service';
@@ -82,32 +83,39 @@ interface DayMeal {
   iconSrc: string;
 }
 
-const MEAL_SLOTS: Array<{ key: MealSlotKey; slot: string; iconSrc: string; aliases: string[] }> = [
+const MEAL_SLOT_ICON_KEY: Record<MealSlotKey, MealSlotIconKey> = {
+  breakfast: 'Breakfast',
+  lunch: 'Lunch',
+  snack: 'Snack',
+  dinner: 'Dinner'
+};
+
+const MEAL_SLOTS: Array<{ key: MealSlotKey; slot: string; aliases: string[] }> = [
   {
     key: 'breakfast',
     slot: 'Petit-déjeuner',
-    iconSrc: 'assets/meals/petit-dejeuner.png',
     aliases: ['breakfast', 'petit-déjeuner', 'petit dejeuner', 'petit-dejeuner', '0']
   },
   {
     key: 'lunch',
     slot: 'Déjeuner',
-    iconSrc: 'assets/meals/dejeuner.png',
     aliases: ['lunch', 'déjeuner', 'dejeuner', 'main', '1']
   },
   {
     key: 'snack',
     slot: 'Collation',
-    iconSrc: 'assets/meals/collation.png',
     aliases: ['snack', 'collation', '2']
   },
   {
     key: 'dinner',
     slot: 'Dîner',
-    iconSrc: 'assets/meals/diner.png',
     aliases: ['dinner', 'dîner', 'diner', 'repas', '3']
   }
 ];
+
+function mealIconSrc(key: MealSlotKey): string {
+  return mealSlotIcon(MEAL_SLOT_ICON_KEY[key]);
+}
 
 interface WeekDay {
   date: string;
@@ -268,6 +276,7 @@ export class AccueilComponent implements OnInit, OnDestroy {
     const theme = document.documentElement.getAttribute('data-theme');
     if (theme === 'demon') return resolveAssetUrl('assets/themes/demon/finance/cible.png');
     if (theme === 'ete') return resolveAssetUrl('assets/themes/ete/finance/cible.png');
+    if (theme === 'hiver') return resolveAssetUrl('assets/themes/hiver/finance/cible.png');
     return null;
   }
 
@@ -962,7 +971,7 @@ export class AccueilComponent implements OnInit, OnDestroy {
           title: match.title || 'À définir',
           done: match.done,
           kcal: match.kcal || this.defaultKcal(def.key),
-          iconSrc: def.iconSrc
+          iconSrc: mealIconSrc(def.key)
         };
       }
       const demo = demos.find((m) => m.key === def.key);
@@ -974,7 +983,7 @@ export class AccueilComponent implements OnInit, OnDestroy {
           title: 'À définir',
           done: false,
           kcal: 0,
-          iconSrc: def.iconSrc
+          iconSrc: mealIconSrc(def.key)
         }
       );
     });
@@ -1165,7 +1174,7 @@ export class AccueilComponent implements OnInit, OnDestroy {
         title: samples.title,
         done: samples.done,
         kcal: samples.kcal,
-        iconSrc: def.iconSrc
+        iconSrc: mealIconSrc(def.key)
       };
     });
   }

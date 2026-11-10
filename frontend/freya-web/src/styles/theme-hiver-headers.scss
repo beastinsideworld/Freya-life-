@@ -1,0 +1,384 @@
+﻿/* Accueil Hiver — paysages enneigés plein cadre + texte bleu glaçon */
+
+$hiver-ice: #d8e6f4;
+$hiver-ink: #0a2f52;
+$hiver-ink-soft: #123a5c;
+$hiver-outline: 0 0 1px #0a2f52, 0 0 2px #0a2f52, 1px 0 0 #0a2f52, -1px 0 0 #0a2f52,
+  0 1px 0 #0a2f52, 0 -1px 0 #0a2f52;
+
+@mixin hiver-card($file, $position: center center, $scrim, $size: cover) {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background-color: $hiver-ice;
+  background-image: url('../../public/assets/themes/hiver/fonds/#{$file}');
+  background-size: $size;
+  background-position: $position;
+  background-repeat: no-repeat;
+  border: 1.5px solid color-mix(in srgb, #6b8cae 55%, white);
+  box-shadow:
+    0 0 0 1px rgba(54, 77, 104, 0.35),
+    0 10px 24px rgba(10, 47, 82, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.65);
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    background: $scrim;
+  }
+
+  > *:not(.family-scope) {
+    position: relative;
+    z-index: 1;
+  }
+}
+
+@mixin hiver-ink-text {
+  color: $hiver-ink;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+:root[data-theme='hiver'] .idea-fab {
+  border-color: color-mix(in srgb, #6b8cae 55%, white);
+  background: linear-gradient(180deg, #c9d8e8 0%, #8aabd0 55%, #4a6a8a 100%);
+  color: $hiver-ink;
+  box-shadow: 0 0 14px rgba(107, 140, 174, 0.4);
+}
+
+/* Hero — vallée au lever du jour */
+:root[data-theme='hiver'] .page.accueil > .hero {
+  border-radius: var(--radius);
+  min-height: 14.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: center;
+  padding: 1.1rem 1rem 0.85rem;
+  @include hiver-card(
+    'accueil.png',
+    center 42%,
+    linear-gradient(
+      180deg,
+      rgba(216, 230, 244, 0.08) 0%,
+      rgba(216, 230, 244, 0.22) 48%,
+      rgba(197, 216, 236, 0.48) 100%
+    )
+  );
+
+  &::after {
+    display: none;
+  }
+
+  > .icon {
+    margin: 0 auto 0.15rem;
+    filter: drop-shadow(0 1px 6px rgba(10, 47, 82, 0.25));
+  }
+
+  > h1 {
+    margin: 0.15rem 0 0;
+    text-align: center;
+    @include hiver-ink-text;
+    font-weight: 700;
+  }
+
+  > .sub {
+    margin: 0.4rem auto 0;
+    text-align: center;
+    color: $hiver-ink-soft;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.55);
+  }
+
+  > .hero-date.meta-pill {
+    margin-top: auto;
+    min-height: 2.35rem;
+    padding: 0.45rem 1rem;
+    color: $hiver-ink;
+    font-size: 0.8rem;
+    font-weight: 700;
+    border: 1.5px solid color-mix(in srgb, #6b8cae 55%, white);
+    border-radius: var(--radius-pill);
+    background: rgba(255, 252, 250, 0.82);
+    box-shadow: 0 4px 12px rgba(10, 47, 82, 0.12);
+    text-shadow: none;
+  }
+
+  > .family-scope {
+    position: absolute;
+    top: 0.7rem;
+    left: 0.75rem;
+    right: auto;
+    bottom: auto;
+    align-self: flex-start;
+    margin: 0;
+    background: rgba(255, 252, 250, 0.82);
+    border-color: color-mix(in srgb, #6b8cae 55%, white);
+    color: $hiver-ink;
+    box-shadow: 0 4px 14px rgba(10, 47, 82, 0.12);
+  }
+}
+
+/* Voyage — sentier enneigé */
+:root[data-theme='hiver'] .page.accueil > .trip-banner {
+  min-height: 5rem;
+  padding: 0.9rem 1.05rem;
+  border-radius: var(--radius-pill);
+  color: $hiver-ink;
+  @include hiver-card(
+    'voyage.png',
+    center 58%,
+    linear-gradient(
+      90deg,
+      rgba(216, 230, 244, 0.78) 0%,
+      rgba(216, 230, 244, 0.42) 48%,
+      rgba(216, 230, 244, 0.18) 100%
+    )
+  );
+
+  .trip-label {
+    color: $hiver-ink-soft;
+    font-weight: 700;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
+  }
+
+  strong {
+    color: $hiver-ink;
+    font-weight: 700;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
+  }
+
+  .trip-count {
+    color: $hiver-ink;
+    background: rgba(255, 252, 250, 0.92);
+    border: 1.5px solid #6b8cae;
+    font-weight: 700;
+    text-shadow: none;
+    box-shadow: 0 2px 8px rgba(10, 47, 82, 0.12);
+  }
+}
+
+/* Événement — village alpin */
+:root[data-theme='hiver'] .page.accueil > .composer {
+  align-items: center;
+  padding: 0.45rem 0.35rem;
+  min-height: 5rem;
+  @include hiver-card(
+    'evenement.png',
+    center 48%,
+    linear-gradient(
+      90deg,
+      rgba(216, 230, 244, 0.12) 0%,
+      rgba(216, 230, 244, 0.48) 52%,
+      rgba(197, 216, 236, 0.78) 100%
+    )
+  );
+
+  > .field {
+    font-size: 0;
+  }
+
+  > .field-title input {
+    font-size: 1.12rem;
+    font-weight: 600;
+    color: $hiver-ink;
+    background: rgba(255, 252, 250, 0.9);
+    border-color: color-mix(in srgb, #6b8cae 50%, white);
+  }
+
+  > .field-time input,
+  > .field-date app-date-picker .trigger,
+  > .btn.add {
+    background: rgba(255, 252, 250, 0.9);
+    color: $hiver-ink;
+    border-color: color-mix(in srgb, #6b8cae 50%, white);
+  }
+
+  > .error {
+    grid-column: 1 / -1;
+    color: #7a2a3a;
+  }
+}
+
+/* Tâches — forêt enneigée */
+:root[data-theme='hiver'] .page.accueil > .tasks {
+  min-height: 11rem;
+  @include hiver-card(
+    'taches.png',
+    center 40%,
+    linear-gradient(
+      180deg,
+      rgba(216, 230, 244, 0.1) 0%,
+      rgba(216, 230, 244, 0.3) 42%,
+      rgba(197, 216, 236, 0.55) 100%
+    )
+  );
+
+  > .section-head h2,
+  h3,
+  .time {
+    @include hiver-ink-text;
+  }
+
+  > .section-head > a {
+    color: #1a4f7a;
+    font-weight: 600;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.55);
+  }
+
+  .task-card {
+    background: rgba(255, 252, 250, 0.72);
+    border-color: color-mix(in srgb, #6b8cae 40%, white);
+    color: $hiver-ink;
+  }
+
+  .task-ico,
+  .task-ico-img {
+    width: 1.05rem;
+    height: 1.05rem;
+    object-fit: contain;
+    flex: 0 0 auto;
+    filter: drop-shadow(0 1px 3px rgba(10, 47, 82, 0.25));
+  }
+}
+
+/* Repas — lac gelé */
+:root[data-theme='hiver'] .page.accueil > .meals {
+  min-height: 11rem;
+  @include hiver-card(
+    'repas.png',
+    center 46%,
+    linear-gradient(
+      180deg,
+      rgba(216, 230, 244, 0.08) 0%,
+      rgba(216, 230, 244, 0.28) 42%,
+      rgba(197, 216, 236, 0.55) 100%
+    )
+  );
+
+  > .section-head h2,
+  .kcal-total {
+    @include hiver-ink-text;
+  }
+
+  > .section-head > a {
+    color: #1a4f7a;
+    font-weight: 600;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.55);
+  }
+
+  .meal-card {
+    background: rgba(255, 252, 250, 0.72);
+    border-color: color-mix(in srgb, #6b8cae 40%, white);
+    color: $hiver-ink;
+  }
+
+  .meal-edit {
+    border-color: color-mix(in srgb, #6b8cae 50%, white);
+    background: rgba(255, 252, 250, 0.88);
+    color: #1a4f7a;
+  }
+
+  .kcal-badge {
+    border-color: color-mix(in srgb, #6b8cae 45%, white);
+    background: rgba(255, 252, 250, 0.88);
+    color: $hiver-ink;
+  }
+}
+
+/* Planning — clairière dorée (cadrage large) */
+:root[data-theme='hiver'] .page.accueil > .week {
+  min-height: 12rem;
+  @include hiver-card(
+    'planning.png',
+    center 38%,
+    linear-gradient(
+      180deg,
+      rgba(216, 230, 244, 0.08) 0%,
+      rgba(216, 230, 244, 0.3) 40%,
+      rgba(197, 216, 236, 0.55) 100%
+    )
+  );
+
+  > .section-head h2 {
+    @include hiver-ink-text;
+  }
+
+  > .section-head > a {
+    color: #1a4f7a;
+    font-weight: 600;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.55);
+  }
+
+  .week-row article {
+    background: rgba(255, 252, 250, 0.7);
+    border-color: color-mix(in srgb, #6b8cae 38%, white);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  }
+
+  .week-row article.today {
+    background: color-mix(in srgb, #8aabd0 28%, #fffaf8);
+    border-color: #4a6a8a;
+    box-shadow: 0 0 12px rgba(107, 140, 174, 0.28);
+  }
+
+  .week-row h3 {
+    color: $hiver-ink;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.55);
+  }
+
+  .week-row article:first-child h3 {
+    color: #1a4f7a;
+  }
+
+  .day-num {
+    color: $hiver-ink;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.55);
+  }
+
+  .day-weather-temp {
+    color: $hiver-ink-soft;
+  }
+
+  .week-row li {
+    color: $hiver-ink;
+    background: rgba(255, 252, 250, 0.78);
+  }
+}
+
+@media (max-width: 640px) {
+  :root[data-theme='hiver'] .page.accueil > .hero {
+    min-height: 12.5rem;
+    background-position: center 40%;
+    padding-inline: 0.75rem;
+  }
+
+  :root[data-theme='hiver'] .page.accueil > .composer {
+    background-position: center 45%;
+  }
+
+  :root[data-theme='hiver'] .page.accueil > .tasks {
+    background-position: center 36%;
+  }
+
+  :root[data-theme='hiver'] .page.accueil > .meals {
+    background-position: center 44%;
+  }
+
+  :root[data-theme='hiver'] .page.accueil > .week {
+    background-position: center 34%;
+  }
+
+  :root[data-theme='hiver'] .page.accueil > .trip-banner {
+    min-height: 4.5rem;
+    background-position: center 55%;
+  }
+}

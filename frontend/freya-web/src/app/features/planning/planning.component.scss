@@ -730,3 +730,78 @@ h2 {
     color: #0a5f6e;
   }
 }
+
+:host-context([data-theme='hiver']) {
+  @include planning-fantasy-calendar();
+
+  .days p {
+    color: #0a2f52;
+  }
+
+  .days p:first-child {
+    color: #123a5c;
+  }
+
+  .days .today {
+    color: #0a2f52;
+    background: color-mix(in srgb, #8aabd0 32%, #fffaf8);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, #6b8cae 55%, white);
+    font-weight: 700;
+  }
+
+  .days .holiday {
+    color: #4a6a8a;
+    background: rgba(198, 220, 240, 0.45);
+  }
+
+  .days .holiday.today {
+    color: #0a2f52;
+    background: color-mix(in srgb, #8aabd0 26%, #e8f0fa);
+  }
+
+  .col.holiday {
+    background: rgba(198, 220, 240, 0.28);
+  }
+
+  .col.holiday.today {
+    background: color-mix(in srgb, #8aabd0 18%, #fffaf8);
+    box-shadow: inset 0 0 18px rgba(107, 140, 174, 0.18);
+  }
+
+  .col.today {
+    background: color-mix(in srgb, #8aabd0 16%, #fffaf8);
+    box-shadow: inset 0 0 18px rgba(107, 140, 174, 0.14);
+  }
+
+  .month .weekday {
+    color: #123a5c;
+  }
+
+  .month .weekday:first-child {
+    color: #0a2f52;
+  }
+
+  .month-cell.holiday {
+    background: rgba(198, 220, 240, 0.5);
+    color: #4a6a8a;
+    border-color: color-mix(in srgb, #6b8cae 40%, white);
+  }
+
+  .month-cell.holiday .day-num {
+    color: #4a6a8a;
+  }
+
+  .month-cell.today {
+    border-color: #6b8cae;
+    background: color-mix(in srgb, #8aabd0 18%, #fffaf8);
+  }
+
+  .month-cell.today .day-num {
+    color: #0a2f52;
+    font-weight: 700;
+  }
+
+  .month-cell.has .day-num {
+    color: #1a4f7a;
+  }
+}

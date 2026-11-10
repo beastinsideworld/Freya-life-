@@ -1,0 +1,263 @@
+﻿/* UI kit Hiver — givre, bleu glaçon, boutons glacés */
+
+:root[data-theme='hiver'] {
+  --hiver-glass: rgba(17, 28, 42, 0.72);
+  --hiver-glass-strong: rgba(22, 36, 54, 0.88);
+  --hiver-edge: #6b8cae;
+  --hiver-edge-bright: #8aabd0;
+  --hiver-edge-deep: #364d68;
+  --hiver-ink: #0a2f52;
+  --hiver-ice: #d8e6f4;
+  --hiver-border: linear-gradient(135deg, #c9d8e8, #8aabd0 45%, #4a6a8a 100%);
+}
+
+:root[data-theme='hiver'] .panel,
+:root[data-theme='hiver'] .modal,
+:root[data-theme='hiver'] .hero {
+  background: var(--hiver-glass);
+  backdrop-filter: blur(18px) saturate(1.1);
+  -webkit-backdrop-filter: blur(18px) saturate(1.1);
+  border: 1.5px solid color-mix(in srgb, var(--hiver-edge) 55%, #0a1018);
+  box-shadow:
+    0 10px 32px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(168, 196, 224, 0.1) inset,
+    0 0 18px rgba(107, 140, 174, 0.15);
+  color: #e8eef5;
+}
+
+:root[data-theme='hiver'] .panel::before {
+  box-shadow:
+    inset 0 1px 0 rgba(168, 196, 224, 0.12),
+    inset 0 0 0 1px rgba(54, 77, 104, 0.22);
+}
+
+:root[data-theme='hiver'] .page.accueil > .hero,
+:root[data-theme='hiver'] .page.accueil > .trip-banner,
+:root[data-theme='hiver'] .page.accueil > .composer,
+:root[data-theme='hiver'] .page.accueil > .tasks,
+:root[data-theme='hiver'] .page.accueil > .meals,
+:root[data-theme='hiver'] .page.accueil > .week {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  color: var(--hiver-ink);
+}
+
+:root[data-theme='hiver'] .page.accueil > .composer.panel::before,
+:root[data-theme='hiver'] .page.accueil > .tasks.panel::before,
+:root[data-theme='hiver'] .page.accueil > .meals.panel::before,
+:root[data-theme='hiver'] .page.accueil > .week.panel::before {
+  box-shadow: none;
+}
+
+:root[data-theme='hiver'] .page.planning > .hero,
+:root[data-theme='hiver'] .page.repas > .hero,
+:root[data-theme='hiver'] .page.voyages > .hero,
+:root[data-theme='hiver'] .page.sport-page > .hero,
+:root[data-theme='hiver'] .page.budget-page > .hero,
+:root[data-theme='hiver'] .page.animaux-page > .hero {
+  color: var(--hiver-ink);
+}
+
+:root[data-theme='hiver'] .page.planning > .hero h1,
+:root[data-theme='hiver'] .page.repas > .hero h1,
+:root[data-theme='hiver'] .page.voyages > .hero h1,
+:root[data-theme='hiver'] .page.sport-page > .hero h1,
+:root[data-theme='hiver'] .page.budget-page > .hero h1,
+:root[data-theme='hiver'] .page.animaux-page > .hero h1 {
+  color: #ffffff;
+  text-shadow:
+    0 0 1px #0a2f52,
+    0 0 2px #0a2f52,
+    1px 0 0 #0a2f52,
+    -1px 0 0 #0a2f52,
+    0 1px 0 #0a2f52,
+    0 -1px 0 #0a2f52,
+    0 2px 8px rgba(10, 47, 82, 0.35);
+}
+
+:root[data-theme='hiver'] .page.planning > .hero .sub,
+:root[data-theme='hiver'] .page.repas > .hero .sub,
+:root[data-theme='hiver'] .page.voyages > .hero .sub,
+:root[data-theme='hiver'] .page.sport-page > .hero .sub,
+:root[data-theme='hiver'] .page.budget-page > .hero .sub,
+:root[data-theme='hiver'] .page.animaux-page > .hero .sub {
+  color: var(--hiver-ink);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+:root[data-theme='hiver'] .seg button,
+:root[data-theme='hiver'] .chip,
+:root[data-theme='hiver'] .btn,
+:root[data-theme='hiver'] .meta-pill,
+:root[data-theme='hiver'] .field input,
+:root[data-theme='hiver'] .field select,
+:root[data-theme='hiver'] .field textarea,
+:root[data-theme='hiver'] .search input {
+  background: var(--hiver-glass-strong);
+  border: 1.5px solid color-mix(in srgb, var(--hiver-edge) 50%, #0a1018);
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(168, 196, 224, 0.12);
+  color: #e8eef5;
+}
+
+:root[data-theme='hiver'] .seg button.active,
+:root[data-theme='hiver'] .chip.active,
+:root[data-theme='hiver'] .btn.primary {
+  background: linear-gradient(180deg, #d4e4f4 0%, #8aabd0 48%, #4a6a8a 100%);
+  border-color: #364d68;
+  color: #0a2f52;
+  font-weight: 700;
+  box-shadow:
+    0 0 14px rgba(107, 140, 174, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+:root[data-theme='hiver'] .btn.ghost,
+:root[data-theme='hiver'] .ghost-link {
+  background: transparent;
+  border: 1.5px solid color-mix(in srgb, #6b8cae 65%, #0a1018);
+  color: #a8c4e0;
+  box-shadow: none;
+}
+
+:root[data-theme='hiver'] .btn.ghost:hover,
+:root[data-theme='hiver'] .ghost-link:hover {
+  background: var(--hiver-glass);
+  border-color: var(--hiver-edge-bright);
+  color: #e8eef5;
+}
+
+:root[data-theme='hiver'] .field input:focus,
+:root[data-theme='hiver'] .field select:focus,
+:root[data-theme='hiver'] .field textarea:focus,
+:root[data-theme='hiver'] .search input:focus {
+  border-color: var(--hiver-edge-bright);
+  box-shadow:
+    0 0 0 2px rgba(107, 140, 174, 0.28),
+    0 0 14px rgba(168, 196, 224, 0.22);
+}
+
+:root[data-theme='hiver'] .meta-pill {
+  color: #c9d8e8;
+}
+
+:root[data-theme='hiver'] .progress-track {
+  background: color-mix(in srgb, var(--hiver-edge) 22%, #0a1018);
+}
+
+:root[data-theme='hiver'] .progress-fill {
+  background: linear-gradient(90deg, #c9d8e8, #6b8cae 55%, #364d68);
+  box-shadow: 0 0 10px rgba(107, 140, 174, 0.4);
+}
+
+:root[data-theme='hiver'] input[type='checkbox'],
+:root[data-theme='hiver'] input[type='radio'] {
+  accent-color: #8aabd0;
+}
+
+:root[data-theme='hiver'] a {
+  color: #a8c4e0;
+}
+
+:root[data-theme='hiver'] .modal {
+  background: rgba(10, 16, 24, 0.92);
+  color: #e8eef5;
+}
+
+:root[data-theme='hiver'] .modal-close {
+  background: var(--hiver-glass-strong);
+  border-color: color-mix(in srgb, var(--hiver-edge) 50%, #0a1018);
+  color: #e8eef5;
+}
+
+:root[data-theme='hiver'] .bottom-nav-rail {
+  background: rgba(10, 16, 24, 0.86);
+  border: 1.5px solid color-mix(in srgb, var(--hiver-edge) 55%, #0a1018);
+  box-shadow:
+    0 10px 28px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(168, 196, 224, 0.1) inset,
+    0 0 20px rgba(107, 140, 174, 0.2);
+  backdrop-filter: blur(18px) saturate(1.15);
+  -webkit-backdrop-filter: blur(18px) saturate(1.15);
+}
+
+:root[data-theme='hiver'] .bottom-link,
+:root[data-theme='hiver'] .nav-label {
+  color: #a8c4e0;
+}
+
+:root[data-theme='hiver'] .bottom-link.active .nav-label {
+  color: #e8eef5;
+  text-shadow: 0 0 8px rgba(107, 140, 174, 0.45);
+}
+
+:root[data-theme='hiver'] .bottom-link.active .active-ring {
+  border-color: var(--hiver-edge-bright);
+  box-shadow:
+    0 0 12px rgba(107, 140, 174, 0.45),
+    inset 0 0 10px rgba(168, 196, 224, 0.2);
+}
+
+:root[data-theme='hiver'] .bottom-link.active .active-ring::before,
+:root[data-theme='hiver'] .bottom-link.active .active-ring::after {
+  background: #1c2a3d;
+  box-shadow: 0 0 10px 2px rgba(107, 140, 174, 0.65);
+}
+
+:root[data-theme='hiver'] .ico-wrap {
+  filter: drop-shadow(0 0 6px rgba(107, 140, 174, 0.55));
+}
+
+/* Logos / icônes thématiques encore trop chauds → teinte glace */
+:root[data-theme='hiver'] .theme-module__ico img,
+:root[data-theme='hiver'] .page img.icon,
+:root[data-theme='hiver'] .page .icon img,
+:root[data-theme='hiver'] .meal-edit img,
+:root[data-theme='hiver'] .task-ico-img,
+:root[data-theme='hiver'] .sport-ico img,
+:root[data-theme='hiver'] .finance-ico img,
+:root[data-theme='hiver'] .animaux-ico img {
+  filter: drop-shadow(0 1px 4px rgba(10, 47, 82, 0.2));
+}
+
+:root[data-theme='hiver'] .nav-divider {
+  background: linear-gradient(
+    180deg,
+    transparent,
+    color-mix(in srgb, var(--hiver-edge) 45%, transparent),
+    transparent
+  );
+}
+
+:root[data-theme='hiver'] .dot-badge,
+:root[data-theme='hiver'] .nav-badge {
+  background: linear-gradient(180deg, #c9d8e8, #6b8cae);
+  color: #0a2f52;
+  font-weight: 700;
+}
+
+:root[data-theme='hiver'] .theme-module {
+  color: #0a2f52;
+}
+
+:root[data-theme='hiver'] .theme-module h3,
+:root[data-theme='hiver'] .theme-module p {
+  color: #0a2f52;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+@media (min-width: 1024px) {
+  :root[data-theme='hiver'] .side-nav {
+    background: linear-gradient(180deg, rgba(17, 28, 42, 0.92) 0%, rgba(10, 16, 24, 0.9) 100%);
+    border-right: 1.5px solid color-mix(in srgb, var(--hiver-edge) 45%, #0a1018);
+    backdrop-filter: blur(14px);
+  }
+
+  :root[data-theme='hiver'] .side-nav a.active {
+    color: #0a2f52;
+    background: linear-gradient(180deg, #d4e4f4 0%, #8aabd0 55%, #4a6a8a 100%);
+    border-color: #364d68;
+    font-weight: 700;
+  }
+}

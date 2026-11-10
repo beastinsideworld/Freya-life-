@@ -30,10 +30,25 @@ export const NAV_DEMON_ICON: Record<NavTabId, string> = {
   parametres: 'assets/nav/demon/parametres.png'
 };
 
+/** Icônes barre du bas — thème Hiver (or/rose-gold → bleu glace). */
+export const NAV_HIVER_ICON: Record<NavTabId, string> = {
+  accueil: 'assets/nav/hiver/accueil.png',
+  planning: 'assets/nav/hiver/planning.png',
+  repas: 'assets/nav/hiver/repas.png',
+  voyages: 'assets/nav/hiver/voyages.png',
+  tele: 'assets/nav/hiver/tele.png',
+  chat: 'assets/nav/hiver/chat.png',
+  budget: 'assets/nav/hiver/budget.png',
+  sport: 'assets/nav/hiver/sport.png',
+  animaux: 'assets/nav/hiver/animaux.png',
+  parametres: 'assets/nav/hiver/parametres.png'
+};
+
 export function navIconsForFantasyTheme(): Record<NavTabId, string> | null {
   const t = activeFantasyTheme();
   if (t === 'ange') return NAV_ANGE_ICON;
   if (t === 'demon') return NAV_DEMON_ICON;
+  if (t === 'hiver') return NAV_HIVER_ICON;
   return null;
 }
 
@@ -101,6 +116,56 @@ export const FINANCE_ICON_ETE = {
   portefeuille: 'assets/themes/ete/finance/portefeuille.png'
 } as const;
 
+/** Icônes Hiver — Finance. */
+export const FINANCE_ICON_HIVER = {
+  graphique: 'assets/themes/hiver/finance/graphique.png',
+  transfert: 'assets/themes/hiver/finance/transfert.png',
+  cible: 'assets/themes/hiver/finance/cible.png',
+  calendrier: 'assets/themes/hiver/finance/calendrier.png',
+  carte: 'assets/themes/hiver/finance/carte.png',
+  tirelire: 'assets/themes/hiver/finance/tirelire.png',
+  croissance: 'assets/themes/hiver/finance/croissance.png',
+  portefeuille: 'assets/themes/hiver/finance/portefeuille.png'
+} as const;
+
+/** Icônes repas (créneaux) — défaut or. */
+export const MEAL_SLOT_ICON = {
+  Breakfast: 'assets/meals/petit-dejeuner.png',
+  Lunch: 'assets/meals/dejeuner.png',
+  Snack: 'assets/meals/collation.png',
+  Dinner: 'assets/meals/diner.png'
+} as const;
+
+/** Icônes repas Hiver — même palette glace, un peu plus blanche. */
+export const MEAL_SLOT_ICON_HIVER = {
+  Breakfast: 'assets/themes/hiver/meals/petit-dejeuner.png',
+  Lunch: 'assets/themes/hiver/meals/dejeuner.png',
+  Snack: 'assets/themes/hiver/meals/collation.png',
+  Dinner: 'assets/themes/hiver/meals/diner.png'
+} as const;
+
+export type MealSlotIconKey = keyof typeof MEAL_SLOT_ICON;
+
+export function mealSlotIconsForTheme(): typeof MEAL_SLOT_ICON | typeof MEAL_SLOT_ICON_HIVER {
+  return activeFantasyTheme() === 'hiver' ? MEAL_SLOT_ICON_HIVER : MEAL_SLOT_ICON;
+}
+
+export function mealSlotIcon(slot: MealSlotIconKey): string {
+  return resolveAssetUrl(mealSlotIconsForTheme()[slot]);
+}
+
+/** Icônes Hiver — Animaux. */
+export const ANIMAUX_ICON_HIVER = {
+  patte: 'assets/themes/hiver/animaux/patte.webp',
+  bourse: 'assets/themes/hiver/animaux/bourse.webp',
+  calendrier: 'assets/themes/hiver/animaux/calendrier.webp',
+  chien: 'assets/themes/hiver/animaux/chien.webp',
+  chat: 'assets/themes/hiver/animaux/chat.webp',
+  vaccin: 'assets/themes/hiver/animaux/vaccin.webp',
+  gamelle: 'assets/themes/hiver/animaux/gamelle.webp',
+  soin: 'assets/themes/hiver/animaux/soin.webp'
+} as const;
+
 /** Icônes Été — Animaux. */
 export const ANIMAUX_ICON_ETE = {
   patte: 'assets/themes/ete/animaux/patte.png',
@@ -113,13 +178,22 @@ export const ANIMAUX_ICON_ETE = {
   soin: 'assets/themes/ete/animaux/soin.png'
 } as const;
 
-export type FinanceIconMap = typeof FINANCE_ICON | typeof FINANCE_ICON_DEMON | typeof FINANCE_ICON_ETE;
-export type AnimauxIconMap = typeof ANIMAUX_ICON | typeof ANIMAUX_ICON_DEMON | typeof ANIMAUX_ICON_ETE;
+export type FinanceIconMap =
+  | typeof FINANCE_ICON
+  | typeof FINANCE_ICON_DEMON
+  | typeof FINANCE_ICON_ETE
+  | typeof FINANCE_ICON_HIVER;
+export type AnimauxIconMap =
+  | typeof ANIMAUX_ICON
+  | typeof ANIMAUX_ICON_DEMON
+  | typeof ANIMAUX_ICON_ETE
+  | typeof ANIMAUX_ICON_HIVER;
 
 export function financeIconsForTheme(): FinanceIconMap {
   const t = activeFantasyTheme();
   if (t === 'demon') return FINANCE_ICON_DEMON;
   if (t === 'ete') return FINANCE_ICON_ETE;
+  if (t === 'hiver') return FINANCE_ICON_HIVER;
   return FINANCE_ICON;
 }
 
@@ -127,6 +201,7 @@ export function animauxIconsForTheme(): AnimauxIconMap {
   const t = activeFantasyTheme();
   if (t === 'demon') return ANIMAUX_ICON_DEMON;
   if (t === 'ete') return ANIMAUX_ICON_ETE;
+  if (t === 'hiver') return ANIMAUX_ICON_HIVER;
   return ANIMAUX_ICON;
 }
 

@@ -264,6 +264,15 @@ button.cell.filled:focus-visible {
   box-shadow: var(--shadow-glow);
 }
 
+.cell.filled .thumb.has-photo {
+  background-size: cover;
+  background-position: center;
+}
+
+.cell.filled .thumb.has-photo img {
+  display: none;
+}
+
 .cell.filled .thumb {
   display: grid;
   place-items: center;
@@ -692,6 +701,81 @@ button.cell.filled:focus-visible {
 
 .recipe-modal {
   width: min(460px, calc(100vw - 1.5rem));
+}
+
+.meal-picker {
+  max-height: min(86vh, 720px);
+  overflow: auto;
+}
+
+.meal-picker-meta {
+  margin: 0 0 0.65rem;
+  color: var(--gold);
+  font-size: 0.85rem;
+}
+
+.meal-picker-cats {
+  margin: 0.15rem 0 0.55rem;
+}
+
+.meal-picker-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  max-height: 52vh;
+  overflow: auto;
+  margin: 0.55rem 0 0.75rem;
+}
+
+.meal-picker-item {
+  display: grid;
+  grid-template-columns: 4.2rem minmax(0, 1fr);
+  gap: 0.6rem;
+  align-items: center;
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--border);
+  border-radius: 0.9rem;
+  padding: 0.45rem;
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  color: inherit;
+}
+
+.meal-picker-item:hover,
+.meal-picker-item:focus-visible {
+  border-color: color-mix(in srgb, var(--contour) 85%, transparent);
+  box-shadow: var(--shadow-glow);
+}
+
+.meal-picker-item:disabled {
+  opacity: 0.6;
+}
+
+.meal-picker-cover {
+  width: 4.2rem;
+  height: 4.2rem;
+  border-radius: 0.75rem;
+  background:
+    linear-gradient(160deg, color-mix(in srgb, var(--accent) 45%, transparent), color-mix(in srgb, var(--bg) 90%, transparent));
+  background-size: cover;
+  background-position: center;
+}
+
+.meal-picker-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.meal-picker-copy strong {
+  font-size: 0.92rem;
+  line-height: 1.25;
+}
+
+.meal-picker-copy small {
+  color: var(--muted);
+  font-size: 0.74rem;
+  line-height: 1.3;
 }
 
 .recipes .info {

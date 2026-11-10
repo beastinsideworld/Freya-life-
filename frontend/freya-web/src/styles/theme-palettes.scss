@@ -567,29 +567,35 @@
 }
 
 :root[data-theme='hiver'] {
-  --bg: #04070b;
-  --bg-secondary: #0a1018;
-  --bg-card: #111824;
-  --bordeaux: #111824;
-  --bordeaux-lit: #1c2a3d;
+  --bg: #061018;
+  --bg-secondary: #0c1622;
+  --bg-card: #142030;
+  --bordeaux: #142030;
+  --bordeaux-lit: #1e3148;
   --contour: #6b8cae;
   --red-bright: #8aabd0;
   --red-glow: #a8c4e0;
   --champagne: #c9d8e8;
-  --ivory: #f0f4f8;
+  --ivory: #e8eef5;
   --cream: #c9d8e8;
-  --powder: #c2ccd8;
+  --powder: #b8c8d8;
   --rose-muted: #8793a6;
   --rose-bright: #a8c4e0;
-  --text-on-card: #f0f4f8;
-  --btn-text: #04070b;
-  --shadow-glow: 0 0 10px rgba(168, 196, 224, 0.3);
-  --shadow-card: 0 6px 20px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(168, 196, 224, 0.15);
-  --shadow-btn: 0 0 14px rgba(168, 196, 224, 0.35);
-  --grad-page: radial-gradient(ellipse at 50% 0%, #1c2a3d 0%, transparent 45%), #04070b;
-  --grad-panel: linear-gradient(160deg, #1c2a3d 0%, #111824 50%, #0a1018 100%);
-  --grad-btn: linear-gradient(180deg, #a8c4e0 0%, #8aabd0 55%, #364d68 100%);
-  --grad-hero: linear-gradient(180deg, #111824 0%, #04070b 100%);
-  --grad-nav: linear-gradient(180deg, #111824 0%, #04070b 100%);
+  --text-on-card: #e8eef5;
+  --btn-text: #0a2f52;
+  --shadow-glow: 0 0 12px rgba(138, 171, 208, 0.32);
+  --shadow-card: 0 8px 22px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(168, 196, 224, 0.14);
+  --shadow-btn: 0 0 14px rgba(138, 171, 208, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  --grad-page: radial-gradient(ellipse at 50% 0%, #1e3148 0%, transparent 48%), #061018;
+  --grad-panel: linear-gradient(160deg, #1e3148 0%, #142030 50%, #0c1622 100%);
+  --grad-btn: linear-gradient(180deg, #d4e4f4 0%, #8aabd0 48%, #4a6a8a 100%);
+  --grad-hero: linear-gradient(180deg, #142030 0%, #061018 100%);
+  --grad-nav: linear-gradient(180deg, #142030 0%, #061018 100%);
   @include theme-base;
+  --title: #e8eef5;
+  --muted: #b8c8d8;
+  --accent-soft: rgba(107, 140, 174, 0.28);
+  --chart-1: #8aabd0;
+  --chart-2: #c9d8e8;
+  --chart-3: #4a6a8a;
 }

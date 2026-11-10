@@ -11,6 +11,7 @@ import {
   ingredientNames,
   searchCatalog
 } from '../../core/grocery-catalog';
+import { mealSlotIcon, MealSlotIconKey } from '../../core/theme-ange-icons';
 import { ImagePickerComponent } from '../../shared/image-picker/image-picker.component';
 import { NavIconComponent } from '../../shared/nav-icon/nav-icon.component';
 
@@ -22,6 +23,7 @@ interface MealRow {
   slot: string;
   title: string;
   recipeId?: string | null;
+  imageUrl?: string | null;
   kcal?: number | null;
 }
 
@@ -72,6 +74,22 @@ export class RepasComponent implements OnInit {
   readonly recipeModalOpen = signal(false);
   readonly recipeDetail = signal<Recipe | null>(null);
   readonly recipePeople = signal(1);
+  readonly mealPickerOpen = signal(false);
+  readonly mealPickerQuery = signal('');
+  readonly mealPickerCat = signal('tout');
+  readonly mealPickerDate = signal(this.toIso(new Date()));
+  readonly mealPickerSlot = signal<'Breakfast' | 'Lunch' | 'Snack' | 'Dinner'>('Lunch');
+  readonly mealPickerSaving = signal(false);
+  readonly mealPickerCats: Array<{ id: string; label: string }> = [
+    { id: 'tout', label: 'Tout' },
+    { id: 'petit-dejeuner', label: 'Petit-déj.' },
+    { id: 'dejeuner', label: 'Déjeuner' },
+    { id: 'entree', label: 'Entrée' },
+    { id: 'plat', label: 'Plat' },
+    { id: 'dessert', label: 'Dessert' },
+    { id: 'collation', label: 'Collation' },
+    { id: 'apero', label: 'Apéro' }
+  ];
   readonly editingRecipeId = signal<string | null>(null);
   readonly recipeSaving = signal(false);
   readonly recipeFormError = signal('');
@@ -94,12 +112,19 @@ export class RepasComponent implements OnInit {
     Snack: 'Collation',
     Dinner: 'Dîner'
   };
-  readonly slotIcons: Record<'Breakfast' | 'Lunch' | 'Snack' | 'Dinner', string> = {
-    Breakfast: 'assets/meals/petit-dejeuner.png',
-    Lunch: 'assets/meals/dejeuner.png',
-    Snack: 'assets/meals/collation.png',
-    Dinner: 'assets/meals/diner.png'
-  };
+  slotIcon(slot: MealSlotIconKey): string {
+    return mealSlotIcon(slot);
+  }
+
+  /** Compat template `[src]="slotIcons[slot]"` */
+  get slotIcons(): Record<MealSlotIconKey, string> {
+    return {
+      Breakfast: mealSlotIcon('Breakfast'),
+      Lunch: mealSlotIcon('Lunch'),
+      Snack: mealSlotIcon('Snack'),
+      Dinner: mealSlotIcon('Dinner')
+    };
+  }
   readonly recipeFormCats = ['Rapide', 'Healthy', 'Végé', 'Viande', 'Poisson', 'Dessert'];
   readonly difficulties = ['Facile', 'Moyen', 'Difficile'];
   readonly units = ['pièce', 'g', 'kg', 'mL', 'L', 'botte', 'sachet', 'boîte', 'tranche', 'c. à s.', 'c. à c.'];
@@ -145,6 +170,21 @@ export class RepasComponent implements OnInit {
       (a, b) => this.categoryRank(a) - this.categoryRank(b) || a.localeCompare(b, 'fr')
     );
     return ['Tout', ...ranked];
+  });
+
+  readonly mealPickerRecipes = computed(() => {
+    const q = this.mealPickerQuery().trim().toLowerCase();
+    const cat = this.mealPickerCat();
+    return this.recipes()
+      .filter((recipe) => {
+        const okQ = !q || recipe.title.toLowerCase().includes(q);
+        const okC = this.recipeMatchesMealPickerCategory(recipe, cat);
+        return okQ && okC;
+      })
+      .sort((a, b) => {
+        const catCmp = this.primaryCategory(a).localeCompare(this.primaryCategory(b), 'fr');
+        return catCmp !== 0 ? catCmp : a.title.localeCompare(b.title, 'fr');
+      });
   });
 
   readonly recipeGroups = computed(() => {
@@ -243,43 +283,81 @@ export class RepasComponent implements OnInit {
   }
 
   quickAdd(dayIndex: number, slot: string): void {
-    this.newMealTitle = 'Nouveau repas';
-    this.addMeal(dayIndex, slot);
+    this.openMealRecipePicker(dayIndex, slot);
   }
 
   addMeal(dayIndex?: number, slot?: string): void {
+    this.openMealRecipePicker(dayIndex, slot);
+  }
+
+  openMealRecipePicker(dayIndex?: number, slot?: string): void {
     if (dayIndex !== undefined && slot) {
-      this.newMealDate = this.dateFor(dayIndex);
-      this.newMealSlot = slot as typeof this.newMealSlot;
+      this.mealPickerDate.set(this.dateFor(dayIndex));
+      this.mealPickerSlot.set(slot as (typeof this.slots)[number]);
+    } else {
+      this.mealPickerDate.set(this.newMealDate);
+      this.mealPickerSlot.set(this.newMealSlot);
     }
-    if (!this.newMealTitle.trim()) {
-      this.newMealTitle = 'Nouveau repas';
+
+    this.mealPickerQuery.set('');
+    this.mealPickerCat.set(this.defaultMealPickerCategory(this.mealPickerSlot()));
+    this.mealPickerSaving.set(false);
+    if (!this.recipes().length) {
+      this.loadRecipes();
     }
-    this.http
-      .post(`${environment.apiUrl}/meals`, {
-        date: this.newMealDate,
-        slot: this.slots.indexOf(this.newMealSlot),
-        title: this.newMealTitle.trim()
-      })
-      .subscribe({
-        next: () => {
-          this.newMealTitle = '';
-          this.loadWeek();
-        },
-        error: () => {
-          this.meals.update((list) => [
-            ...list,
-            {
-              id: createId(),
-              date: this.newMealDate,
-              slot: this.newMealSlot,
-              title: this.newMealTitle.trim(),
-              kcal: 450
-            }
-          ]);
-          this.newMealTitle = '';
-        }
-      });
+    this.mealPickerOpen.set(true);
+  }
+
+  closeMealRecipePicker(): void {
+    if (this.mealPickerSaving()) return;
+    this.mealPickerOpen.set(false);
+  }
+
+  mealPickerLabel(): string {
+    const date = new Date(`${this.mealPickerDate()}T12:00:00`);
+    const day = date.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
+    return `${day} · ${this.slotLabels[this.mealPickerSlot()]}`;
+  }
+
+  pickRecipeForMeal(recipe: Recipe): void {
+    if (this.mealPickerSaving()) return;
+
+    this.mealPickerSaving.set(true);
+    const slot = this.slots.indexOf(this.mealPickerSlot());
+    const payload = {
+      date: this.mealPickerDate(),
+      slot,
+      title: recipe.title,
+      recipeId: recipe.id,
+      imageUrl: recipe.imageUrl ?? null,
+      kcal: recipe.kcal ?? null
+    };
+
+    this.http.post(`${environment.apiUrl}/meals`, payload).subscribe({
+      next: () => {
+        this.mealPickerSaving.set(false);
+        this.mealPickerOpen.set(false);
+        this.newMealDate = this.mealPickerDate();
+        this.newMealSlot = this.mealPickerSlot();
+        this.loadWeek();
+      },
+      error: () => {
+        this.mealPickerSaving.set(false);
+        this.meals.update((list) => [
+          ...list,
+          {
+            id: createId(),
+            date: this.mealPickerDate(),
+            slot: this.mealPickerSlot(),
+            title: recipe.title,
+            recipeId: recipe.id,
+            imageUrl: recipe.imageUrl ?? null,
+            kcal: recipe.kcal ?? null
+          }
+        ]);
+        this.mealPickerOpen.set(false);
+      }
+    });
   }
 
   openRecipeModal(): void {
@@ -646,6 +724,7 @@ export class RepasComponent implements OnInit {
       slot: String(item.slot ?? ''),
       title: String(item.title ?? 'Repas'),
       recipeId: item.recipeId != null ? String(item.recipeId) : null,
+      imageUrl: item.imageUrl ?? null,
       kcal: item.kcal != null ? Number(item.kcal) : null
     };
   }
@@ -716,6 +795,60 @@ export class RepasComponent implements OnInit {
     }
 
     return { ingredients: [], servings: 1 };
+  }
+
+  private defaultMealPickerCategory(slot: (typeof this.slots)[number]): string {
+    switch (slot) {
+      case 'Breakfast':
+        return 'petit-dejeuner';
+      case 'Snack':
+        return 'collation';
+      case 'Dinner':
+        return 'plat';
+      case 'Lunch':
+        return 'dejeuner';
+      default:
+        return 'plat';
+    }
+  }
+
+  private recipeMatchesMealPickerCategory(recipe: Recipe, catId: string): boolean {
+    if (catId === 'tout') {
+      return true;
+    }
+
+    const haystack = this.recipeCategoryHaystack(recipe);
+    return this.mealPickerCategoryNeedles(catId).some((needle) => haystack.includes(needle));
+  }
+
+  private recipeCategoryHaystack(recipe: Recipe): string {
+    const fromPrimary = this.primaryCategory(recipe);
+    const raw = `${recipe.categories || ''};${fromPrimary}`;
+    return raw
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/\p{Diacritic}/gu, '');
+  }
+
+  private mealPickerCategoryNeedles(catId: string): string[] {
+    switch (catId) {
+      case 'petit-dejeuner':
+        return ['petit-dejeuner', 'petits-dejeuner', 'petits dejeuners'];
+      case 'dejeuner':
+        return ['plat', 'plats', 'viande', 'poisson', 'rapide', 'healthy', 'vege', 'vegetarien'];
+      case 'entree':
+        return ['entree', 'entrees'];
+      case 'plat':
+        return ['plat', 'plats', 'viande', 'poisson', 'rapide', 'healthy', 'vege', 'vegetarien'];
+      case 'dessert':
+        return ['dessert', 'desserts'];
+      case 'collation':
+        return ['collation', 'collations'];
+      case 'apero':
+        return ['apero', 'aperitif', 'aperos'];
+      default:
+        return [];
+    }
   }
 
   private primaryCategory(recipe: Recipe): string {

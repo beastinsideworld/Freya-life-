@@ -829,12 +829,27 @@ export const MUSCU_ICON_ETE = {
   trophee: 'assets/themes/ete/muscu/trophee.png'
 } as const;
 
+export const MUSCU_ICON_HIVER = {
+  haltere: 'assets/themes/hiver/muscu/haltere.png',
+  kettlebell: 'assets/themes/hiver/muscu/kettlebell.png',
+  banc: 'assets/themes/hiver/muscu/banc.png',
+  disques: 'assets/themes/hiver/muscu/disques.png',
+  shaker: 'assets/themes/hiver/muscu/shaker.png',
+  programme: 'assets/themes/hiver/muscu/programme.png',
+  trophee: 'assets/themes/hiver/muscu/trophee.png'
+} as const;
+
 export type MuscuIconKey = keyof typeof MUSCU_ICON;
 
-export function muscuIconsForTheme(): typeof MUSCU_ICON | typeof MUSCU_ICON_DEMON | typeof MUSCU_ICON_ETE {
+export function muscuIconsForTheme():
+  | typeof MUSCU_ICON
+  | typeof MUSCU_ICON_DEMON
+  | typeof MUSCU_ICON_ETE
+  | typeof MUSCU_ICON_HIVER {
   const t = document.documentElement.getAttribute('data-theme');
   if (t === 'demon') return MUSCU_ICON_DEMON;
   if (t === 'ete') return MUSCU_ICON_ETE;
+  if (t === 'hiver') return MUSCU_ICON_HIVER;
   return MUSCU_ICON;
 }
 

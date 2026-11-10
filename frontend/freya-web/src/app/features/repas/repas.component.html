@@ -36,8 +36,15 @@
         @for (slot of slots; track slot) {
           @if (mealAt(i, slot); as meal) {
             <button type="button" class="cell filled" (click)="openMealRecipe(meal)">
-              <div class="thumb" aria-hidden="true">
-                <img [src]="slotIcons[slot]" alt="" draggable="false" />
+              <div
+                class="thumb"
+                aria-hidden="true"
+                [class.has-photo]="!!meal.imageUrl"
+                [style.background-image]="meal.imageUrl ? 'url(' + meal.imageUrl + ')' : null"
+              >
+                @if (!meal.imageUrl) {
+                  <img [src]="slotIcons[slot]" alt="" draggable="false" />
+                }
               </div>
               <p>{{ meal.title }}</p>
               @if (meal.kcal) {
@@ -53,6 +60,73 @@
         }
       }
     </div>
+
+    @if (mealPickerOpen()) {
+      <div class="modal-backdrop" (click)="closeMealRecipePicker()" role="presentation"></div>
+      <div
+        class="modal recipe-modal meal-picker"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="meal-picker-title"
+        (click)="$event.stopPropagation()"
+      >
+        <header class="modal-head">
+          <h2 id="meal-picker-title">Choisir une recette</h2>
+          <button type="button" class="modal-close" (click)="closeMealRecipePicker()" aria-label="Fermer">×</button>
+        </header>
+        <p class="meal-picker-meta">{{ mealPickerLabel() }}</p>
+
+        <label class="search">
+          <input
+            type="search"
+            [ngModel]="mealPickerQuery()"
+            (ngModelChange)="mealPickerQuery.set($event)"
+            placeholder="Rechercher dans mes recettes..."
+          >
+        </label>
+
+        <div class="cats meal-picker-cats">
+          @for (cat of mealPickerCats; track cat.id) {
+            <button
+              type="button"
+              [class.active]="mealPickerCat() === cat.id"
+              (click)="mealPickerCat.set(cat.id)"
+            >
+              {{ cat.label }}
+            </button>
+          }
+        </div>
+
+        @if (mealPickerRecipes().length) {
+          <div class="meal-picker-list">
+            @for (recipe of mealPickerRecipes(); track recipe.id) {
+              <button
+                type="button"
+                class="meal-picker-item"
+                [disabled]="mealPickerSaving()"
+                (click)="pickRecipeForMeal(recipe)"
+              >
+                <div
+                  class="meal-picker-cover"
+                  [style.background-image]="recipe.imageUrl ? 'url(' + recipe.imageUrl + ')' : null"
+                  [class.has-photo]="!!recipe.imageUrl"
+                ></div>
+                <span class="meal-picker-copy">
+                  <strong>{{ recipe.title }}</strong>
+                  <small>{{ recipe.durationMin }} min · {{ formatKcal(recipe.kcal) }} · {{ displayCategories(recipe.categories) }}</small>
+                </span>
+              </button>
+            }
+          </div>
+        } @else {
+          <p class="empty-ingredients">Aucune recette trouvée. Importe ou crée des recettes dans l’onglet Recettes.</p>
+        }
+
+        <div class="modal-actions">
+          <button type="button" class="btn" (click)="closeMealRecipePicker()" [disabled]="mealPickerSaving()">Annuler</button>
+        </div>
+      </div>
+    }
   }
 
   @if (tab() === 'courses') {

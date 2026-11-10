@@ -1,6 +1,6 @@
 ﻿# Synchronise les assets thèmes Ange / Démon (structure identique dans public/assets/themes/).
 param(
-  [ValidateSet('demon', 'ange')]
+  [ValidateSet('demon', 'ange', 'hiver')]
   [string]$Theme = 'demon'
 )
 
@@ -10,6 +10,13 @@ $design = Join-Path (Split-Path -Parent (Split-Path -Parent $root)) "Assets\Desi
 
 if ($Theme -eq 'demon') {
   $src = Join-Path $design "Demon\demon"
+} elseif ($Theme -eq 'hiver') {
+  $sh = Join-Path $PSScriptRoot "sync-hiver-assets.sh"
+  $dst = Join-Path $root "public\assets\themes\hiver"
+  $designHiver = Join-Path $design "Hiver"
+  podman run --rm -v "${designHiver}:/src:ro" -v "${dst}:/dst" -v "${sh}:/sync.sh:ro" docker.io/alpine:latest sh -c "sed 's/\r$//' /sync.sh | sh"
+  Write-Host "OK: $dst (hiver)"
+  exit 0
 } else {
   Write-Error "Sync ange : copier manuellement depuis Design theme/Ange vers public/assets/themes/ange"
   exit 1

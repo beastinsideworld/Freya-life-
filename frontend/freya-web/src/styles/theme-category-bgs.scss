@@ -8,7 +8,9 @@
 }
 
 :root[data-theme='ange'] .theme-modules,
-:root[data-theme='demon'] .theme-modules {
+:root[data-theme='demon'] .theme-modules,
+:root[data-theme='ete'] .theme-modules,
+:root[data-theme='hiver'] .theme-modules {
   display: grid;
 }
 
@@ -171,6 +173,40 @@
   background-image: url('../../public/assets/themes/ete/animaux.png');
 }
 
+:root[data-theme='hiver'] .theme-module {
+  color: #0a2f52;
+  border-color: #6b8cae;
+  background-color: #d8e6f4;
+}
+
+:root[data-theme='hiver'] .theme-module::before {
+  background: linear-gradient(
+    180deg,
+    rgba(216, 230, 244, 0.08) 5%,
+    rgba(216, 230, 244, 0.35) 45%,
+    rgba(197, 216, 236, 0.72) 100%
+  );
+}
+
+:root[data-theme='hiver'] .theme-module--planning {
+  background-image: url('../../public/assets/themes/hiver/planning.png');
+}
+:root[data-theme='hiver'] .theme-module--repas {
+  background-image: url('../../public/assets/themes/hiver/repas.png');
+}
+:root[data-theme='hiver'] .theme-module--voyage {
+  background-image: url('../../public/assets/themes/hiver/voyage.png');
+}
+:root[data-theme='hiver'] .theme-module--sport {
+  background-image: url('../../public/assets/themes/hiver/sport.png');
+}
+:root[data-theme='hiver'] .theme-module--finances {
+  background-image: url('../../public/assets/themes/hiver/finances.png');
+}
+:root[data-theme='hiver'] .theme-module--animaux {
+  background-image: url('../../public/assets/themes/hiver/animaux.png');
+}
+
 /* Héros Accueil Démon — theme-demon-headers.scss */
 
 @mixin theme-page-hero-bg($theme, $selector, $file) {
@@ -233,6 +269,18 @@
   background-position: 34% 28%;
 }
 
+@include theme-page-hero-bg('hiver', '.page.repas', 'repas.png');
+@include theme-page-hero-bg('hiver', '.page.voyages', 'voyage.png');
+@include theme-page-hero-bg('hiver', '.page.sport-page', 'sport.png');
+@include theme-page-hero-bg('hiver', '.page.budget-page', 'finances.png');
+@include theme-page-hero-bg('hiver', '.page.animaux-page', 'animaux.png');
+
+:root[data-theme='hiver'] .page.planning > .hero {
+  background-image: url('../../public/assets/themes/hiver/fonds/planning.png');
+  background-size: cover;
+  background-position: center 38%;
+}
+
 :root[data-theme='ete'] .page.planning > .hero::after,
 :root[data-theme='ete'] .page.repas > .hero::after,
 :root[data-theme='ete'] .page.voyages > .hero::after,
@@ -258,6 +306,24 @@
 :root[data-theme='demon'] .page.budget-page > .hero::after,
 :root[data-theme='demon'] .page.animaux-page > .hero::after {
   background: linear-gradient(180deg, rgba(11, 11, 14, 0.3), rgba(11, 11, 14, 0.75));
+}
+
+:root[data-theme='hiver'] .page.planning > .hero,
+:root[data-theme='hiver'] .page.repas > .hero,
+:root[data-theme='hiver'] .page.voyages > .hero,
+:root[data-theme='hiver'] .page.sport-page > .hero,
+:root[data-theme='hiver'] .page.budget-page > .hero,
+:root[data-theme='hiver'] .page.animaux-page > .hero {
+  background-color: #d8e6f4;
+}
+
+:root[data-theme='hiver'] .page.planning > .hero::after,
+:root[data-theme='hiver'] .page.repas > .hero::after,
+:root[data-theme='hiver'] .page.voyages > .hero::after,
+:root[data-theme='hiver'] .page.sport-page > .hero::after,
+:root[data-theme='hiver'] .page.budget-page > .hero::after,
+:root[data-theme='hiver'] .page.animaux-page > .hero::after {
+  background: linear-gradient(180deg, rgba(216, 230, 244, 0.12), rgba(197, 216, 236, 0.55));
 }
 
 @media (min-width: 768px) {
