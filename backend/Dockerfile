@@ -16,9 +16,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/* \
     && mkdir -p /app/data \
     && chown -R app:app /app/data
-USER app
 WORKDIR /app
 COPY --from=build /app/publish .
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN sed -i 's/\r$//' /docker-entrypoint.sh && chmod +x /docker-entrypoint.sh
 ENV ASPNETCORE_URLS=http://+:8080
 EXPOSE 8080
-ENTRYPOINT ["dotnet", "Freya.Api.dll"]
+ENTRYPOINT ["/bin/sh", "/docker-entrypoint.sh"]

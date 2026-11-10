@@ -13,6 +13,7 @@ using Freya.Infrastructure;
 using Freya.Infrastructure.Auth;
 using Freya.Infrastructure.Identity;
 using Freya.Infrastructure.Persistence;
+using Freya.Api;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -64,6 +65,13 @@ builder.Services
         };
     });
 builder.Services.AddAuthorization();
+builder.Services.AddHttpClient("CroqKilos", client =>
+{
+    client.BaseAddress = new Uri("https://api.croq-kilos.com/");
+    client.DefaultRequestHeaders.Accept.ParseAdd("application/json");
+    client.Timeout = TimeSpan.FromSeconds(60);
+});
+builder.Services.AddSingleton<CroqKilosRecipeSyncService>();
 
 var corsOrigins = (builder.Configuration["CORS_ORIGINS"] ?? string.Empty)
     .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
@@ -568,7 +576,7 @@ api.MapGet("/recipes", async (string? q, string? category, ICurrentUser current,
         query = query.Where(r => r.Categories.ToLower().Contains(cat));
     }
 
-    var recipes = await query.OrderByDescending(r => r.Title).Take(50).ToListAsync();
+    var recipes = await query.OrderBy(r => r.Title).Take(500).ToListAsync();
     return Results.Ok(recipes);
 }).RequireAuthorization();
 
@@ -596,6 +604,46 @@ api.MapPost("/recipes", async (RecipeCreateRequest request, ICurrentUser current
     db.Recipes.Add(entity);
     await db.SaveChangesAsync();
     return Results.Created($"/api/v1/recipes/{entity.Id}", entity);
+}).RequireAuthorization();
+
+api.MapPost("/recipes/sync/croq-kilos", (
+    CroqKilosSyncRequest request,
+    ICurrentUser current,
+    CroqKilosRecipeSyncService sync) =>
+{
+    if (current.UserId is null)
+    {
+        return Results.Unauthorized();
+    }
+
+    if (!sync.TryStart(current.UserId, request, out var error))
+    {
+        return Results.BadRequest(new { message = error });
+    }
+
+    return Results.Accepted("/api/v1/recipes/sync/croq-kilos/status", new
+    {
+        message = "Synchronisation Croq-Kilos démarrée. Un appel toutes les 5 secondes par identifiant.",
+        idFrom = request.IdFrom,
+        idTo = request.IdTo,
+        statusUrl = "/api/v1/recipes/sync/croq-kilos/status"
+    });
+}).RequireAuthorization();
+
+api.MapGet("/recipes/sync/croq-kilos/status", (ICurrentUser current, CroqKilosRecipeSyncService sync) =>
+{
+    if (current.UserId is null)
+    {
+        return Results.Unauthorized();
+    }
+
+    var status = sync.GetStatus();
+    if (status.UserId is not null && status.UserId != current.UserId)
+    {
+        return Results.Ok(new CroqKilosSyncStatus());
+    }
+
+    return Results.Ok(status);
 }).RequireAuthorization();
 
 api.MapPut("/recipes/{id:guid}", async (Guid id, RecipeCreateRequest request, ICurrentUser current, FreyaDbContext db) =>

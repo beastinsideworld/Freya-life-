@@ -1,21 +1,23 @@
 <section class="page budget-page">
   <header class="hero finance-hero">
-    <label class="scope-select">
-      <span class="sr-only">Vue</span>
-      <select
-        [ngModel]="ownerUserId() ?? 'me'"
-        (ngModelChange)="selectOwner($event)"
-        name="budgetOwner"
-        aria-label="Choisir mon budget ou un budget partagé"
-      >
-        <option value="me">Mon budget</option>
-        @for (owner of sharedOwners(); track owner.userId) {
-          <option [value]="owner.userId">{{ owner.displayName }}</option>
-        }
-      </select>
-    </label>
+    <div class="finance-hero-bar">
+      <label class="scope-select">
+        <span class="sr-only">Vue</span>
+        <select
+          [ngModel]="ownerUserId() ?? 'me'"
+          (ngModelChange)="selectOwner($event)"
+          name="budgetOwner"
+          aria-label="Choisir mon budget ou un budget partagé"
+        >
+          <option value="me">Mon budget</option>
+          @for (owner of sharedOwners(); track owner.userId) {
+            <option [value]="owner.userId">{{ owner.displayName }}</option>
+          }
+        </select>
+      </label>
 
-    <button type="button" class="share-btn" (click)="openShare()" aria-label="Partager mon budget">Partager</button>
+      <button type="button" class="share-btn" (click)="openShare()" aria-label="Partager mon budget">Partager</button>
+    </div>
 
     <div class="icon" aria-hidden="true">
       <img class="theme-ico" [src]="assetUrl(icons.portefeuille)" alt="" draggable="false" />

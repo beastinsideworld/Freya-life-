@@ -181,29 +181,34 @@
       >
     </label>
     <div class="cats">
-      @for (cat of recipeCats; track cat) {
+      @for (cat of recipeCategories(); track cat) {
         <button type="button" [class.active]="recipeCat() === cat.toLowerCase()" (click)="recipeCat.set(cat.toLowerCase())">
           {{ cat }}
         </button>
       }
     </div>
 
-    <div class="recipes">
-      @for (recipe of filteredRecipes(); track recipe.id) {
-        <article class="recipe-card" (click)="openRecipeDetail(recipe)" role="button" tabindex="0">
-          <div
-            class="cover"
-            aria-hidden="true"
-            [style.background-image]="recipe.imageUrl ? 'url(' + recipe.imageUrl + ')' : null"
-            [class.has-photo]="!!recipe.imageUrl"
-          ></div>
-          <div class="info">
-            <h3>{{ recipe.title }}</h3>
-            <p>{{ recipe.durationMin }} min · {{ recipe.difficulty }} · {{ formatKcal(recipe.kcal) }}</p>
-          </div>
-        </article>
-      }
-    </div>
+    @for (group of recipeGroups(); track group.category) {
+      <section class="recipe-group">
+        <h3>{{ group.category }}</h3>
+        <div class="recipes">
+          @for (recipe of group.recipes; track recipe.id) {
+            <article class="recipe-card" (click)="openRecipeDetail(recipe)" role="button" tabindex="0">
+              <div
+                class="cover"
+                aria-hidden="true"
+                [style.background-image]="recipe.imageUrl ? 'url(' + recipe.imageUrl + ')' : null"
+                [class.has-photo]="!!recipe.imageUrl"
+              ></div>
+              <div class="info">
+                <h3>{{ recipe.title }}</h3>
+                <p>{{ recipe.durationMin }} min · {{ recipe.difficulty }} · {{ formatKcal(recipe.kcal) }}</p>
+              </div>
+            </article>
+          }
+        </div>
+      </section>
+    }
   }
 
   @if (recipeModalOpen()) {
@@ -349,16 +354,24 @@
         <div class="detail-cover" [style.background-image]="'url(' + recipe.imageUrl + ')'"></div>
       }
 
-      <p class="detail-meta">{{ recipe.durationMin }} min · {{ recipe.difficulty }} · {{ formatKcal(recipe.kcal) }} · {{ recipe.categories || 'Sans catégorie' }}</p>
+      <p class="detail-meta">{{ recipe.durationMin }} min · {{ recipe.difficulty }} · {{ formatKcal(recipe.kcal) }} · {{ displayCategories(recipe.categories) }}</p>
 
       <section class="detail-block">
-        <h3>Ingrédients</h3>
+        <div class="people-bar">
+          <h3>Ingrédients</h3>
+          <div class="people-stepper">
+            <button type="button" (click)="changePeople(-1)" [disabled]="recipePeople() <= 1" aria-label="Retirer une personne">−</button>
+            <strong>{{ recipePeople() }}</strong>
+            <button type="button" (click)="changePeople(1)" aria-label="Ajouter une personne">+</button>
+          </div>
+        </div>
+        <p class="people-hint">Quantités pour {{ recipePeople() }} personne{{ recipePeople() > 1 ? 's' : '' }}</p>
         @if (recipe.ingredients?.length) {
           <ul class="ingredient-list readonly">
             @for (item of recipe.ingredients!; track item.id) {
               <li>
                 <span>{{ item.name }}</span>
-                <span class="qty">{{ item.quantity }} {{ item.unit }}</span>
+                <span class="qty">{{ scaledQuantity(recipe, item) }} {{ item.unit }}</span>
               </li>
             }
           </ul>

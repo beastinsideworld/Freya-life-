@@ -453,6 +453,17 @@ button.cell.filled:focus-visible {
   font-size: 1.15rem;
 }
 
+.recipe-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.recipe-group h3 {
+  margin: 0.35rem 0 0;
+  font-size: 0.95rem;
+}
+
 .recipes {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -626,8 +637,50 @@ button.cell.filled:focus-visible {
 }
 
 .detail-block h3 {
-  margin: 0 0 0.45rem;
+  margin: 0;
   font-size: 1rem;
+}
+
+.people-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-bottom: 0.25rem;
+}
+
+.people-stepper {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.people-stepper strong {
+  min-width: 1.2rem;
+  text-align: center;
+}
+
+.people-stepper button {
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 50%;
+  border: 1px solid var(--contour);
+  background: var(--grad-btn);
+  box-shadow: var(--shadow-glow);
+  color: var(--ivory);
+  font-size: 1.2rem;
+  line-height: 1;
+  padding: 0;
+}
+
+.people-stepper button:disabled {
+  opacity: 0.45;
+}
+
+.people-hint {
+  margin: 0 0 0.45rem;
+  color: var(--muted);
+  font-size: 0.78rem;
 }
 
 .detail-instructions {

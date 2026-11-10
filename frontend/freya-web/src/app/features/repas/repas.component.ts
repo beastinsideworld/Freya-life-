@@ -51,6 +51,7 @@ interface Recipe {
   imageUrl?: string | null;
   instructions?: string | null;
   ingredients?: RecipeIngredient[];
+  servings?: number;
   kcal?: number | null;
 }
 
@@ -70,6 +71,7 @@ export class RepasComponent implements OnInit {
   readonly recipeQuery = signal('');
   readonly recipeModalOpen = signal(false);
   readonly recipeDetail = signal<Recipe | null>(null);
+  readonly recipePeople = signal(1);
   readonly editingRecipeId = signal<string | null>(null);
   readonly recipeSaving = signal(false);
   readonly recipeFormError = signal('');
@@ -98,7 +100,6 @@ export class RepasComponent implements OnInit {
     Snack: 'assets/meals/collation.png',
     Dinner: 'assets/meals/diner.png'
   };
-  readonly recipeCats = ['Tout', 'Rapide', 'Healthy', 'Végé', 'Viande', 'Poisson', 'Dessert'];
   readonly recipeFormCats = ['Rapide', 'Healthy', 'Végé', 'Viande', 'Poisson', 'Dessert'];
   readonly difficulties = ['Facile', 'Moyen', 'Difficile'];
   readonly units = ['pièce', 'g', 'kg', 'mL', 'L', 'botte', 'sachet', 'boîte', 'tranche', 'c. à s.', 'c. à c.'];
@@ -136,6 +137,31 @@ export class RepasComponent implements OnInit {
       const okC = cat === 'tout' || (r.categories || '').toLowerCase().includes(cat);
       return okQ && okC;
     });
+  });
+
+  readonly recipeCategories = computed(() => {
+    const present = new Set(this.recipes().map((recipe) => this.primaryCategory(recipe)));
+    const ranked = [...present].sort(
+      (a, b) => this.categoryRank(a) - this.categoryRank(b) || a.localeCompare(b, 'fr')
+    );
+    return ['Tout', ...ranked];
+  });
+
+  readonly recipeGroups = computed(() => {
+    const groups = new Map<string, Recipe[]>();
+    for (const recipe of this.filteredRecipes()) {
+      const category = this.primaryCategory(recipe);
+      const bucket = groups.get(category) ?? [];
+      bucket.push(recipe);
+      groups.set(category, bucket);
+    }
+
+    return [...groups.entries()]
+      .sort((a, b) => this.categoryRank(a[0]) - this.categoryRank(b[0]) || a[0].localeCompare(b[0], 'fr'))
+      .map(([category, recipes]) => ({
+        category,
+        recipes: [...recipes].sort((a, b) => a.title.localeCompare(b.title, 'fr'))
+      }));
   });
 
   readonly catalogSuggestions = computed(() => searchCatalog(this.articleQuery(), 8));
@@ -273,7 +299,29 @@ export class RepasComponent implements OnInit {
   }
 
   openRecipeDetail(recipe: Recipe): void {
+    this.recipePeople.set(Math.max(1, recipe.servings ?? 1));
     this.recipeDetail.set(recipe);
+  }
+
+  changePeople(delta: number): void {
+    this.recipePeople.update((value) => Math.max(1, value + delta));
+  }
+
+  scaledQuantity(recipe: Recipe, item: RecipeIngredient): string {
+    const base = Math.max(1, recipe.servings ?? 1);
+    const people = Math.max(1, this.recipePeople());
+    const raw = Number(String(item.quantity).replace(',', '.'));
+    if (!Number.isFinite(raw)) return item.quantity;
+    const value = Math.round(raw * (people / base) * 100) / 100;
+    return Number.isInteger(value) ? String(value) : String(value);
+  }
+
+  displayCategories(raw: string | null | undefined): string {
+    const parts = (raw || '')
+      .split(';')
+      .map((part) => part.trim())
+      .filter((part) => part && !part.toLowerCase().startsWith('croq-kilos:'));
+    return parts.join(' · ') || 'Sans catégorie';
   }
 
   closeRecipeDetail(): void {
@@ -618,6 +666,7 @@ export class RepasComponent implements OnInit {
   }
 
   private mapRecipe(item: any, fallbackImage?: string | null): Recipe {
+    const parsed = this.parseIngredients(item.ingredients);
     return {
       id: String(item.id ?? createId()),
       title: item.title,
@@ -627,28 +676,88 @@ export class RepasComponent implements OnInit {
       favorite: !!item.favorite,
       imageUrl: item.imageUrl ?? fallbackImage ?? null,
       instructions: item.instructions ?? null,
-      ingredients: this.parseIngredients(item.ingredients),
+      ingredients: parsed.ingredients,
+      servings: parsed.servings,
       kcal: item.kcal != null ? Number(item.kcal) : null
     };
   }
 
-  private parseIngredients(raw: unknown): RecipeIngredient[] {
-    if (Array.isArray(raw)) {
-      return raw.map((item: any) => ({
-        id: String(item.id ?? createId()),
-        name: String(item.name ?? ''),
-        quantity: String(item.quantity ?? '1'),
-        unit: String(item.unit ?? 'pièce')
-      }));
-    }
+  private parseIngredients(raw: unknown): { ingredients: RecipeIngredient[]; servings: number } {
     if (typeof raw === 'string' && raw.trim()) {
       try {
         return this.parseIngredients(JSON.parse(raw));
       } catch {
-        return [];
+        return { ingredients: [], servings: 1 };
       }
     }
-    return [];
+
+    if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+      const payload = raw as { items?: unknown; Items?: unknown; servings?: unknown; Servings?: unknown };
+      const nested = this.parseIngredients(payload.items ?? payload.Items ?? []);
+      const servings = Number(payload.servings ?? payload.Servings ?? nested.servings);
+      return {
+        ingredients: nested.ingredients,
+        servings: Number.isFinite(servings) && servings > 0 ? servings : 1
+      };
+    }
+
+    if (Array.isArray(raw)) {
+      return {
+        servings: 1,
+        ingredients: raw
+          .map((item: any) => ({
+            id: String(item.id ?? item.Id ?? createId()),
+            name: String(item.name ?? item.Name ?? '').trim(),
+            quantity: String(item.quantity ?? item.Quantity ?? '1'),
+            unit: String(item.unit ?? item.Unit ?? 'pièce')
+          }))
+          .filter((item) => item.name.length > 0)
+      };
+    }
+
+    return { ingredients: [], servings: 1 };
+  }
+
+  private primaryCategory(recipe: Recipe): string {
+    const parts = (recipe.categories || '')
+      .split(';')
+      .map((part) => part.trim())
+      .filter(Boolean);
+    const dish = parts.find((part) => {
+      const key = part.toLowerCase();
+      return !key.startsWith('croq-kilos:') && !key.startsWith('sans ');
+    });
+    return dish ? dish.charAt(0).toUpperCase() + dish.slice(1) : 'Autres';
+  }
+
+  private categoryRank(name: string): number {
+    const key = name
+      .trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/\p{Diacritic}/gu, '');
+    const order = [
+      'petit-dejeuner',
+      'petits-dejeuners',
+      'collation',
+      'collations',
+      'entree',
+      'entrees',
+      'apero',
+      'plat',
+      'plats',
+      'accompagnement',
+      'accompagnements',
+      'viande',
+      'poisson',
+      'rapide',
+      'healthy',
+      'vege',
+      'dessert',
+      'desserts'
+    ];
+    const index = order.findIndex((item) => key === item);
+    return index === -1 ? 500 : index;
   }
 
   private emptyRecipeForm() {
