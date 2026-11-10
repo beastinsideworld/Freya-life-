@@ -28,7 +28,7 @@ export class ParametresComponent implements OnInit {
   readonly navTabsModalOpen = signal(false);
   readonly themeCategories = THEME_CATEGORIES;
   readonly toggleableTabs = TOGGLEABLE_NAV_TABS;
-  readonly selectedThemeId = signal<ThemeId>('freya');
+  readonly selectedThemeId = signal<ThemeId>('ange');
   readonly currentTheme = computed(() => findTheme(this.selectedThemeId()));
   readonly hiddenNavTabs = signal<NavTabId[]>([]);
   readonly navTabOrder = signal<NavTabId[]>([]);

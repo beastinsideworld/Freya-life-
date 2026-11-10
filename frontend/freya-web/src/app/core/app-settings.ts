@@ -21,7 +21,7 @@ const REMINDER_SNOOZED_KEY = 'freya.reminder.snoozed.v1';
 const DEFAULT_SETTINGS: AppSettings = {
   reminderEnabled: true,
   reminderTime: '20:00',
-  themeId: 'freya',
+  themeId: 'ange',
   hiddenNavTabs: [],
   navTabOrder: []
 };

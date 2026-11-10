@@ -172,13 +172,13 @@
 
   <section class="panel">
     <h2>Apparence</h2>
-    <p class="hint">Noir Velours, Rouge Glossy et les autres thèmes s’appliquent à toute l’app.</p>
+    <p class="hint">Ange, Démon et les saisons s’appliquent à toute l’app.</p>
 
     <div class="current-appearance">
-      <span class="swatch large" [style.background]="currentTheme()?.swatch ?? '#8f2d3b'" aria-hidden="true"></span>
+      <span class="swatch large" [style.background]="currentTheme()?.swatch ?? '#D8B981'" aria-hidden="true"></span>
       <div class="current-info">
-        <strong>{{ currentTheme()?.label ?? 'Freya' }}</strong>
-        <span>{{ currentTheme()?.categoryLabel ?? 'Classique' }}</span>
+        <strong>{{ currentTheme()?.label ?? 'Ange' }}</strong>
+        <span>{{ currentTheme()?.categoryLabel ?? 'Céleste' }}</span>
       </div>
       <button type="button" class="btn primary" (click)="openThemeModal()">Changer</button>
     </div>
