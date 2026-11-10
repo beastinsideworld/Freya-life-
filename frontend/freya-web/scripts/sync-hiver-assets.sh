@@ -11,13 +11,8 @@ cp "$SRC/Famille enlacée sous la neige-2.png" "$DST/famille-fantasy.png"
 # Nouveaux paysages (noms FR longs → fichiers stables ASCII)
 # 1 vallée → accueil | 2 forêt → tâches | 3 village → événement
 # 4 lac → repas | 5 clairière → planning | 6 sentier → voyage
-cp "$SRC/fonds/"Vallée\ enneigée\ au\ lever\ du\ jour-1.png "$DST/fonds/accueil.png"
-cp "$SRC/fonds/"Forêt\ enneigée\ aux\ montagnes\ lointaines-2.png "$DST/fonds/taches.png"
-cp "$SRC/fonds/"Village\ alpin\ sous\ la\ neige\ au\ lever\ du\ jour-3.png "$DST/fonds/evenement.png"
-cp "$SRC/fonds/"Lac\ gelé\ sous\ les\ sommets\ enneigés-4.png "$DST/fonds/repas.png"
-cp "$SRC/fonds/"Clairière\ enneigée\ aux\ lueurs\ dorées-5.png "$DST/fonds/planning.png"
-cp "$SRC/fonds/"Sentier\ enneigé\ vers\ les\ montagnes\ lointaines-6.png "$DST/fonds/voyage.png"
-cp "$SRC/fonds/"Paysage\ hivernal\ enneigé\ au\ lever\ du\ jour.png "$DST/fonds/paysage.png"
+# Paysages synchronisés en .jpg (déjà compressés côté public) — ne pas écraser
+# avec les PNG source 3Mo. Utiliser scripts/slim-theme-assets.py si besoin.
 cp "$SRC/planning.png" "$DST/planning.png"
 cp "$SRC/finance/Graphique analytique givré hivernal-5.png" "$DST/finance/graphique.png"
 cp "$SRC/finance/Graphique de croissance hivernal givré-4.png" "$DST/finance/croissance.png"

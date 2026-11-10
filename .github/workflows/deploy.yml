@@ -12,6 +12,7 @@ jobs:
   api:
     name: Image de l'API
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     env:
       IMAGE: ${{ vars.REGISTRY_IMAGE || 'registry.bariserv.net/freya' }}
     steps:
@@ -36,6 +37,7 @@ jobs:
   front:
     name: GitHub Pages
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     permissions:
       contents: read
       pages: write

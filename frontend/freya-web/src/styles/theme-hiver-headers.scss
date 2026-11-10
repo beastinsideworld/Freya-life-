@@ -62,7 +62,7 @@ $hiver-outline: 0 0 1px #0a2f52, 0 0 2px #0a2f52, 1px 0 0 #0a2f52, -1px 0 0 #0a2
   text-align: center;
   padding: 1.1rem 1rem 0.85rem;
   @include hiver-card(
-    'accueil.png',
+    'accueil.jpg',
     center 42%,
     linear-gradient(
       180deg,
@@ -131,7 +131,7 @@ $hiver-outline: 0 0 1px #0a2f52, 0 0 2px #0a2f52, 1px 0 0 #0a2f52, -1px 0 0 #0a2
   border-radius: var(--radius-pill);
   color: $hiver-ink;
   @include hiver-card(
-    'voyage.png',
+    'voyage.jpg',
     center 58%,
     linear-gradient(
       90deg,
@@ -169,7 +169,7 @@ $hiver-outline: 0 0 1px #0a2f52, 0 0 2px #0a2f52, 1px 0 0 #0a2f52, -1px 0 0 #0a2
   padding: 0.45rem 0.35rem;
   min-height: 5rem;
   @include hiver-card(
-    'evenement.png',
+    'evenement.jpg',
     center 48%,
     linear-gradient(
       90deg,
@@ -209,7 +209,7 @@ $hiver-outline: 0 0 1px #0a2f52, 0 0 2px #0a2f52, 1px 0 0 #0a2f52, -1px 0 0 #0a2
 :root[data-theme='hiver'] .page.accueil > .tasks {
   min-height: 11rem;
   @include hiver-card(
-    'taches.png',
+    'taches.jpg',
     center 40%,
     linear-gradient(
       180deg,
@@ -251,7 +251,7 @@ $hiver-outline: 0 0 1px #0a2f52, 0 0 2px #0a2f52, 1px 0 0 #0a2f52, -1px 0 0 #0a2
 :root[data-theme='hiver'] .page.accueil > .meals {
   min-height: 11rem;
   @include hiver-card(
-    'repas.png',
+    'repas.jpg',
     center 46%,
     linear-gradient(
       180deg,
@@ -295,7 +295,7 @@ $hiver-outline: 0 0 1px #0a2f52, 0 0 2px #0a2f52, 1px 0 0 #0a2f52, -1px 0 0 #0a2
 :root[data-theme='hiver'] .page.accueil > .week {
   min-height: 12rem;
   @include hiver-card(
-    'planning.png',
+    'planning.jpg',
     center 38%,
     linear-gradient(
       180deg,
