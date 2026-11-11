@@ -210,6 +210,15 @@
           </button>
         }
       </div>
+
+      <button type="button" class="sport-pick-bubble" (click)="openSportPicker()">
+        <span class="sport-pick-emoji" aria-hidden="true">{{ selectedDayDiscipline().emoji }}</span>
+        <span class="sport-pick-copy">
+          <em>Sport du jour</em>
+          <strong>{{ selectedDayDiscipline().label }}</strong>
+        </span>
+        <span class="sport-pick-action" aria-hidden="true">Choisir ›</span>
+      </button>
     </section>
 
     @if (store.selectedSession(); as session) {
@@ -240,24 +249,34 @@
       <section class="panel">
         <header class="card-head">
           <h2>Exercices de la séance</h2>
-          <button type="button" class="ghost-link">✎ Modifier la séance</button>
+          <button type="button" class="ghost-link" (click)="openSessionEditor()">✎ Modifier la séance</button>
         </header>
         <ul class="exercise-list">
           @for (ex of session.exercises; track ex.id) {
-            <li [class.done]="ex.done">
+            <li [class.done]="ex.done" [class.editing]="expandedExerciseId() === ex.id">
               <span class="ex-emoji" aria-hidden="true">
                 <img class="sport-ico" [src]="exerciseIconSrc(ex.emoji)" alt="" draggable="false" />
               </span>
-              <div class="ex-main">
+              <button
+                type="button"
+                class="ex-main ex-main-btn"
+                (click)="toggleExerciseEditor(ex.id)"
+                [attr.aria-expanded]="expandedExerciseId() === ex.id"
+                [attr.aria-label]="'Modifier ' + ex.name + ' : séries, répétitions, poids'"
+              >
                 <strong>{{ ex.name }}</strong>
                 <span class="muscle">{{ ex.muscle }}</span>
                 <div class="ex-meta">
                   <span>{{ ex.sets }} × {{ ex.reps }}</span>
-                  <span>{{ ex.loadKg != null ? ex.loadKg + ' kg' : '—' }}</span>
+                  <span>@if (ex.loadKg != null) { {{ numberFr(ex.loadKg, ex.loadKg % 1 === 0 ? 0 : 1) }} kg } @else { — }</span>
                   <span>{{ formatRest(ex.restSec) }}</span>
                   <span class="rpe">RPE {{ ex.rpe }}</span>
                 </div>
-              </div>
+                @if (store.personalBestKg(ex); as pr) {
+                  <span class="ex-pr">Record perso : {{ numberFr(pr, pr % 1 === 0 ? 0 : 1) }} kg</span>
+                }
+                <span class="ex-edit-hint">{{ expandedExerciseId() === ex.id ? 'Fermer' : 'Modifier séries, reps, poids' }}</span>
+              </button>
               <button
                 type="button"
                 class="check"
@@ -265,13 +284,37 @@
                 (click)="store.toggleExercise(session.id, ex.id)"
                 [attr.aria-label]="ex.done ? 'Marquer non fait' : 'Marquer fait'"
               >{{ ex.done ? '✓' : '' }}</button>
+              @if (expandedExerciseId() === ex.id) {
+                <div class="ex-inline-editor" (click)="$event.stopPropagation()">
+                  <label>
+                    Séries
+                    <input type="number" min="1" max="20" name="inlineSets" [(ngModel)]="draftExerciseSets" (ngModelChange)="saveExpandedExercise()" />
+                  </label>
+                  <label>
+                    Répétitions
+                    <input type="number" min="1" max="100" name="inlineReps" [(ngModel)]="draftExerciseReps" (ngModelChange)="saveExpandedExercise()" />
+                  </label>
+                  <label>
+                    Poids (kg)
+                    <input type="number" min="0" step="0.5" name="inlineLoad" [(ngModel)]="draftExerciseLoadKg" (ngModelChange)="saveExpandedExercise()" placeholder="0" />
+                  </label>
+                  <label>
+                    Repos (s)
+                    <input type="number" min="0" max="600" step="5" name="inlineRest" [(ngModel)]="draftExerciseRestSec" (ngModelChange)="saveExpandedExercise()" />
+                  </label>
+                  <label>
+                    RPE
+                    <input type="number" min="1" max="10" name="inlineRpe" [(ngModel)]="draftExerciseRpe" (ngModelChange)="saveExpandedExercise()" />
+                  </label>
+                </div>
+              }
             </li>
           } @empty {
             <li class="empty-row">Aucun exercice pour cette séance.</li>
           }
         </ul>
         <div class="session-actions">
-          <button type="button" class="btn">+ Ajouter un exercice</button>
+          <button type="button" class="btn" (click)="openExercisePicker()">+ Ajouter un exercice</button>
           <button type="button" class="btn primary" (click)="store.completeSession(session.id)">▶ Terminer la séance</button>
         </div>
       </section>
@@ -540,6 +583,241 @@
       </div>
 
       <button type="button" class="btn primary wide" (click)="saveGoal()">Enregistrer l’objectif</button>
+    </div>
+  </div>
+}
+
+@if (sportPickerOpen()) {
+  <div class="modal-backdrop" (click)="closeSportPicker()" role="presentation"></div>
+  <div class="modal form-modal sport-picker-modal" role="dialog" aria-modal="true" aria-labelledby="sport-picker-title">
+    <header class="modal-head">
+      <h2 id="sport-picker-title">Choisir un sport</h2>
+      <button type="button" class="modal-close" (click)="closeSportPicker()" aria-label="Fermer">×</button>
+    </header>
+
+    <p class="hint sport-picker-hint">
+      Jour sélectionné : <strong>{{ selectedDayLabel() }}</strong>
+    </p>
+
+    <div class="form-grid sport-picker-grid">
+      <label class="field wide">
+        Rechercher ou saisir un sport
+        <input
+          type="search"
+          [ngModel]="disciplineQuery()"
+          (ngModelChange)="disciplineQuery.set($event); draftDisciplineId.set(null)"
+          name="disciplineQuery"
+          placeholder="Ex. course, Beat Saber, yoga…"
+          autocomplete="off"
+        />
+      </label>
+
+      <label class="field wide">
+        Catégorie
+        <select
+          [ngModel]="disciplineCategory()"
+          (ngModelChange)="disciplineCategory.set($event)"
+          name="disciplineCategory"
+        >
+          @for (cat of disciplineCategories; track cat) {
+            <option [value]="cat">{{ cat }}</option>
+          }
+        </select>
+      </label>
+
+      @if (disciplineQuery().trim().length >= 2 && filteredDisciplines().length === 0) {
+        <button type="button" class="btn primary wide" (click)="useTypedSportAsCustom()">
+          Utiliser « {{ disciplineQuery().trim() }} » comme sport personnalisé
+        </button>
+      }
+
+      <ul class="discipline-list wide" role="listbox" aria-label="Sports">
+        @for (opt of filteredDisciplines(); track opt.id) {
+          <li>
+            <button
+              type="button"
+              class="discipline-row"
+              role="option"
+              [class.active]="draftDisciplineId() === opt.id"
+              [attr.aria-selected]="draftDisciplineId() === opt.id"
+              (click)="pickDiscipline(opt.id)"
+            >
+              <span class="discipline-emoji" aria-hidden="true">{{ opt.emoji }}</span>
+              <span class="discipline-main">
+                <strong>{{ opt.label }}</strong>
+                <span>{{ opt.category }}</span>
+              </span>
+            </button>
+          </li>
+        } @empty {
+          <li class="discipline-empty">Aucun sport ne correspond — tu peux saisir un nom au-dessus.</li>
+        }
+      </ul>
+
+      <div class="sport-picker-actions wide">
+        <button type="button" class="btn ghost" (click)="closeSportPicker()">Annuler</button>
+        <button type="button" class="btn primary" (click)="saveSportDiscipline()">Valider</button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (sessionEditOpen()) {
+  <div class="modal-backdrop" (click)="closeSessionEditor()" role="presentation"></div>
+  <div class="modal form-modal sport-picker-modal" role="dialog" aria-modal="true" aria-labelledby="session-edit-title">
+    <header class="modal-head">
+      <h2 id="session-edit-title">Modifier la séance</h2>
+      <button type="button" class="modal-close" (click)="closeSessionEditor()" aria-label="Fermer">×</button>
+    </header>
+    <p class="hint sport-picker-hint">
+      Sport du jour : <strong>{{ selectedDayDiscipline().emoji }} {{ selectedDayDiscipline().label }}</strong>
+    </p>
+  @if (store.selectedSession(); as session) {
+    <div class="form-grid session-edit-grid">
+      <label class="field wide">Titre
+        <input [(ngModel)]="draftSessionTitle" name="sessionTitle" />
+      </label>
+      <label class="field wide">Détail / focus
+        <input [(ngModel)]="draftSessionDetail" name="sessionDetail" placeholder="Ex. Pecs / Dos" />
+      </label>
+      <label class="field">Durée (min)
+        <input type="number" min="5" max="300" [(ngModel)]="draftSessionDuration" name="sessionDuration" />
+      </label>
+
+      @if (session.exercises.length) {
+        <div class="session-edit-list wide" aria-label="Exercices déjà planifiés">
+          <h3>Exercices de la séance</h3>
+          <ul class="discipline-list session-ex-list">
+            @for (ex of session.exercises; track ex.id) {
+              <li class="session-ex-row">
+                <button type="button" class="session-ex-open" (click)="openExerciseEdit(ex.id)">
+                  {{ ex.emoji }} {{ ex.name }}
+                  <span>{{ ex.sets }}×{{ ex.reps }}@if (ex.loadKg != null) { · {{ ex.loadKg }} kg }</span>
+                </button>
+                <button type="button" class="btn ghost tiny" (click)="removeSessionExercise(ex.id)">Retirer</button>
+              </li>
+            }
+          </ul>
+        </div>
+      }
+
+      <div class="sport-picker-actions wide">
+        <button type="button" class="btn ghost" (click)="closeSessionEditor()">Annuler</button>
+        <button type="button" class="btn" (click)="closeSessionEditor(); openExercisePicker()">+ Ajouter un exercice</button>
+        <button type="button" class="btn primary" (click)="saveSessionEditor()">Enregistrer</button>
+      </div>
+    </div>
+  }
+  </div>
+}
+
+@if (exercisePickerOpen()) {
+  <div class="modal-backdrop" (click)="closeExercisePicker()" role="presentation"></div>
+  <div class="modal form-modal sport-picker-modal" role="dialog" aria-modal="true" aria-labelledby="exercise-picker-title">
+    <header class="modal-head">
+      <h2 id="exercise-picker-title">Ajouter un exercice</h2>
+      <button type="button" class="modal-close" (click)="closeExercisePicker()" aria-label="Fermer">×</button>
+    </header>
+    <p class="hint sport-picker-hint">
+      Propositions pour <strong>{{ selectedDayDiscipline().label }}</strong>
+      ({{ dayExerciseCatalog().length }} modèles)
+    </p>
+    <div class="form-grid">
+      <label class="field wide">
+        Rechercher
+        <input
+          type="search"
+          [ngModel]="exerciseQuery()"
+          (ngModelChange)="exerciseQuery.set($event)"
+          name="exerciseQuery"
+          placeholder="Nom, muscle, bloc…"
+          autocomplete="off"
+        />
+      </label>
+      <ul class="discipline-list wide" role="listbox" aria-label="Exercices">
+        @for (tpl of filteredExerciseTemplates(); track tpl.id) {
+          <li>
+            <button type="button" class="discipline-row" (click)="pickExerciseTemplate(tpl)">
+              <span class="discipline-emoji" aria-hidden="true">{{ tpl.emoji }}</span>
+              <span class="discipline-main">
+                <strong>{{ tpl.name }}</strong>
+                <span>
+                  {{ tpl.muscle }} · {{ tpl.defaultSets }}×{{ tpl.defaultReps }}
+                  @if (tpl.defaultLoadKg != null) { · {{ tpl.defaultLoadKg }} kg }
+                  @if (store.personalBestForTemplate(tpl.id); as pr) {
+                    · record {{ numberFr(pr, pr % 1 === 0 ? 0 : 1) }} kg
+                  }
+                </span>
+              </span>
+              <span class="ex-add-label">Choisir</span>
+            </button>
+          </li>
+        } @empty {
+          <li class="discipline-empty">Aucun modèle — change de sport du jour ou affine la recherche.</li>
+        }
+      </ul>
+      <div class="sport-picker-actions wide">
+        <button type="button" class="btn ghost" (click)="closeExercisePicker()">Fermer</button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (exerciseConfigureOpen()) {
+  <div class="modal-backdrop" (click)="closeExerciseConfigure()" role="presentation"></div>
+  <div class="modal form-modal sport-picker-modal exercise-config-modal" role="dialog" aria-modal="true" aria-labelledby="exercise-config-title">
+    <header class="modal-head">
+      <h2 id="exercise-config-title">
+        @if (exerciseConfigureMode() === 'add') {
+          Paramètres — {{ configureExerciseTitle() }}
+        } @else {
+          Modifier — {{ configureExerciseTitle() }}
+        }
+      </h2>
+      <button type="button" class="modal-close" (click)="closeExerciseConfigure()" aria-label="Fermer">×</button>
+    </header>
+  @if (configurePersonalBestKg(); as pr) {
+    <p class="hint sport-picker-hint">
+      Record perso sur cet exercice : <strong>{{ numberFr(pr, pr % 1 === 0 ? 0 : 1) }} kg</strong>
+    </p>
+  }
+    <div class="form-grid exercise-config-grid">
+      <label class="field">
+        Séries
+        <input type="number" min="1" max="20" [(ngModel)]="draftExerciseSets" name="exSets" />
+      </label>
+      <label class="field">
+        Répétitions
+        <input type="number" min="1" max="100" [(ngModel)]="draftExerciseReps" name="exReps" />
+      </label>
+      <label class="field wide">
+        Charge (kg)
+        <input
+          type="number"
+          min="0"
+          step="0.5"
+          [(ngModel)]="draftExerciseLoadKg"
+          name="exLoad"
+          placeholder="Laisser vide si sans charge"
+        />
+      </label>
+      <label class="field">
+        Repos (sec)
+        <input type="number" min="0" max="600" step="5" [(ngModel)]="draftExerciseRestSec" name="exRest" />
+      </label>
+      <label class="field">
+        RPE (1–10)
+        <input type="number" min="1" max="10" [(ngModel)]="draftExerciseRpe" name="exRpe" />
+      </label>
+      <p class="hint wide exercise-config-note">
+        Ajuste les valeurs prévues pour cette séance. Le record perso se met à jour quand tu coches l'exercice comme fait.
+      </p>
+      <div class="sport-picker-actions wide">
+        <button type="button" class="btn ghost" (click)="closeExerciseConfigure()">Annuler</button>
+        <button type="button" class="btn primary" (click)="confirmExerciseConfigure()">
+          @if (exerciseConfigureMode() === 'add') { Ajouter à la séance } @else { Enregistrer }
+        </button>
+      </div>
     </div>
   </div>
 }

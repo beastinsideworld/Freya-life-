@@ -180,8 +180,8 @@ public sealed class CroqKilosRecipeSyncService
         var db = scope.ServiceProvider.GetRequiredService<FreyaDbContext>();
         var marker = $"{CroqMarkerPrefix}{croqId}";
 
-        var existing = await db.Recipes
-            .FirstOrDefaultAsync(r => r.UserId == userId && r.Categories.Contains(marker));
+        /* Catalogue partagé : UserId null => visible pour tous les comptes (GET /recipes). */
+        var existing = await db.Recipes.FirstOrDefaultAsync(r => r.Categories.Contains(marker));
 
         if (existing is not null && !overwrite)
         {
@@ -191,8 +191,10 @@ public sealed class CroqKilosRecipeSyncService
         var entity = existing ?? new Recipe
         {
             Id = Guid.NewGuid(),
-            UserId = userId
+            UserId = null
         };
+
+        entity.UserId = null;
 
         entity.Title = croq.Title!.Trim();
         entity.DurationMin = croq.TotalCookingTime ?? croq.PreparationTime + croq.CookingTime;

@@ -98,6 +98,7 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<FreyaDbContext>();
     var users = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
+<<<<<<< Updated upstream
     var dbInfo = scope.ServiceProvider.GetRequiredService<DatabaseRuntimeInfo>();
     var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("DatabaseBootstrap");
 
@@ -121,6 +122,16 @@ using (var scope = app.Services.CreateScope())
         await EnsurePetShareSchemaAsync(db);
     }
 
+=======
+    await db.Database.EnsureCreatedAsync();
+    await EnsureEventSchemaAsync(db);
+    await EnsureRecipeSchemaAsync(db);
+    await PublishCatalogRecipesAsync(db);
+    await EnsureSocialSchemaAsync(db);
+    await EnsureFamilySchemaAsync(db);
+    await EnsureBudgetSchemaAsync(db);
+    await EnsurePetShareSchemaAsync(db);
+>>>>>>> Stashed changes
     await EnsureFriendCodesAsync(db, users);
 }
 
@@ -1888,6 +1899,61 @@ static async Task EnsureRecipeSchemaAsync(FreyaDbContext db)
     catch
     {
         /* column may already exist */
+    }
+}
+
+/// <summary>Recettes importées (Croq-Kilos, etc.) : UserId null pour que tout le monde les voie.</summary>
+static async Task PublishCatalogRecipesAsync(FreyaDbContext db)
+{
+    const string croqMarker = "croq-kilos:";
+
+    await db.Database.ExecuteSqlRawAsync($"""
+        UPDATE "Recipes" SET "UserId" = NULL
+        WHERE "Categories" LIKE '%{croqMarker}%';
+        """);
+
+    var catalog = await db.Recipes
+        .Where(r => r.UserId == null && r.Categories.Contains(croqMarker))
+        .ToListAsync();
+
+    if (catalog.Count < 2)
+    {
+        return;
+    }
+
+    static string? CroqKey(Recipe r)
+    {
+        foreach (var part in r.Categories.Split(',', StringSplitOptions.TrimEntries))
+        {
+            if (part.StartsWith(croqMarker, StringComparison.Ordinal))
+            {
+                return part;
+            }
+        }
+
+        return null;
+    }
+
+    var keepers = new Dictionary<string, Recipe>(StringComparer.Ordinal);
+    var dupes = new List<Recipe>();
+
+    foreach (var recipe in catalog.OrderBy(r => r.Title))
+    {
+        var key = CroqKey(recipe) ?? recipe.Id.ToString();
+        if (keepers.ContainsKey(key))
+        {
+            dupes.Add(recipe);
+        }
+        else
+        {
+            keepers[key] = recipe;
+        }
+    }
+
+    if (dupes.Count > 0)
+    {
+        db.Recipes.RemoveRange(dupes);
+        await db.SaveChangesAsync();
     }
 }
 

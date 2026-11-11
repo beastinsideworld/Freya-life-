@@ -5,7 +5,10 @@ import {
   ACTIVITY_OPTIONS,
   ActivityLevel,
   computeEnergy,
+  disciplineEmoji,
+  disciplineLabel,
   exerciseIconSrc,
+  filterSportDisciplines,
   formatDuration,
   formatRest,
   GOAL_TYPE_OPTIONS,
@@ -15,10 +18,18 @@ import {
   muscuIcon,
   muscuIconsForTheme,
   pct,
+  SPORT_DISCIPLINE_CATEGORIES,
+  SportDisciplineCategory,
+  SportDisciplineId,
   SportSex,
   SportStore,
   SportTab
 } from '../../core/sport.store';
+import {
+  exerciseTemplatesForDay,
+  filterExerciseTemplates,
+  type ExerciseTemplate
+} from '../../core/sport-exercise-catalog';
 
 @Component({
   selector: 'app-sport',
@@ -41,9 +52,84 @@ export class SportComponent {
   readonly sportFilter = signal('Tous les sports');
   readonly loadExercise = signal('Développé couché');
   readonly goalFormOpen = signal(false);
+  readonly sportPickerOpen = signal(false);
+  readonly disciplineQuery = signal('');
+  readonly disciplineCategory = signal<SportDisciplineCategory>('Toutes');
+  readonly draftDisciplineId = signal<SportDisciplineId | 'custom' | null>(null);
 
   readonly goalTypes = GOAL_TYPE_OPTIONS;
   readonly activityOptions = ACTIVITY_OPTIONS;
+  readonly disciplineCategories = SPORT_DISCIPLINE_CATEGORIES;
+
+  readonly selectedDayDiscipline = computed(() => {
+    const date = this.store.selectedDate();
+    const session = this.store.selectedSession();
+    const day = this.store.weekDays().find((d) => d.date === date);
+    const id = session?.disciplineId ?? day?.disciplineId ?? null;
+    const custom = session?.customDiscipline ?? day?.customDiscipline ?? null;
+    return {
+      id,
+      label: disciplineLabel(id, custom),
+      emoji: disciplineEmoji(id)
+    };
+  });
+
+  readonly filteredDisciplines = computed(() =>
+    filterSportDisciplines(this.disciplineQuery(), this.disciplineCategory())
+  );
+
+  readonly selectedDayLabel = computed(() => {
+    const date = this.store.selectedDate();
+    return this.store.weekDays().find((d) => d.date === date)?.label ?? '';
+  });
+
+  readonly sessionEditOpen = signal(false);
+  readonly exercisePickerOpen = signal(false);
+  readonly exerciseConfigureOpen = signal(false);
+  readonly expandedExerciseId = signal<string | null>(null);
+  readonly exerciseConfigureMode = signal<'add' | 'edit'>('add');
+  readonly exerciseQuery = signal('');
+  pendingExerciseTemplate: ExerciseTemplate | null = null;
+  editingExerciseId: string | null = null;
+  draftExerciseSets = 3;
+  draftExerciseReps = 10;
+  draftExerciseLoadKg: number | null = null;
+  draftExerciseRestSec = 90;
+  draftExerciseRpe = 7;
+
+  draftSessionTitle = '';
+  draftSessionDetail = '';
+  draftSessionDuration = 45;
+
+  readonly dayExerciseCatalog = computed(() => {
+    const date = this.store.selectedDate();
+    const session = this.store.selectedSession();
+    const day = this.store.weekDays().find((d) => d.date === date);
+    const disciplineId = session?.disciplineId ?? day?.disciplineId ?? null;
+    const kind = session?.kind ?? day?.kind ?? null;
+    return exerciseTemplatesForDay(disciplineId, kind);
+  });
+
+  readonly filteredExerciseTemplates = computed(() =>
+    filterExerciseTemplates(this.dayExerciseCatalog(), this.exerciseQuery())
+  );
+
+  readonly configurePersonalBestKg = computed(() => {
+    if (this.exerciseConfigureMode() === 'add' && this.pendingExerciseTemplate) {
+      return this.store.personalBestForTemplate(this.pendingExerciseTemplate.id);
+    }
+    const session = this.store.selectedSession();
+    const ex = session?.exercises.find((e) => e.id === this.editingExerciseId);
+    return ex ? this.store.personalBestKg(ex) : null;
+  });
+
+  readonly configureExerciseTitle = computed(() => {
+    if (this.exerciseConfigureMode() === 'add' && this.pendingExerciseTemplate) {
+      return this.pendingExerciseTemplate.name;
+    }
+    const session = this.store.selectedSession();
+    return session?.exercises.find((e) => e.id === this.editingExerciseId)?.name ?? 'Exercice';
+  });
 
   draftType: GoalType = 'prise_seche';
   draftSex: SportSex = 'M';
@@ -120,6 +206,194 @@ export class SportComponent {
 
   closeGoalForm(): void {
     this.goalFormOpen.set(false);
+  }
+
+  openSportPicker(): void {
+    const sel = this.selectedDayDiscipline();
+    this.disciplineQuery.set('');
+    this.disciplineCategory.set('Toutes');
+    this.draftDisciplineId.set((sel.id as SportDisciplineId) ?? null);
+    this.sportPickerOpen.set(true);
+  }
+
+  closeSportPicker(): void {
+    this.sportPickerOpen.set(false);
+  }
+
+  pickDiscipline(id: SportDisciplineId): void {
+    this.draftDisciplineId.set(id);
+    this.disciplineQuery.set('');
+  }
+
+  saveSportDiscipline(): void {
+    const date = this.store.selectedDate();
+    const id = this.draftDisciplineId();
+    const query = this.disciplineQuery().trim();
+
+    if (id) {
+      this.store.setDayDiscipline(date, id);
+      this.closeSportPicker();
+      return;
+    }
+
+    if (query.length >= 2) {
+      this.store.setDayDiscipline(date, 'custom', query);
+      this.closeSportPicker();
+      return;
+    }
+
+    const matches = this.filteredDisciplines();
+    if (matches.length === 1) {
+      this.store.setDayDiscipline(date, matches[0].id);
+      this.closeSportPicker();
+    }
+  }
+
+  useTypedSportAsCustom(): void {
+    const query = this.disciplineQuery().trim();
+    if (query.length < 2) return;
+    this.store.setDayDiscipline(this.store.selectedDate(), 'custom', query);
+    this.closeSportPicker();
+  }
+
+  private requireSession(): { id: string } | null {
+    const session = this.store.selectedSession();
+    if (session) return session;
+    this.openSportPicker();
+    return null;
+  }
+
+  openSessionEditor(): void {
+    const session = this.requireSession();
+    if (!session) return;
+    const full = this.store.selectedSession()!;
+    this.draftSessionTitle = full.title;
+    this.draftSessionDetail = full.detail;
+    this.draftSessionDuration = full.durationMin;
+    this.sessionEditOpen.set(true);
+  }
+
+  closeSessionEditor(): void {
+    this.sessionEditOpen.set(false);
+  }
+
+  saveSessionEditor(): void {
+    const session = this.store.selectedSession();
+    if (!session || !this.draftSessionTitle.trim()) return;
+    this.store.updateSessionMeta(session.id, {
+      title: this.draftSessionTitle,
+      detail: this.draftSessionDetail,
+      durationMin: Number(this.draftSessionDuration) || session.durationMin
+    });
+    this.closeSessionEditor();
+  }
+
+  openExercisePicker(): void {
+    if (!this.requireSession()) return;
+    this.exerciseQuery.set('');
+    this.exercisePickerOpen.set(true);
+  }
+
+  closeExercisePicker(): void {
+    this.exercisePickerOpen.set(false);
+    this.closeExerciseConfigure();
+  }
+
+  pickExerciseTemplate(template: ExerciseTemplate): void {
+    this.pendingExerciseTemplate = template;
+    this.editingExerciseId = null;
+    this.exerciseConfigureMode.set('add');
+    this.draftExerciseSets = template.defaultSets;
+    this.draftExerciseReps = template.defaultReps;
+    this.draftExerciseLoadKg = template.defaultLoadKg;
+    this.draftExerciseRestSec = template.defaultRestSec;
+    this.draftExerciseRpe = template.defaultRpe;
+    this.exercisePickerOpen.set(false);
+    this.exerciseConfigureOpen.set(true);
+  }
+
+  openExerciseEdit(exerciseId: string): void {
+    const session = this.store.selectedSession();
+    const ex = session?.exercises.find((e) => e.id === exerciseId);
+    if (!ex) return;
+    this.pendingExerciseTemplate = null;
+    this.editingExerciseId = exerciseId;
+    this.exerciseConfigureMode.set('edit');
+    this.draftExerciseSets = ex.sets;
+    this.draftExerciseReps = ex.reps;
+    this.draftExerciseLoadKg = ex.loadKg;
+    this.draftExerciseRestSec = ex.restSec;
+    this.draftExerciseRpe = ex.rpe;
+    this.sessionEditOpen.set(false);
+    this.exercisePickerOpen.set(false);
+    this.exerciseConfigureOpen.set(false);
+    this.expandedExerciseId.set(exerciseId);
+  }
+
+  toggleExerciseEditor(exerciseId: string): void {
+    if (this.expandedExerciseId() === exerciseId) {
+      this.expandedExerciseId.set(null);
+      return;
+    }
+    this.openExerciseEdit(exerciseId);
+  }
+
+  saveExpandedExercise(): void {
+    const session = this.store.selectedSession();
+    const exerciseId = this.expandedExerciseId();
+    if (!session || !exerciseId) return;
+    this.store.updateExercise(session.id, exerciseId, {
+      sets: Math.max(1, Math.round(Number(this.draftExerciseSets) || 1)),
+      reps: Math.max(1, Math.round(Number(this.draftExerciseReps) || 1)),
+      loadKg: this.parseExerciseLoadKg(this.draftExerciseLoadKg),
+      restSec: Math.max(0, Math.round(Number(this.draftExerciseRestSec) || 0)),
+      rpe: Math.min(10, Math.max(1, Math.round(Number(this.draftExerciseRpe) || 7)))
+    });
+  }
+
+  closeExerciseConfigure(): void {
+    this.exerciseConfigureOpen.set(false);
+    this.pendingExerciseTemplate = null;
+    this.editingExerciseId = null;
+  }
+
+  parseExerciseLoadKg(raw: number | null | string): number | null {
+    if (raw === null || raw === undefined || raw === '') return null;
+    const n = Number(String(raw).replace(',', '.'));
+    return Number.isFinite(n) && n >= 0 ? n : null;
+  }
+
+  confirmExerciseConfigure(): void {
+    const session = this.store.selectedSession();
+    if (!session) return;
+    const sets = Math.max(1, Math.round(Number(this.draftExerciseSets) || 1));
+    const reps = Math.max(1, Math.round(Number(this.draftExerciseReps) || 1));
+    const loadKg = this.parseExerciseLoadKg(this.draftExerciseLoadKg);
+    const restSec = Math.max(0, Math.round(Number(this.draftExerciseRestSec) || 0));
+    const rpe = Math.min(10, Math.max(1, Math.round(Number(this.draftExerciseRpe) || 7)));
+
+    if (this.exerciseConfigureMode() === 'add' && this.pendingExerciseTemplate) {
+      this.store.addExerciseFromTemplate(session.id, this.pendingExerciseTemplate, {
+        sets,
+        reps,
+        loadKg,
+        restSec,
+        rpe
+      });
+      this.closeExerciseConfigure();
+      return;
+    }
+
+    if (this.exerciseConfigureMode() === 'edit' && this.editingExerciseId) {
+      this.store.updateExercise(session.id, this.editingExerciseId, { sets, reps, loadKg, restSec, rpe });
+      this.closeExerciseConfigure();
+    }
+  }
+
+  removeSessionExercise(exerciseId: string): void {
+    const session = this.store.selectedSession();
+    if (!session) return;
+    this.store.removeExercise(session.id, exerciseId);
   }
 
   onDraftChange(): void {

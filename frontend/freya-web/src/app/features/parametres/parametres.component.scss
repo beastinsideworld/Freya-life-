@@ -434,7 +434,7 @@
 
 .sticky-actions {
   position: sticky;
-  bottom: calc(var(--nav-h) + 0.55rem);
+  bottom: calc(var(--bottom-safe) + 0.55rem);
   z-index: 3;
   padding: 0.65rem 0.75rem;
   border: 1px solid var(--border);
@@ -456,14 +456,16 @@
 
 @media (max-width: 1023px) {
   .theme-modal {
-    top: auto;
-    bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 0.65rem);
-    transform: translate(-50%, 0);
-    max-height: calc(100dvh - var(--nav-h) - env(safe-area-inset-bottom, 0px) - 1.35rem);
+    top: var(--modal-top);
+    bottom: calc(var(--bottom-safe) + var(--modal-gap));
+    transform: translateX(-50%);
+    max-height: none;
   }
 
   .theme-modal-body {
-    max-height: calc(100dvh - var(--nav-h) - env(safe-area-inset-bottom, 0px) - 8rem);
+    flex: 1;
+    min-height: 0;
+    max-height: none;
     padding-bottom: 0.85rem;
   }
 }

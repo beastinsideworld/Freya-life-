@@ -39,6 +39,9 @@
   --fs-secondary: 12px;
   --fs-btn: 14px;
   --nav-h: 5.1rem;
+  --bottom-safe: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px));
+  --modal-gap: 0.65rem;
+  --modal-top: max(0.75rem, env(safe-area-inset-top, 0px));
 }
 
 @media (max-width: 1023px) {
@@ -131,7 +134,7 @@ h3 {
   max-width: 100%;
   min-width: 0;
   margin: 0 auto;
-  padding: 0 1rem calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 2rem);
+  padding: 0 1rem calc(var(--bottom-safe) + 2rem);
   overflow-x: clip;
   overflow-y: visible;
 }
@@ -438,11 +441,8 @@ h3 {
 .modal {
   position: fixed;
   left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
   z-index: 51;
   width: min(420px, calc(100vw - 1.5rem));
-  max-height: min(88vh, 640px);
   overflow: auto;
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -452,6 +452,29 @@ h3 {
     0 0 18px color-mix(in srgb, var(--accent) 14%, transparent),
     inset 0 1px 0 color-mix(in srgb, var(--cream) 12%, transparent);
   padding: 1rem 1rem 1.1rem;
+}
+
+@media (max-width: 1023px) {
+  .modal-backdrop {
+    z-index: 55;
+  }
+
+  .modal {
+    top: var(--modal-top);
+    bottom: calc(var(--bottom-safe) + var(--modal-gap));
+    transform: translateX(-50%);
+    max-height: none;
+    z-index: 56;
+  }
+}
+
+@media (min-width: 1024px) {
+  .modal {
+    top: 50%;
+    bottom: auto;
+    transform: translate(-50%, -50%);
+    max-height: min(88vh, 640px);
+  }
 }
 
 .modal-head {
@@ -540,7 +563,7 @@ input[type='radio'] {
 @media (min-width: 768px) {
   .page {
     max-width: 920px;
-    padding: 0 1.5rem calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 2.25rem);
+    padding: 0 1.5rem calc(var(--bottom-safe) + 2.25rem);
   }
 
   .hero {

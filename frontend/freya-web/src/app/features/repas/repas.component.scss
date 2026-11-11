@@ -935,17 +935,12 @@ button.cell.filled:focus-visible {
   inset: 0;
   background: rgba(0, 0, 0, 0.72);
   backdrop-filter: blur(4px);
-  z-index: 50;
 }
 
 .modal {
   position: fixed;
   left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 51;
   width: min(420px, calc(100vw - 1.5rem));
-  max-height: min(88vh, 640px);
   overflow: auto;
   border: 1px solid var(--border);
   border-radius: var(--radius);

@@ -1,9 +1,249 @@
 import { Injectable, computed, signal } from '@angular/core';
 import { resolveAssetUrl } from './asset-url';
 import { createId } from './id';
+import type { ExerciseTemplate } from './sport-exercise-catalog';
 
 export type SportTab = 'suivi' | 'entrainement' | 'progression';
 export type SportKind = 'musculation' | 'course' | 'velo' | 'natation' | 'mobilite' | 'autre';
+
+export type SportDisciplineId =
+  | 'musculation'
+  | 'force'
+  | 'course'
+  | 'natation'
+  | 'velo'
+  | 'yoga'
+  | 'boxe'
+  | 'vr_beatsaber'
+  | 'vr_boxvr'
+  | 'vr_fitxr'
+  | 'vr_supernatural'
+  | 'hiit'
+  | 'mobilite'
+  | 'escalade'
+  | 'tennis'
+  | 'football'
+  | 'marche'
+  | 'custom';
+
+export interface SportDisciplineOption {
+  id: SportDisciplineId;
+  label: string;
+  category: string;
+  kind: SportKind;
+  emoji: string;
+  keywords: string[];
+}
+
+export const SPORT_DISCIPLINE_CATEGORIES = [
+  'Toutes',
+  'Cardio',
+  'Renfo',
+  'VR & Quest',
+  'Mind-body',
+  'Sports collectifs',
+  'Autre'
+] as const;
+
+export type SportDisciplineCategory = (typeof SPORT_DISCIPLINE_CATEGORIES)[number];
+
+export const SPORT_DISCIPLINE_CATALOG: SportDisciplineOption[] = [
+  {
+    id: 'course',
+    label: 'Course à pied',
+    category: 'Cardio',
+    kind: 'course',
+    emoji: '🏃',
+    keywords: ['running', 'jogging', 'trail']
+  },
+  {
+    id: 'natation',
+    label: 'Natation',
+    category: 'Cardio',
+    kind: 'natation',
+    emoji: '🏊',
+    keywords: ['piscine', 'nage', 'crawl']
+  },
+  {
+    id: 'velo',
+    label: 'Vélo',
+    category: 'Cardio',
+    kind: 'velo',
+    emoji: '🚴',
+    keywords: ['vélo', 'home trainer', 'zwift', 'cyclisme']
+  },
+  {
+    id: 'marche',
+    label: 'Marche rapide',
+    category: 'Cardio',
+    kind: 'course',
+    emoji: '🚶',
+    keywords: ['marche', 'rando', 'nordic']
+  },
+  {
+    id: 'hiit',
+    label: 'HIIT',
+    category: 'Cardio',
+    kind: 'autre',
+    emoji: '⚡',
+    keywords: ['interval', 'tabata', 'cardio']
+  },
+  {
+    id: 'musculation',
+    label: 'Musculation',
+    category: 'Renfo',
+    kind: 'musculation',
+    emoji: '🏋️',
+    keywords: ['hypertrophie', 'salles', 'poids']
+  },
+  {
+    id: 'force',
+    label: 'Force / Powerlifting',
+    category: 'Renfo',
+    kind: 'musculation',
+    emoji: '💪',
+    keywords: ['squat', 'deadlift', 'haltéro']
+  },
+  {
+    id: 'vr_beatsaber',
+    label: 'Beat Saber (Quest)',
+    category: 'VR & Quest',
+    kind: 'autre',
+    emoji: '🎵',
+    keywords: ['meta quest', 'vr', 'rhythm', 'sabre']
+  },
+  {
+    id: 'vr_boxvr',
+    label: 'BoxVR / Thrill of the Fight',
+    category: 'VR & Quest',
+    kind: 'autre',
+    emoji: '🥽',
+    keywords: ['boxvr', 'quest', 'vr', 'boxe']
+  },
+  {
+    id: 'vr_fitxr',
+    label: 'FitXR',
+    category: 'VR & Quest',
+    kind: 'autre',
+    emoji: '🥊',
+    keywords: ['fitxr', 'meta quest', 'cardio vr']
+  },
+  {
+    id: 'vr_supernatural',
+    label: 'Supernatural VR',
+    category: 'VR & Quest',
+    kind: 'autre',
+    emoji: '✨',
+    keywords: ['supernatural', 'quest', 'vr fitness']
+  },
+  {
+    id: 'yoga',
+    label: 'Yoga',
+    category: 'Mind-body',
+    kind: 'mobilite',
+    emoji: '🧘',
+    keywords: ['stretch', 'souplesse', 'flow']
+  },
+  {
+    id: 'mobilite',
+    label: 'Mobilité / Étirements',
+    category: 'Mind-body',
+    kind: 'mobilite',
+    emoji: '🤸',
+    keywords: ['stretching', 'récup', 'souplesse']
+  },
+  {
+    id: 'boxe',
+    label: 'Boxe',
+    category: 'Autre',
+    kind: 'autre',
+    emoji: '🥊',
+    keywords: ['muay thai', 'kick', 'sac']
+  },
+  {
+    id: 'escalade',
+    label: 'Escalade',
+    category: 'Autre',
+    kind: 'autre',
+    emoji: '🧗',
+    keywords: ['bloc', 'voie', 'mur']
+  },
+  {
+    id: 'tennis',
+    label: 'Tennis / Padel',
+    category: 'Sports collectifs',
+    kind: 'autre',
+    emoji: '🎾',
+    keywords: ['padel', 'raquette']
+  },
+  {
+    id: 'football',
+    label: 'Football',
+    category: 'Sports collectifs',
+    kind: 'autre',
+    emoji: '⚽',
+    keywords: ['five', 'futsal']
+  }
+];
+
+export function disciplineById(id: string | null | undefined): SportDisciplineOption | null {
+  if (!id || id === 'custom') return null;
+  return SPORT_DISCIPLINE_CATALOG.find((d) => d.id === id) ?? null;
+}
+
+export function disciplineLabel(
+  disciplineId: string | null | undefined,
+  customLabel?: string | null
+): string {
+  if (disciplineId === 'custom' && customLabel?.trim()) return customLabel.trim();
+  const d = disciplineById(disciplineId);
+  if (d) return d.label;
+  return customLabel?.trim() || 'Choisir un sport';
+}
+
+export function disciplineEmoji(disciplineId: string | null | undefined): string {
+  const d = disciplineById(disciplineId);
+  if (d) return d.emoji;
+  return '🏅';
+}
+
+export function defaultDisciplineIdForKind(kind: SportKind | null | undefined): SportDisciplineId | null {
+  switch (kind) {
+    case 'musculation':
+      return 'musculation';
+    case 'course':
+      return 'course';
+    case 'velo':
+      return 'velo';
+    case 'natation':
+      return 'natation';
+    case 'mobilite':
+      return 'mobilite';
+    default:
+      return null;
+  }
+}
+
+export function filterSportDisciplines(
+  query: string,
+  category: SportDisciplineCategory
+): SportDisciplineOption[] {
+  const q = query
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '');
+  return SPORT_DISCIPLINE_CATALOG.filter((d) => {
+    if (category !== 'Toutes' && d.category !== category) return false;
+    if (!q) return true;
+    const hay = [d.label, d.category, ...d.keywords]
+      .join(' ')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/\p{M}/gu, '');
+    return hay.includes(q) || d.label.toLowerCase().includes(query.trim().toLowerCase());
+  });
+}
 export type SportSex = 'F' | 'M';
 export type ActivityLevel = 'sedentaire' | 'leger' | 'modere' | 'actif' | 'tres_actif';
 export type GoalType = 'perte' | 'maintien' | 'prise_seche' | 'prise_muscle' | 'recomposition';
@@ -142,6 +382,8 @@ export interface WeeklyTrainingGoal {
 
 export interface SportExercise {
   id: string;
+  /** Id du catalogue (sport-exercise-catalog) pour suivre le record par exercice. */
+  templateId?: string;
   name: string;
   muscle: string;
   emoji: string;
@@ -153,10 +395,37 @@ export interface SportExercise {
   done: boolean;
 }
 
+/** Clé stable pour agréger le poids max par type d'exercice. */
+export function exerciseTrackKey(templateId: string | undefined | null, name: string): string {
+  if (templateId) return templateId;
+  return name
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+function buildExercisePersonalBests(sessions: DaySession[]): Record<string, number> {
+  const map: Record<string, number> = {};
+  for (const session of sessions) {
+    for (const ex of session.exercises) {
+      if (ex.loadKg == null || ex.loadKg <= 0) continue;
+      if (!ex.done && !session.completed) continue;
+      const key = exerciseTrackKey(ex.templateId, ex.name);
+      map[key] = Math.max(map[key] ?? 0, ex.loadKg);
+    }
+  }
+  return map;
+}
+
 export interface DaySession {
   id: string;
   date: string;
   kind: SportKind;
+  disciplineId?: SportDisciplineId | string | null;
+  customDiscipline?: string | null;
   title: string;
   detail: string;
   tags: string[];
@@ -173,6 +442,8 @@ export interface WeekDayCard {
   date: string;
   label: string;
   kind: SportKind | null;
+  disciplineId?: SportDisciplineId | string | null;
+  customDiscipline?: string | null;
   title: string;
   detail: string;
   completed: boolean;
@@ -224,6 +495,29 @@ export interface SportState {
 
 const STORAGE_KEY = 'freya.sport.v2';
 
+function recomputeSession(session: DaySession): DaySession {
+  const exercises = session.exercises;
+  const seriesTotal = exercises.reduce((sum, ex) => sum + ex.sets, 0);
+  const volumeKg = Math.round(
+    exercises.reduce((sum, ex) => sum + ex.sets * ex.reps * (ex.loadKg ?? 0), 0)
+  );
+  const exerciseCount = exercises.length;
+  const restMin = exercises.reduce((sum, ex) => sum + Math.max(0, ex.sets - 1) * (ex.restSec / 60), 0);
+  const workMin = exercises.reduce((sum, ex) => sum + ex.sets * (ex.reps > 15 ? 1.2 : 2), 0);
+  const durationMin = exerciseCount > 0 ? Math.max(20, Math.round(restMin + workMin)) : session.durationMin;
+  const kcalPerMin =
+    session.kind === 'musculation' ? 6.5 : session.kind === 'course' || session.kind === 'natation' ? 9.5 : 7;
+  const kcalEstimate = Math.round(durationMin * kcalPerMin);
+  return {
+    ...session,
+    seriesTotal,
+    volumeKg,
+    exerciseCount,
+    durationMin,
+    kcalEstimate
+  };
+}
+
 function todayIso(): string {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -255,6 +549,7 @@ function demoState(): SportState {
       id: createId(),
       date: addDaysIso(monday, 0),
       kind: 'musculation',
+      disciplineId: 'musculation',
       title: 'Musculation - Bas du corps',
       detail: 'Jambes / Fessiers',
       tags: ['Hypertrophie'],
@@ -270,6 +565,7 @@ function demoState(): SportState {
       id: createId(),
       date: addDaysIso(monday, 1),
       kind: 'course',
+      disciplineId: 'course',
       title: 'Course',
       detail: '5 km',
       tags: ['Endurance'],
@@ -285,6 +581,7 @@ function demoState(): SportState {
       id: sessionId,
       date: today,
       kind: 'musculation',
+      disciplineId: 'musculation',
       title: 'Musculation - Haut du corps',
       detail: 'Pecs / Dos / Épaules',
       tags: ['Force', 'Hypertrophie'],
@@ -297,6 +594,7 @@ function demoState(): SportState {
       exercises: [
         {
           id: createId(),
+          templateId: 'mp-bench',
           name: 'Développé couché',
           muscle: 'Pectoraux',
           emoji: '🏋️',
@@ -309,6 +607,7 @@ function demoState(): SportState {
         },
         {
           id: createId(),
+          templateId: 'mp-pull',
           name: 'Tirage vertical',
           muscle: 'Dos',
           emoji: '💪',
@@ -321,6 +620,7 @@ function demoState(): SportState {
         },
         {
           id: createId(),
+          templateId: 'mp-ohp',
           name: 'Développé militaire',
           muscle: 'Épaules',
           emoji: '🏋️',
@@ -385,6 +685,7 @@ function demoState(): SportState {
       id: createId(),
       date: addDaysIso(today, 1),
       kind: 'velo',
+      disciplineId: 'velo',
       title: 'Vélo',
       detail: '45 min zone 2',
       tags: ['Cardio'],
@@ -400,6 +701,7 @@ function demoState(): SportState {
       id: createId(),
       date: addDaysIso(today, 2),
       kind: 'mobilite',
+      disciplineId: 'mobilite',
       title: 'Mobilité',
       detail: 'Hanches / Dos',
       tags: ['Récup'],
@@ -420,6 +722,8 @@ function demoState(): SportState {
       date,
       label: `${weekdayShort(date)}. ${dayMonth(date)}`,
       kind: session?.kind ?? null,
+      disciplineId: session?.disciplineId ?? defaultDisciplineIdForKind(session?.kind ?? null),
+      customDiscipline: session?.customDiscipline ?? null,
       title: session?.title ?? 'Repos',
       detail: session?.detail ?? '—',
       completed: !!session?.completed
@@ -589,6 +893,29 @@ function normalizeGoal(raw: Partial<SportGoal> | undefined, fallbackWeight: numb
   };
 }
 
+function normalizeSessionsAndDays(sessions: DaySession[], weekDays: WeekDayCard[]): {
+  sessions: DaySession[];
+  weekDays: WeekDayCard[];
+} {
+  const normSessions = sessions.map((s) => ({
+    ...s,
+    disciplineId: s.disciplineId ?? defaultDisciplineIdForKind(s.kind)
+  }));
+  const normDays = weekDays.map((d) => {
+    const session = normSessions.find((s) => s.date === d.date);
+    return {
+      ...d,
+      disciplineId:
+        d.disciplineId ?? session?.disciplineId ?? defaultDisciplineIdForKind(d.kind ?? session?.kind),
+      customDiscipline: d.customDiscipline ?? session?.customDiscipline ?? null,
+      title: d.title || session?.title || 'Repos',
+      detail: d.detail || session?.detail || '—',
+      kind: d.kind ?? session?.kind ?? null
+    };
+  });
+  return { sessions: normSessions, weekDays: normDays };
+}
+
 function loadState(): SportState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -626,6 +953,9 @@ function loadState(): SportState {
       targetKcal: energy.targetKcal
     };
     if (!parsed.targets) merged.targets = energy.macros;
+    const norm = normalizeSessionsAndDays(merged.sessions, merged.weekDays);
+    merged.sessions = norm.sessions;
+    merged.weekDays = norm.weekDays;
     return merged;
   } catch {
     return demoState();
@@ -658,6 +988,19 @@ export class SportStore {
     return this.state().sessions.find((s) => s.date === date) ?? null;
   });
 
+  readonly exercisePersonalBests = computed(() => buildExercisePersonalBests(this.state().sessions));
+
+  personalBestKg(exercise: SportExercise): number | null {
+    const key = exerciseTrackKey(exercise.templateId, exercise.name);
+    const kg = this.exercisePersonalBests()[key];
+    return kg != null && kg > 0 ? kg : null;
+  }
+
+  personalBestForTemplate(templateId: string): number | null {
+    const kg = this.exercisePersonalBests()[templateId];
+    return kg != null && kg > 0 ? kg : null;
+  }
+
   readonly currentWeight = computed(() => {
     const hist = this.weightHistory();
     return hist[hist.length - 1]?.kg ?? 0;
@@ -686,6 +1029,202 @@ export class SportStore {
 
   selectDate(date: string): void {
     this.patch((s) => ({ ...s, selectedDate: date }));
+  }
+
+  /** Sport choisi pour un jour (catalogue ou nom libre). */
+  setDayDiscipline(date: string, disciplineId: string, customLabel?: string): void {
+    const custom = customLabel?.trim() ?? '';
+    const catalog = disciplineById(disciplineId);
+    const useCustom = disciplineId === 'custom' || (!catalog && custom.length > 0);
+    const resolvedId: string = useCustom ? 'custom' : disciplineId;
+    const option =
+      catalog ??
+      (useCustom
+        ? {
+            id: 'custom' as SportDisciplineId,
+            label: custom,
+            category: 'Autre',
+            kind: 'autre' as SportKind,
+            emoji: '🏅',
+            keywords: []
+          }
+        : null);
+    if (!option) return;
+
+    const title = useCustom ? custom : option.label;
+    const detail = option.category === 'Autre' && useCustom ? 'Personnalisé' : option.category;
+
+    this.patch((s) => {
+      const sessions = [...s.sessions];
+      const idx = sessions.findIndex((x) => x.date === date);
+      let session = idx >= 0 ? { ...sessions[idx] } : null;
+
+      if (!session) {
+        session = {
+          id: createId(),
+          date,
+          kind: option.kind,
+          disciplineId: resolvedId,
+          customDiscipline: useCustom ? custom : null,
+          title,
+          detail,
+          tags: [option.category],
+          durationMin: 45,
+          exerciseCount: 0,
+          kcalEstimate: option.kind === 'musculation' ? 350 : 280,
+          seriesTotal: 0,
+          volumeKg: 0,
+          completed: false,
+          exercises: []
+        };
+        sessions.push(session);
+      } else {
+        session = {
+          ...session,
+          kind: option.kind,
+          disciplineId: resolvedId,
+          customDiscipline: useCustom ? custom : null,
+          title,
+          detail,
+          tags: session.tags?.length ? session.tags : [option.category]
+        };
+        sessions[idx] = session;
+      }
+
+      const weekDays = s.weekDays.map((day) =>
+        day.date === date
+          ? {
+              ...day,
+              kind: option.kind,
+              disciplineId: resolvedId,
+              customDiscipline: useCustom ? custom : null,
+              title,
+              detail
+            }
+          : day
+      );
+
+      return {
+        ...s,
+        sessions,
+        weekDays,
+        selectedDate: date,
+        plannedSessions: Math.max(s.plannedSessions, sessions.length)
+      };
+    });
+  }
+
+  updateSessionMeta(
+    sessionId: string,
+    input: { title: string; detail: string; durationMin?: number }
+  ): void {
+    const title = input.title.trim();
+    if (!title) return;
+    this.patch((s) => {
+      const sessions = s.sessions.map((session) => {
+        if (session.id !== sessionId) return session;
+        const next = {
+          ...session,
+          title: title,
+          detail: input.detail.trim() || session.detail,
+          durationMin:
+            input.durationMin != null && input.durationMin > 0
+              ? Math.round(input.durationMin)
+              : session.durationMin
+        };
+        return recomputeSession(next);
+      });
+      const session = sessions.find((x) => x.id === sessionId);
+      const weekDays = session
+        ? s.weekDays.map((day) =>
+            day.date === session.date ? { ...day, title: session.title, detail: session.detail } : day
+          )
+        : s.weekDays;
+      return { ...s, sessions, weekDays };
+    });
+  }
+
+  addExerciseFromTemplate(
+    sessionId: string,
+    template: ExerciseTemplate,
+    overrides?: Partial<Pick<SportExercise, 'sets' | 'reps' | 'loadKg' | 'restSec' | 'rpe'>>
+  ): void {
+    const sets = Math.max(1, Math.round(overrides?.sets ?? template.defaultSets));
+    const reps = Math.max(1, Math.round(overrides?.reps ?? template.defaultReps));
+    let loadKg = template.defaultLoadKg;
+    if (overrides && 'loadKg' in overrides) {
+      loadKg = overrides.loadKg ?? null;
+    }
+    this.patch((s) => ({
+      ...s,
+      sessions: s.sessions.map((session) => {
+        if (session.id !== sessionId) return session;
+        const exercise: SportExercise = {
+          id: createId(),
+          templateId: template.id,
+          name: template.name,
+          muscle: template.muscle,
+          emoji: template.emoji,
+          sets,
+          reps,
+          loadKg,
+          restSec: overrides?.restSec != null ? Math.max(0, Math.round(overrides.restSec)) : template.defaultRestSec,
+          rpe: overrides?.rpe != null ? Math.min(10, Math.max(1, Math.round(overrides.rpe))) : template.defaultRpe,
+          done: false
+        };
+        return recomputeSession({ ...session, exercises: [...session.exercises, exercise] });
+      })
+    }));
+  }
+
+  updateExercise(
+    sessionId: string,
+    exerciseId: string,
+    input: { sets?: number; reps?: number; loadKg?: number | null; restSec?: number; rpe?: number }
+  ): void {
+    this.patch((s) => ({
+      ...s,
+      sessions: s.sessions.map((session) => {
+        if (session.id !== sessionId) return session;
+        const exercises = session.exercises.map((ex) => {
+          if (ex.id !== exerciseId) return ex;
+          const sets =
+            input.sets != null && Number.isFinite(input.sets)
+              ? Math.max(1, Math.round(input.sets))
+              : ex.sets;
+          const reps =
+            input.reps != null && Number.isFinite(input.reps)
+              ? Math.max(1, Math.round(input.reps))
+              : ex.reps;
+          let loadKg = ex.loadKg;
+          if ('loadKg' in input) {
+            const raw = input.loadKg;
+            loadKg = raw == null || !Number.isFinite(raw) || raw < 0 ? null : raw;
+          }
+          const restSec =
+            input.restSec != null && Number.isFinite(input.restSec)
+              ? Math.max(0, Math.round(input.restSec))
+              : ex.restSec;
+          const rpe =
+            input.rpe != null && Number.isFinite(input.rpe)
+              ? Math.min(10, Math.max(1, Math.round(input.rpe)))
+              : ex.rpe;
+          return { ...ex, sets, reps, loadKg, restSec, rpe };
+        });
+        return recomputeSession({ ...session, exercises });
+      })
+    }));
+  }
+
+  removeExercise(sessionId: string, exerciseId: string): void {
+    this.patch((s) => ({
+      ...s,
+      sessions: s.sessions.map((session) => {
+        if (session.id !== sessionId) return session;
+        const exercises = session.exercises.filter((ex) => ex.id !== exerciseId);
+        return recomputeSession({ ...session, exercises });
+      })
+    }));
   }
 
   toggleExercise(sessionId: string, exerciseId: string): void {

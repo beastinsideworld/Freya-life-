@@ -2,7 +2,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
-  padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 2.5rem);
+  padding-bottom: calc(var(--bottom-safe) + 2.5rem);
   overflow: visible;
 }
 
@@ -718,6 +718,12 @@
   overflow: auto;
 }
 
+@media (max-width: 1023px) {
+  .section-modal {
+    max-height: none;
+  }
+}
+
 .form-grid {
   display: grid;
   gap: 0.65rem;
@@ -879,6 +885,16 @@
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
+}
+
+@media (max-width: 1023px) {
+  .calendar-popover {
+    top: var(--modal-top);
+    bottom: calc(var(--bottom-safe) + var(--modal-gap));
+    transform: translateX(-50%);
+    max-height: none;
+    overflow: auto;
+  }
 }
 
 .cal-head {
