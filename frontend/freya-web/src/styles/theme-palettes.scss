@@ -538,6 +538,52 @@
   --chart-3: #3cbf8f;
 }
 
+:root[data-theme='printemps'] {
+  --bg: #f5fbf3;
+  --bg-secondary: #e8f5e4;
+  --bg-card: rgba(255, 252, 250, 0.88);
+  --bordeaux: #fffafc;
+  --bordeaux-lit: #dff5e3;
+  --contour: #5cb88a;
+  --red-bright: #e8a4c8;
+  --red-glow: #f5c4dc;
+  --champagne: #2d6b52;
+  --ivory: #1a4d38;
+  --cream: #1a4d38;
+  --powder: #6a9a7e;
+  --rose-muted: #8aab96;
+  --rose-bright: #e8a4c8;
+  --text-on-card: #1a4d38;
+  --btn-text: #16432f;
+  --shadow-glow: 0 0 14px rgba(92, 184, 138, 0.28);
+  --shadow-card: 0 10px 28px rgba(26, 77, 56, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  --shadow-btn: 0 0 14px rgba(232, 164, 200, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  --grad-page: radial-gradient(ellipse at 50% 0%, #c8ecd4 0%, transparent 46%),
+    linear-gradient(180deg, #edf9f0 0%, #f7fbf5 45%, #fff0f6 100%);
+  --grad-panel: linear-gradient(160deg, rgba(255, 255, 255, 0.78) 0%, rgba(223, 245, 227, 0.6) 100%);
+  --grad-btn: linear-gradient(180deg, #b8e8c8 0%, #5cb88a 52%, #3a9868 100%);
+  --grad-hero: radial-gradient(ellipse at 50% 0%, #b8e8c8 0%, transparent 55%),
+    linear-gradient(180deg, rgba(255, 252, 250, 0.65) 0%, rgba(200, 236, 212, 0.4) 100%);
+  --grad-nav: linear-gradient(180deg, rgba(255, 252, 250, 0.85) 0%, rgba(200, 236, 212, 0.78) 100%);
+  @include theme-base;
+  --title: #1a4d38;
+  --gold: #1a4d38;
+  --gold-bright: #16432f;
+  --champagne: #2d6b52;
+  --muted: #3d6b54;
+  --powder: #4a7a62;
+  --accent-soft: #dff5e3;
+  --border: #5cb88a;
+  --border-soft: color-mix(in srgb, #5cb88a 40%, white);
+  --surface: rgba(255, 252, 250, 0.72);
+  --surface-strong: rgba(255, 252, 250, 0.92);
+  --field-bg: rgba(255, 252, 250, 0.92);
+  --text: #1a4d38;
+  --chart-1: #5cb88a;
+  --chart-2: #c45f8a;
+  --chart-3: #3a9868;
+}
+
 :root[data-theme='automne'] {
   --bg: #0b0400;
   --bg-secondary: #180a00;

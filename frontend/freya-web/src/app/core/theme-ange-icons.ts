@@ -44,11 +44,25 @@ export const NAV_HIVER_ICON: Record<NavTabId, string> = {
   parametres: 'assets/nav/hiver/parametres.png'
 };
 
+export const NAV_PRINTEMPS_ICON: Record<NavTabId, string> = {
+  accueil: 'assets/nav/printemps/accueil.png',
+  planning: 'assets/nav/printemps/planning.png',
+  repas: 'assets/nav/printemps/repas.png',
+  voyages: 'assets/nav/printemps/voyages.png',
+  tele: 'assets/nav/printemps/tele.png',
+  chat: 'assets/nav/printemps/chat.png',
+  budget: 'assets/nav/printemps/budget.png',
+  sport: 'assets/nav/printemps/sport.png',
+  animaux: 'assets/nav/printemps/animaux.png',
+  parametres: 'assets/nav/printemps/parametres.png'
+};
+
 export function navIconsForFantasyTheme(): Record<NavTabId, string> | null {
   const t = activeFantasyTheme();
   if (t === 'ange') return NAV_ANGE_ICON;
   if (t === 'demon') return NAV_DEMON_ICON;
   if (t === 'hiver') return NAV_HIVER_ICON;
+  if (t === 'printemps') return NAV_PRINTEMPS_ICON;
   return null;
 }
 
@@ -140,6 +154,17 @@ export const FINANCE_ICON_AUTOMNE = {
   portefeuille: 'assets/themes/automne/finance/portefeuille.png'
 } as const;
 
+export const FINANCE_ICON_PRINTEMPS = {
+  graphique: 'assets/themes/printemps/finance/graphique.png',
+  transfert: 'assets/themes/printemps/finance/transfert.png',
+  cible: 'assets/themes/printemps/finance/cible.png',
+  calendrier: 'assets/themes/printemps/finance/calendrier.png',
+  carte: 'assets/themes/printemps/finance/carte.png',
+  tirelire: 'assets/themes/printemps/finance/tirelire.png',
+  croissance: 'assets/themes/printemps/finance/croissance.png',
+  portefeuille: 'assets/themes/printemps/finance/portefeuille.png'
+} as const;
+
 /** Icônes repas (créneaux) — défaut or. */
 export const MEAL_SLOT_ICON = {
   Breakfast: 'assets/meals/petit-dejeuner.png',
@@ -164,11 +189,30 @@ export const MEAL_SLOT_ICON_HIVER_ACCUEIL = {
   Dinner: 'assets/themes/hiver/meals/accueil/diner.png'
 } as const;
 
+export const MEAL_SLOT_ICON_PRINTEMPS = {
+  Breakfast: 'assets/themes/printemps/meals/petit-dejeuner.png',
+  Lunch: 'assets/themes/printemps/meals/dejeuner.png',
+  Snack: 'assets/themes/printemps/meals/collation.png',
+  Dinner: 'assets/themes/printemps/meals/diner.png'
+} as const;
+
+export const MEAL_SLOT_ICON_PRINTEMPS_ACCUEIL = {
+  Breakfast: 'assets/themes/printemps/meals/accueil/petit-dejeuner.png',
+  Lunch: 'assets/themes/printemps/meals/accueil/dejeuner.png',
+  Snack: 'assets/themes/printemps/meals/accueil/collation.png',
+  Dinner: 'assets/themes/printemps/meals/accueil/diner.png'
+} as const;
+
 export type MealSlotIconKey = keyof typeof MEAL_SLOT_ICON;
 
 export function mealSlotIcon(slot: MealSlotIconKey, place: 'accueil' | 'page' = 'page'): string {
-  if (activeFantasyTheme() === 'hiver') {
+  const t = activeFantasyTheme();
+  if (t === 'hiver') {
     const set = place === 'accueil' ? MEAL_SLOT_ICON_HIVER_ACCUEIL : MEAL_SLOT_ICON_HIVER;
+    return resolveAssetUrl(set[slot]);
+  }
+  if (t === 'printemps') {
+    const set = place === 'accueil' ? MEAL_SLOT_ICON_PRINTEMPS_ACCUEIL : MEAL_SLOT_ICON_PRINTEMPS;
     return resolveAssetUrl(set[slot]);
   }
   return resolveAssetUrl(MEAL_SLOT_ICON[slot]);
@@ -198,6 +242,17 @@ export const ANIMAUX_ICON_AUTOMNE = {
   soin: 'assets/themes/automne/animaux/soin.png'
 } as const;
 
+export const ANIMAUX_ICON_PRINTEMPS = {
+  patte: 'assets/themes/printemps/animaux/patte.png',
+  bourse: 'assets/themes/printemps/animaux/bourse.png',
+  calendrier: 'assets/themes/printemps/animaux/calendrier.png',
+  chien: 'assets/themes/printemps/animaux/chien.png',
+  chat: 'assets/themes/printemps/animaux/chat.png',
+  vaccin: 'assets/themes/printemps/animaux/vaccin.png',
+  gamelle: 'assets/themes/printemps/animaux/gamelle.png',
+  soin: 'assets/themes/printemps/animaux/soin.png'
+} as const;
+
 /** Icônes Été — Animaux. */
 export const ANIMAUX_ICON_ETE = {
   patte: 'assets/themes/ete/animaux/patte.png',
@@ -215,13 +270,15 @@ export type FinanceIconMap =
   | typeof FINANCE_ICON_DEMON
   | typeof FINANCE_ICON_ETE
   | typeof FINANCE_ICON_HIVER
-  | typeof FINANCE_ICON_AUTOMNE;
+  | typeof FINANCE_ICON_AUTOMNE
+  | typeof FINANCE_ICON_PRINTEMPS;
 export type AnimauxIconMap =
   | typeof ANIMAUX_ICON
   | typeof ANIMAUX_ICON_DEMON
   | typeof ANIMAUX_ICON_ETE
   | typeof ANIMAUX_ICON_HIVER
-  | typeof ANIMAUX_ICON_AUTOMNE;
+  | typeof ANIMAUX_ICON_AUTOMNE
+  | typeof ANIMAUX_ICON_PRINTEMPS;
 
 export function financeIconsForTheme(): FinanceIconMap {
   const t = activeFantasyTheme();
@@ -229,6 +286,7 @@ export function financeIconsForTheme(): FinanceIconMap {
   if (t === 'ete') return FINANCE_ICON_ETE;
   if (t === 'hiver') return FINANCE_ICON_HIVER;
   if (t === 'automne') return FINANCE_ICON_AUTOMNE;
+  if (t === 'printemps') return FINANCE_ICON_PRINTEMPS;
   return FINANCE_ICON;
 }
 
@@ -238,6 +296,7 @@ export function animauxIconsForTheme(): AnimauxIconMap {
   if (t === 'ete') return ANIMAUX_ICON_ETE;
   if (t === 'hiver') return ANIMAUX_ICON_HIVER;
   if (t === 'automne') return ANIMAUX_ICON_AUTOMNE;
+  if (t === 'printemps') return ANIMAUX_ICON_PRINTEMPS;
   return ANIMAUX_ICON;
 }
 

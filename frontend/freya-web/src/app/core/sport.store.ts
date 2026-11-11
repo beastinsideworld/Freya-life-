@@ -839,6 +839,16 @@ export const MUSCU_ICON_AUTOMNE = {
   trophee: 'assets/themes/automne/muscu/trophee.png'
 } as const;
 
+export const MUSCU_ICON_PRINTEMPS = {
+  haltere: 'assets/themes/printemps/muscu/haltere.png',
+  kettlebell: 'assets/themes/printemps/muscu/kettlebell.png',
+  banc: 'assets/themes/printemps/muscu/banc.png',
+  disques: 'assets/themes/printemps/muscu/disques.png',
+  shaker: 'assets/themes/printemps/muscu/shaker.png',
+  programme: 'assets/themes/printemps/muscu/programme.png',
+  trophee: 'assets/themes/printemps/muscu/trophee.png'
+} as const;
+
 export const MUSCU_ICON_HIVER = {
   haltere: 'assets/themes/hiver/muscu/haltere.png',
   kettlebell: 'assets/themes/hiver/muscu/kettlebell.png',
@@ -856,12 +866,14 @@ export function muscuIconsForTheme():
   | typeof MUSCU_ICON_DEMON
   | typeof MUSCU_ICON_ETE
   | typeof MUSCU_ICON_HIVER
-  | typeof MUSCU_ICON_AUTOMNE {
+  | typeof MUSCU_ICON_AUTOMNE
+  | typeof MUSCU_ICON_PRINTEMPS {
   const t = document.documentElement.getAttribute('data-theme');
   if (t === 'demon') return MUSCU_ICON_DEMON;
   if (t === 'ete') return MUSCU_ICON_ETE;
   if (t === 'hiver') return MUSCU_ICON_HIVER;
   if (t === 'automne') return MUSCU_ICON_AUTOMNE;
+  if (t === 'printemps') return MUSCU_ICON_PRINTEMPS;
   return MUSCU_ICON;
 }
 

@@ -1,0 +1,379 @@
+/* Accueil Printemps — fonds floraux */
+
+$printemps-ink: #1a4d38;
+$printemps-ink-soft: #2d6b52;
+$printemps-nacre: rgba(255, 252, 250, 0.82);
+$printemps-nacre-border: rgba(255, 255, 255, 0.72);
+
+@mixin printemps-nacre-pill {
+  background: $printemps-nacre;
+  border: 1px solid $printemps-nacre-border;
+  border-radius: var(--radius-pill);
+  box-shadow: 0 2px 10px rgba(26, 77, 56, 0.1);
+  color: $printemps-ink;
+  text-shadow: none;
+}
+
+@mixin printemps-card($file, $position: center, $scrim) {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background-color: #e8f5e4;
+  background-image: url('../../public/assets/themes/printemps/fonds/#{$file}');
+  background-size: cover;
+  background-position: $position;
+  background-repeat: no-repeat;
+  border: 1.5px solid color-mix(in srgb, #5cb88a 50%, white);
+  box-shadow:
+    0 10px 24px rgba(26, 77, 56, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.75);
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    background: $scrim;
+  }
+
+  > *:not(.family-scope) {
+    position: relative;
+    z-index: 1;
+  }
+}
+
+:root[data-theme='printemps'] .page.accueil > .hero,
+:root[data-theme='printemps'] .page.accueil > .trip-banner,
+:root[data-theme='printemps'] .page.accueil > .composer,
+:root[data-theme='printemps'] .page.accueil > .tasks,
+:root[data-theme='printemps'] .page.accueil > .meals,
+:root[data-theme='printemps'] .page.accueil > .week {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+:root[data-theme='printemps'] .page.accueil > .hero {
+  border-radius: var(--radius);
+  min-height: 13.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  @include printemps-card(
+    'accueil.jpg',
+    center 42%,
+    linear-gradient(180deg, rgba(245, 251, 243, 0.1) 0%, rgba(245, 251, 243, 0.35) 48%, rgba(232, 245, 228, 0.18) 100%)
+  );
+
+  &::after {
+    display: none;
+  }
+
+  > h1 {
+    @include printemps-nacre-pill;
+    margin: 0.1rem 0 0;
+    padding: 0.2rem 0.85rem;
+    font-weight: 700;
+  }
+
+  > .sub {
+    @include printemps-nacre-pill;
+    margin: 0.4rem 0 0;
+    padding: 0.15rem 0.65rem;
+    color: $printemps-ink-soft;
+    font-size: var(--fs-sub);
+  }
+
+  > .hero-date.meta-pill,
+  > .family-scope {
+    @include printemps-nacre-pill;
+    border-color: color-mix(in srgb, #5cb88a 40%, white);
+    font-weight: 600;
+    color: $printemps-ink;
+  }
+
+  > .family-scope {
+    position: absolute;
+    top: 0.7rem;
+    left: 0.75rem;
+  }
+}
+
+:root[data-theme='printemps'] .page.accueil > .trip-banner {
+  min-height: 4.75rem;
+  color: $printemps-ink;
+  @include printemps-card(
+    'voyage.jpg',
+    center 48%,
+    linear-gradient(
+      90deg,
+      rgba(255, 252, 250, 0.85) 0%,
+      rgba(245, 251, 243, 0.5) 55%,
+      rgba(245, 251, 243, 0.15) 100%
+    )
+  );
+  background-image: url('../../public/assets/themes/printemps/bandeau.jpg');
+
+  .trip-label,
+  strong {
+    color: $printemps-ink;
+    font-weight: 700;
+    text-shadow: 0 1px 0 rgba(255, 252, 250, 0.92);
+  }
+
+  .trip-count {
+    color: $printemps-ink;
+    background: rgba(255, 252, 250, 0.92);
+    border: 1px solid #5cb88a;
+    font-weight: 600;
+    text-shadow: none;
+  }
+}
+
+:root[data-theme='printemps'] .page.accueil > .composer {
+  --composer-h: 3.15rem;
+  align-items: center;
+  justify-content: center;
+  justify-items: center;
+  padding: 0.65rem 0.5rem;
+  min-height: 5rem;
+  grid-template-columns:
+    minmax(5.5rem, 1.05fr)
+    var(--composer-h)
+    minmax(4.5rem, 5.2rem)
+    var(--composer-h);
+  max-width: 100%;
+  margin-inline: auto;
+  @include printemps-card(
+    'evenement.jpg',
+    center 42%,
+    linear-gradient(
+      180deg,
+      rgba(245, 251, 243, 0.22) 0%,
+      rgba(232, 245, 228, 0.38) 50%,
+      rgba(245, 251, 243, 0.28) 100%
+    )
+  );
+
+  > .field-title {
+    font-size: 0;
+    line-height: 0;
+  }
+
+  > .field-title input,
+  > .field-time input,
+  > .field-date app-date-picker .trigger,
+  > .btn.add {
+    align-self: center;
+    justify-self: center;
+    @include printemps-nacre-pill;
+    background: rgba(255, 252, 250, 0.92);
+    border-color: color-mix(in srgb, #5cb88a 45%, white);
+    font-weight: 600;
+  }
+
+  > .field-title input::placeholder {
+    color: color-mix(in srgb, $printemps-ink 72%, white);
+    opacity: 1;
+  }
+
+  > .error {
+    grid-column: 1 / -1;
+    color: $printemps-ink;
+    @include printemps-nacre-pill;
+    padding: 0.2rem 0.55rem;
+    text-align: center;
+  }
+}
+
+:root[data-theme='printemps'] .page.accueil > .tasks {
+  @include printemps-card(
+    'taches.jpg',
+    center 38%,
+    linear-gradient(180deg, rgba(245, 251, 243, 0.12), rgba(232, 245, 228, 0.35))
+  );
+
+  .section-head h2,
+  .task-group h3 {
+    @include printemps-nacre-pill;
+    display: inline-block;
+    padding: 0.18rem 0.55rem;
+    margin: 0;
+  }
+
+  .section-head a {
+    @include printemps-nacre-pill;
+    padding: 0.15rem 0.45rem;
+    color: $printemps-ink-soft;
+    text-decoration: none;
+  }
+
+  h2,
+  h3,
+  .time,
+  a,
+  .task-card {
+    color: $printemps-ink;
+  }
+
+  .task-card {
+    background: rgba(255, 252, 250, 0.72);
+    border-color: color-mix(in srgb, #5cb88a 35%, white);
+  }
+
+  .task-ico-img {
+    width: 1.05rem;
+    height: 1.05rem;
+    object-fit: contain;
+  }
+}
+
+:root[data-theme='printemps'] .page.accueil > .meals {
+  @include printemps-card(
+    'repas.jpg',
+    center 40%,
+    linear-gradient(180deg, rgba(245, 251, 243, 0.1), rgba(232, 245, 228, 0.32))
+  );
+
+  .section-head h2 {
+    @include printemps-nacre-pill;
+    padding: 0.2rem 0.55rem;
+    flex-wrap: wrap;
+    gap: 0.25rem 0.4rem;
+  }
+
+  .section-head a,
+  .section-link {
+    @include printemps-nacre-pill;
+    padding: 0.15rem 0.45rem;
+    color: $printemps-ink-soft;
+  }
+
+  .kcal-total {
+    @include printemps-nacre-pill;
+    padding: 0.12rem 0.4rem;
+    margin-left: 0;
+    color: $printemps-ink;
+    font-weight: 600;
+  }
+
+  h2,
+  a,
+  .meal-card h3,
+  .meal-card p {
+    color: $printemps-ink;
+  }
+
+  .meal-card {
+    background: rgba(255, 252, 250, 0.58);
+    border-color: color-mix(in srgb, #5cb88a 38%, white);
+  }
+
+  .meal-card h3,
+  .meal-card p {
+    @include printemps-nacre-pill;
+    padding: 0.12rem 0.35rem;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .kcal-badge,
+  .meal-edit {
+    @include printemps-nacre-pill;
+    background: rgba(255, 252, 250, 0.88);
+    color: $printemps-ink;
+    border-color: color-mix(in srgb, #5cb88a 40%, white);
+  }
+
+  .meal-ico {
+    background: rgba(255, 253, 251, 0.75);
+    border: none;
+    border-radius: 50%;
+    box-shadow: 0 2px 10px rgba(26, 77, 56, 0.18);
+  }
+
+  .meal-ico img {
+    filter: drop-shadow(0 1px 3px rgba(26, 77, 56, 0.25));
+  }
+}
+
+:root[data-theme='printemps'] .page.accueil > .week {
+  @include printemps-card(
+    'planning.jpg',
+    center 38%,
+    linear-gradient(180deg, rgba(245, 251, 243, 0.1), rgba(232, 245, 228, 0.3))
+  );
+
+  .section-head h2,
+  .section-head a {
+    @include printemps-nacre-pill;
+    padding: 0.18rem 0.5rem;
+    margin: 0;
+    text-shadow: none;
+  }
+
+  h2,
+  h3,
+  a,
+  .day-num,
+  li,
+  .week-event {
+    color: $printemps-ink;
+    text-shadow: none;
+  }
+
+  .week-row h3,
+  .day-num,
+  .week-row li,
+  .week-event {
+    @include printemps-nacre-pill;
+    padding: 0.08rem 0.28rem;
+    max-width: 100%;
+  }
+
+  .day-weather {
+    background: rgba(255, 253, 251, 0.96);
+    border: 1px solid color-mix(in srgb, #5cb88a 40%, white);
+    border-radius: 0.55rem;
+    padding: 0.18rem 0.1rem 0.12rem;
+    margin: 0.12rem 0;
+    box-shadow: 0 2px 8px rgba(26, 77, 56, 0.1);
+  }
+
+  .day-weather-ico-img {
+    width: clamp(1.4rem, 7vw, 2rem);
+    height: clamp(1.4rem, 7vw, 2rem);
+    padding: 0.1rem;
+    background: #ffffff;
+    border-radius: 0.4rem;
+    box-sizing: border-box;
+    object-fit: contain;
+    box-shadow: inset 0 0 0 1px rgba(92, 184, 138, 0.25);
+  }
+
+  .day-weather-temp {
+    @include printemps-nacre-pill;
+    background: rgba(255, 253, 251, 0.98);
+    font-weight: 700;
+    font-size: 0.58rem;
+    margin-top: 0.08rem;
+  }
+
+  .week-row article {
+    background: rgba(255, 252, 250, 0.78);
+    border-color: color-mix(in srgb, #5cb88a 45%, white);
+  }
+
+  .week-row article.today {
+    background: color-mix(in srgb, #b8e8c8 45%, #fff);
+    border-color: #3a9868;
+  }
+
+  .week-row li {
+    background: rgba(255, 252, 250, 0.72);
+  }
+}

@@ -16,6 +16,7 @@ export type ThemeId =
   | 'rose'
   | 'noir'
   | 'ete'
+  | 'printemps'
   | 'automne'
   | 'hiver';
 
@@ -23,6 +24,8 @@ export interface ThemeOption {
   id: ThemeId;
   label: string;
   swatch: string;
+  /** Aperçu du fond d’accueil (assets/…). */
+  preview?: string;
 }
 
 export interface ThemeCategory {
@@ -38,18 +41,19 @@ export const THEME_CATEGORIES: ThemeCategory[] = [
     label: 'Céleste',
     description: 'Ange et Démon.',
     themes: [
-      { id: 'ange', label: 'Ange', swatch: '#D8B981' },
-      { id: 'demon', label: 'Démon', swatch: '#D61C2A' }
+      { id: 'ange', label: 'Ange', swatch: '#D8B981', preview: 'assets/themes/ange/fonds/accueil.png' },
+      { id: 'demon', label: 'Démon', swatch: '#D61C2A', preview: 'assets/themes/demon/fonds/accueil.png' }
     ]
   },
   {
     id: 'saisons',
     label: 'Saisons',
-    description: 'Été, automne et hiver.',
+    description: 'Les quatre saisons.',
     themes: [
-      { id: 'ete', label: 'Été', swatch: '#f0a830' },
-      { id: 'automne', label: 'Automne', swatch: '#e07030' },
-      { id: 'hiver', label: 'Hiver', swatch: '#8aabd0' }
+      { id: 'ete', label: 'Été', swatch: '#f0a830', preview: 'assets/themes/ete/fonds/accueil.png' },
+      { id: 'printemps', label: 'Printemps', swatch: '#7dce9a', preview: 'assets/themes/printemps/fonds/accueil.jpg' },
+      { id: 'automne', label: 'Automne', swatch: '#e07030', preview: 'assets/themes/automne/fonds/accueil.jpg' },
+      { id: 'hiver', label: 'Hiver', swatch: '#8aabd0', preview: 'assets/themes/hiver/fonds/accueil.jpg' }
     ]
   }
 ];

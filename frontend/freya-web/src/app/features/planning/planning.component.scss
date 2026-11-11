@@ -839,3 +839,92 @@ h2 {
     font-weight: 700;
   }
 }
+
+:host-context([data-theme='printemps']) {
+  @include planning-fantasy-calendar();
+
+  .days p {
+    color: #1a4d38;
+    background: rgba(255, 253, 251, 0.55);
+    border-radius: 0.35rem;
+  }
+
+  .days p:first-child {
+    color: #0f3d2a;
+    font-weight: 800;
+  }
+
+  .days .today {
+    color: #0f3d2a;
+    background: color-mix(in srgb, #b8e8c8 45%, #fff);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, #5cb88a 50%, white);
+  }
+
+  .days .holiday {
+    color: #3d6b54;
+    background: rgba(184, 232, 200, 0.55);
+  }
+
+  .days .holiday.today {
+    color: #0f3d2a;
+    background: color-mix(in srgb, #5cb88a 25%, #f5fbf3);
+  }
+
+  .col.holiday {
+    background: rgba(184, 232, 200, 0.35);
+  }
+
+  .col.today {
+    background: color-mix(in srgb, #b8e8c8 28%, #f5fbf3);
+    box-shadow: inset 0 0 18px rgba(92, 184, 138, 0.12);
+  }
+
+  .month .weekday {
+    color: #2d6b52;
+    font-weight: 700;
+    text-shadow: 0 1px 0 rgba(255, 253, 251, 0.85);
+  }
+
+  .month .weekday:first-child {
+    color: #0f3d2a;
+  }
+
+  .month-cell.holiday {
+    background: rgba(184, 232, 200, 0.5);
+    color: #1a4d38;
+    border-color: color-mix(in srgb, #5cb88a 45%, white);
+  }
+
+  .month-cell.holiday .day-num {
+    color: #2d6b52;
+  }
+
+  .month-cell.today {
+    border-color: #5cb88a;
+    background: color-mix(in srgb, #b8e8c8 32%, #fff);
+  }
+
+  .month-cell.today .day-num {
+    color: #0f3d2a;
+    font-weight: 700;
+  }
+
+  .month-cell.has .day-num {
+    color: #1a4d38;
+  }
+
+  .hours {
+    color: #4a7a62;
+  }
+
+  .panel h2,
+  .seg button,
+  .view-tabs button {
+    color: #1a4d38;
+  }
+
+  .seg button.active,
+  .view-tabs button.active {
+    color: #0f3d2a;
+  }
+}

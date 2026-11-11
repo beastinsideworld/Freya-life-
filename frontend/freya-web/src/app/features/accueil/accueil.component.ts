@@ -278,6 +278,7 @@ export class AccueilComponent implements OnInit, OnDestroy {
     if (theme === 'ete') return resolveAssetUrl('assets/themes/ete/finance/cible.png');
     if (theme === 'hiver') return resolveAssetUrl('assets/themes/hiver/finance/cible.png');
     if (theme === 'automne') return resolveAssetUrl('assets/themes/automne/finance/cible.png');
+    if (theme === 'printemps') return resolveAssetUrl('assets/themes/printemps/finance/cible.png');
     return null;
   }
 

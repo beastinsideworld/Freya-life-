@@ -123,6 +123,20 @@
   filter: drop-shadow(0 1px 6px rgba(107, 140, 174, 0.55));
 }
 
+:host-context([data-theme='printemps']) .ico-wrap {
+  filter: drop-shadow(0 0 6px rgba(92, 184, 138, 0.38));
+}
+
+:host-context([data-theme='printemps']) .nav-label {
+  color: #2d6b52;
+  font-weight: 600;
+}
+
+:host-context([data-theme='printemps']) .bottom-link.active .nav-label {
+  color: #0f3d2a;
+  font-weight: 700;
+}
+
 :host-context([data-theme='automne']) .ico-wrap {
   width: 2.35rem;
   height: 2.35rem;
@@ -132,6 +146,7 @@
 :host-context([data-theme='ange']) .bottom-link ::ng-deep app-nav-icon,
 :host-context([data-theme='demon']) .bottom-link ::ng-deep app-nav-icon,
 :host-context([data-theme='ete']) .bottom-link ::ng-deep app-nav-icon,
+:host-context([data-theme='printemps']) .bottom-link ::ng-deep app-nav-icon,
 :host-context([data-theme='automne']) .bottom-link ::ng-deep app-nav-icon,
 :host-context([data-theme='hiver']) .bottom-link ::ng-deep app-nav-icon {
   max-width: 2.3rem;

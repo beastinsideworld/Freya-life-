@@ -172,10 +172,22 @@
 
   <section class="panel">
     <h2>Apparence</h2>
-    <p class="hint">Ange, Démon et les saisons s’appliquent à toute l’app.</p>
+    <p class="hint">Ange, Démon et les quatre saisons s’appliquent à toute l’app.</p>
 
     <div class="current-appearance">
-      <span class="swatch large" [style.background]="currentTheme()?.swatch ?? '#D8B981'" aria-hidden="true"></span>
+      @if (currentTheme(); as cur) {
+        @if (themePreviewSrc(cur); as preview) {
+          <span
+            class="swatch large preview"
+            [style.background-image]="'url(' + preview + ')'"
+            aria-hidden="true"
+          ></span>
+        } @else {
+          <span class="swatch large" [style.background]="cur.swatch" aria-hidden="true"></span>
+        }
+      } @else {
+        <span class="swatch large" style="background:#D8B981" aria-hidden="true"></span>
+      }
       <div class="current-info">
         <strong>{{ currentTheme()?.label ?? 'Ange' }}</strong>
         <span>{{ currentTheme()?.categoryLabel ?? 'Céleste' }}</span>
@@ -242,7 +254,15 @@
                 [class.active]="selectedThemeId() === theme.id"
                 (click)="selectTheme(theme.id)"
               >
-                <span class="swatch" [style.background]="theme.swatch" aria-hidden="true"></span>
+                @if (themePreviewSrc(theme); as preview) {
+                  <span
+                    class="swatch preview"
+                    [style.background-image]="'url(' + preview + ')'"
+                    aria-hidden="true"
+                  ></span>
+                } @else {
+                  <span class="swatch" [style.background]="theme.swatch" aria-hidden="true"></span>
+                }
                 <span class="theme-name">{{ theme.label }}</span>
               </button>
             }

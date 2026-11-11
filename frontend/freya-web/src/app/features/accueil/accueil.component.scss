@@ -542,7 +542,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0;
-  color: var(--gold-bright);
+  color: var(--title, var(--gold-bright));
   line-height: 1.15;
   white-space: nowrap;
   overflow: visible;

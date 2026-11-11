@@ -11,7 +11,8 @@
 :root[data-theme='demon'] .theme-modules,
 :root[data-theme='ete'] .theme-modules,
 :root[data-theme='hiver'] .theme-modules,
-:root[data-theme='automne'] .theme-modules {
+:root[data-theme='automne'] .theme-modules,
+:root[data-theme='printemps'] .theme-modules {
   display: grid;
 }
 
@@ -242,6 +243,40 @@
   background-image: url('../../public/assets/themes/automne/animaux.jpg');
 }
 
+:root[data-theme='printemps'] .theme-module {
+  color: #1a4d38;
+  border-color: #5cb88a;
+  background-color: #e8f5e4;
+}
+
+:root[data-theme='printemps'] .theme-module::before {
+  background: linear-gradient(
+    180deg,
+    rgba(245, 251, 243, 0.12) 0%,
+    rgba(245, 251, 243, 0.42) 50%,
+    rgba(232, 245, 228, 0.78) 100%
+  );
+}
+
+:root[data-theme='printemps'] .theme-module--planning {
+  background-image: url('../../public/assets/themes/printemps/planning.jpg');
+}
+:root[data-theme='printemps'] .theme-module--repas {
+  background-image: url('../../public/assets/themes/printemps/repas.jpg');
+}
+:root[data-theme='printemps'] .theme-module--voyage {
+  background-image: url('../../public/assets/themes/printemps/voyage.jpg');
+}
+:root[data-theme='printemps'] .theme-module--sport {
+  background-image: url('../../public/assets/themes/printemps/sport.jpg');
+}
+:root[data-theme='printemps'] .theme-module--finances {
+  background-image: url('../../public/assets/themes/printemps/finances.jpg');
+}
+:root[data-theme='printemps'] .theme-module--animaux {
+  background-image: url('../../public/assets/themes/printemps/animaux.jpg');
+}
+
 /* Héros Accueil Démon — theme-demon-headers.scss */
 
 @mixin theme-page-hero-bg($theme, $selector, $file) {
@@ -381,6 +416,28 @@
 :root[data-theme='automne'] .page.budget-page > .hero::after,
 :root[data-theme='automne'] .page.animaux-page > .hero::after {
   background: linear-gradient(180deg, rgba(11, 4, 0, 0.2), rgba(11, 4, 0, 0.62));
+}
+
+@include theme-page-hero-bg('printemps', '.page.repas', 'repas.jpg');
+@include theme-page-hero-bg('printemps', '.page.voyages', 'voyage.jpg');
+@include theme-page-hero-bg('printemps', '.page.sport-page', 'sport.jpg');
+@include theme-page-hero-bg('printemps', '.page.budget-page', 'finances.jpg');
+@include theme-page-hero-bg('printemps', '.page.animaux-page', 'animaux.jpg');
+
+:root[data-theme='printemps'] .page.planning > .hero {
+  background-image: url('../../public/assets/themes/printemps/fonds/planning.jpg');
+  background-size: cover;
+  background-position: center 40%;
+  background-color: #e8f5e4;
+}
+
+:root[data-theme='printemps'] .page.planning > .hero::after,
+:root[data-theme='printemps'] .page.repas > .hero::after,
+:root[data-theme='printemps'] .page.voyages > .hero::after,
+:root[data-theme='printemps'] .page.sport-page > .hero::after,
+:root[data-theme='printemps'] .page.budget-page > .hero::after,
+:root[data-theme='printemps'] .page.animaux-page > .hero::after {
+  background: linear-gradient(180deg, rgba(245, 251, 243, 0.15), rgba(232, 245, 228, 0.55));
 }
 
 @media (min-width: 768px) {

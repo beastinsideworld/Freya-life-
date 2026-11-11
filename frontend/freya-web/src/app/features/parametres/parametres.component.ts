@@ -7,9 +7,11 @@ import { NavPrefsService } from '../../core/nav-prefs.service';
 import { NavTabId, TOGGLEABLE_NAV_TABS } from '../../core/nav-tabs';
 import { Friend, SocialService, UserProfile } from '../../core/social.service';
 import { ImagePickerComponent } from '../../shared/image-picker/image-picker.component';
+import { resolveAssetUrl } from '../../core/asset-url';
 import {
   THEME_CATEGORIES,
   ThemeId,
+  ThemeOption,
   applyTheme,
   findTheme
 } from '../../core/themes';
@@ -30,6 +32,10 @@ export class ParametresComponent implements OnInit {
   readonly toggleableTabs = TOGGLEABLE_NAV_TABS;
   readonly selectedThemeId = signal<ThemeId>('ange');
   readonly currentTheme = computed(() => findTheme(this.selectedThemeId()));
+
+  themePreviewSrc(theme: ThemeOption): string | null {
+    return theme.preview ? resolveAssetUrl(theme.preview) : null;
+  }
   readonly hiddenNavTabs = signal<NavTabId[]>([]);
   readonly navTabOrder = signal<NavTabId[]>([]);
   readonly orderedToggleableTabs = computed(() =>

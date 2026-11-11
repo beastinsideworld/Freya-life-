@@ -1,0 +1,148 @@
+/* Printemps — lisibilité globale (texte, nav, pages) */
+
+@mixin printemps-encadre {
+  background: rgba(255, 253, 251, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: var(--radius-pill);
+  box-shadow: 0 2px 10px rgba(26, 77, 56, 0.1);
+  color: #1a4d38;
+}
+
+:root[data-theme='printemps'] .panel h2,
+:root[data-theme='printemps'] .panel h3,
+:root[data-theme='printemps'] .page > .hero h1,
+:root[data-theme='printemps'] .page > .hero .sub {
+  color: #1a4d38;
+}
+
+:root[data-theme='printemps'] .page.planning > .hero h1,
+:root[data-theme='printemps'] .page.repas > .hero h1 {
+  @include printemps-encadre;
+  display: inline-block;
+  padding: 0.2rem 0.75rem;
+  margin: 0 auto;
+}
+
+:root[data-theme='printemps'] .page.planning .panel > h2,
+:root[data-theme='printemps'] .page.planning .section-head h2,
+:root[data-theme='printemps'] .page.repas .panel > h2,
+:root[data-theme='printemps'] .page.repas .section-head h2,
+:root[data-theme='printemps'] .parametres .panel > h2 {
+  @include printemps-encadre;
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  margin-bottom: 0.35rem;
+}
+
+:root[data-theme='printemps'] .parametres .hint,
+:root[data-theme='printemps'] .parametres .current-info span,
+:root[data-theme='printemps'] .parametres .theme-category h3,
+:root[data-theme='printemps'] .parametres .friend-code {
+  color: #2d6b52;
+}
+
+:root[data-theme='printemps'] .parametres .current-info strong,
+:root[data-theme='printemps'] .parametres .theme-name {
+  color: #1a4d38;
+}
+
+:root[data-theme='printemps'] .bottom-link .nav-label {
+  color: #2d6b52;
+  font-weight: 600;
+}
+
+:root[data-theme='printemps'] .bottom-link.active .nav-label {
+  color: #0f3d2a;
+  font-weight: 700;
+}
+
+:root[data-theme='printemps'] .bottom-nav-rail {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 252, 250, 0.94) 0%,
+    rgba(223, 245, 227, 0.9) 100%
+  );
+}
+
+/* Icônes très foncées — barre du bas, accueil repas, grille repas */
+
+@mixin printemps-dark-icon-img {
+  filter: contrast(1.65) saturate(1.5) brightness(0.72)
+    drop-shadow(0 1px 0 rgba(255, 255, 255, 0.9));
+}
+
+@mixin printemps-icon-plate($pad: 0.18rem) {
+  display: grid;
+  place-items: center;
+  background: rgba(255, 254, 251, 0.9);
+  border: none;
+  border-radius: 50%;
+  box-shadow: 0 2px 12px rgba(26, 77, 56, 0.22);
+  padding: $pad;
+  box-sizing: border-box;
+}
+
+:root[data-theme='printemps'] .ico-wrap {
+  @include printemps-icon-plate(0.2rem);
+  width: 2.4rem;
+  height: 2.4rem;
+  filter: none;
+}
+
+:root[data-theme='printemps'] .bottom-link ::ng-deep app-nav-icon .nav-img {
+  @include printemps-dark-icon-img;
+}
+
+:root[data-theme='printemps'] .page.accueil > .meals .meal-ico {
+  @include printemps-icon-plate(0.22rem);
+  width: 2.9rem;
+  height: 2.9rem;
+  filter: none;
+}
+
+:root[data-theme='printemps'] .page.accueil > .meals .meal-ico img {
+  @include printemps-dark-icon-img;
+}
+
+:root[data-theme='printemps'] .page.repas .slot-ico {
+  background: none;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+  width: 1.65rem;
+  height: 1.65rem;
+  object-fit: contain;
+  @include printemps-dark-icon-img;
+}
+
+:root[data-theme='printemps'] .page.repas .slot-ico.ghost {
+  width: 1.45rem;
+  height: 1.45rem;
+}
+
+:root[data-theme='printemps'] .page > .hero .icon {
+  @include printemps-icon-plate(0.24rem);
+  width: 2.55rem;
+  height: 2.55rem;
+  margin: 0 auto;
+}
+
+:root[data-theme='printemps'] .page > .hero .icon .nav-img {
+  @include printemps-dark-icon-img;
+}
+
+:root[data-theme='printemps'] .page.accueil .section-ico {
+  @include printemps-icon-plate(0.08rem);
+  width: 1.6rem;
+  height: 1.6rem;
+}
+
+:root[data-theme='printemps'] .page.accueil .section-ico .nav-img {
+  @include printemps-dark-icon-img;
+}
+
+:root[data-theme='printemps'] .bottom-link.active .ico-wrap {
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 0 0 3px rgba(92, 184, 138, 0.4), 0 3px 14px rgba(26, 77, 56, 0.28);
+}

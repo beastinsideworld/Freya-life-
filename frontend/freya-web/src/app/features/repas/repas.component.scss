@@ -727,6 +727,143 @@ button.cell.filled:focus-visible {
   margin: 0.55rem 0 0.75rem;
 }
 
+:host-context([data-theme='printemps']) {
+  $ink: #0a2e1f;
+  $ink-mid: #1a4d38;
+  $ink-soft: #2d6b52;
+
+  .hero h1,
+  .section-head h2,
+  .slot-tabs button,
+  .toolbar .meta-pill {
+    color: $ink-mid;
+  }
+
+  .hero .sub {
+    color: $ink-soft;
+    font-weight: 600;
+  }
+
+  .section-head h2 {
+    background: rgba(255, 253, 251, 0.94);
+    border: none;
+    border-radius: var(--radius-pill);
+    padding: 0.15rem 0.55rem;
+    display: inline-block;
+    color: $ink;
+  }
+
+  .qty,
+  .detail-meta,
+  .meal-picker-meta,
+  .kcal-line,
+  .recipe-card .meta {
+    color: $ink-soft;
+  }
+
+  .meal-grid {
+    padding: 0.55rem;
+    border-radius: 1rem;
+    background: rgba(255, 252, 250, 0.94);
+    box-shadow: 0 4px 22px rgba(26, 77, 56, 0.14);
+  }
+
+  .colhead {
+    color: $ink;
+    font-weight: 700;
+  }
+
+  .colhead span {
+    color: $ink;
+    font-weight: 700;
+    background: rgba(255, 253, 251, 0.96);
+    border-radius: var(--radius-pill);
+    padding: 0.1rem 0.4rem;
+  }
+
+  .day,
+  .day h3 {
+    color: $ink;
+    font-weight: 700;
+  }
+
+  .day-kcal {
+    color: $ink-soft;
+    font-weight: 600;
+  }
+
+  .cell {
+    background: rgba(255, 253, 251, 0.97);
+    border-color: color-mix(in srgb, #3a9868 45%, white);
+    color: $ink;
+  }
+
+  button.cell.filled {
+    color: $ink;
+  }
+
+  .cell.filled p {
+    color: $ink;
+    font-weight: 600;
+  }
+
+  .cell.filled .meal-kcal {
+    color: $ink-soft;
+    font-weight: 700;
+  }
+
+  .cell.slot {
+    color: $ink-mid;
+    background: rgba(255, 253, 251, 0.92);
+    border-color: color-mix(in srgb, $ink-mid 30%, #5cb88a);
+
+    span {
+      color: $ink;
+      font-weight: 700;
+    }
+  }
+
+  .cell.filled .thumb:not(.has-photo) {
+    background: transparent;
+    background-image: none;
+  }
+
+  .colhead .slot-ico,
+  .cell .slot-ico,
+  .cell.filled .thumb img {
+    background: none;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 0;
+    object-fit: contain;
+    filter: contrast(1.65) saturate(1.5) brightness(0.62)
+      drop-shadow(0 1px 3px rgba(10, 46, 31, 0.4));
+  }
+
+  .colhead .slot-ico {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+
+  .cell .slot-ico,
+  .cell.filled .thumb img {
+    width: 1.65rem;
+    height: 1.65rem;
+  }
+
+  .slot-ico.ghost {
+    opacity: 1;
+    width: 1.45rem;
+    height: 1.45rem;
+  }
+
+  .recipe-card h3,
+  .recipe-card p {
+    color: $ink;
+  }
+}
+
 .meal-picker-item {
   display: grid;
   grid-template-columns: 4.2rem minmax(0, 1fr);

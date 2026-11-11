@@ -49,7 +49,8 @@ const NAV_ICON_SRC: Record<NavTabId, string> = {
       :host-context([data-theme='ange']),
       :host-context([data-theme='demon']),
       :host-context([data-theme='ete']),
-      :host-context([data-theme='hiver']) {
+      :host-context([data-theme='hiver']),
+      :host-context([data-theme='printemps']) {
         max-width: 1.95rem;
         max-height: 1.95rem;
       }

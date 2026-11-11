@@ -1,0 +1,41 @@
+:root[data-theme='printemps'] .page.accueil > .hero,
+:root[data-theme='printemps'] .page.accueil > .trip-banner,
+:root[data-theme='printemps'] .page.accueil > .composer,
+:root[data-theme='printemps'] .page.accueil > .tasks,
+:root[data-theme='printemps'] .page.accueil > .meals,
+:root[data-theme='printemps'] .page.accueil > .week {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+:root[data-theme='printemps'] .page.planning > .hero,
+:root[data-theme='printemps'] .page.repas > .hero,
+:root[data-theme='printemps'] .page.voyages > .hero,
+:root[data-theme='printemps'] .page.sport-page > .hero,
+:root[data-theme='printemps'] .page.budget-page > .hero,
+:root[data-theme='printemps'] .page.animaux-page > .hero {
+  color: #1a4d38;
+}
+
+:root[data-theme='printemps'] .btn.primary,
+:root[data-theme='printemps'] .seg button.active,
+:root[data-theme='printemps'] .chip.active {
+  background: linear-gradient(180deg, #d4f4dc 0%, #5cb88a 52%, #3a9868 100%);
+  border-color: #3a9868;
+  color: #16432f;
+  font-weight: 700;
+}
+
+:root[data-theme='printemps'] .btn.ghost,
+:root[data-theme='printemps'] .ghost-link {
+  border-color: color-mix(in srgb, #5cb88a 55%, #1a4d38);
+  color: #3a9868;
+}
+
+:root[data-theme='printemps'] .bottom-nav-rail {
+  border-color: color-mix(in srgb, #5cb88a 45%, #1a4d38);
+}
+
+:root[data-theme='printemps'] .ico-wrap {
+  filter: drop-shadow(0 0 6px rgba(92, 184, 138, 0.38));
+}

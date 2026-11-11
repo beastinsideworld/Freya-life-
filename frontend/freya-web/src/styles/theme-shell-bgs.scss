@@ -1,0 +1,20 @@
+/* Fond principal — paysage d’accueil du thème actif (sous le dégradé) */
+
+@mixin app-frame-landscape($theme, $file) {
+  :root[data-theme='#{$theme}'] .app-frame {
+    background-image:
+      linear-gradient(180deg, color-mix(in srgb, var(--bg) 55%, transparent) 0%, color-mix(in srgb, var(--bg) 82%, transparent) 100%),
+      url('../../public/assets/themes/#{$theme}/fonds/#{$file}');
+    background-size: cover;
+    background-position: center top;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+  }
+}
+
+@include app-frame-landscape('ange', 'accueil.png');
+@include app-frame-landscape('demon', 'accueil.png');
+@include app-frame-landscape('ete', 'accueil.png');
+@include app-frame-landscape('printemps', 'accueil.jpg');
+@include app-frame-landscape('automne', 'accueil.jpg');
+@include app-frame-landscape('hiver', 'accueil.jpg');
