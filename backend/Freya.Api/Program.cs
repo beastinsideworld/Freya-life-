@@ -98,13 +98,29 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<FreyaDbContext>();
     var users = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
-    await db.Database.EnsureCreatedAsync();
-    await EnsureEventSchemaAsync(db);
-    await EnsureRecipeSchemaAsync(db);
-    await EnsureSocialSchemaAsync(db);
-    await EnsureFamilySchemaAsync(db);
-    await EnsureBudgetSchemaAsync(db);
-    await EnsurePetShareSchemaAsync(db);
+    var dbInfo = scope.ServiceProvider.GetRequiredService<DatabaseRuntimeInfo>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("DatabaseBootstrap");
+
+    var migrateFromSqlite = builder.Configuration["MIGRATE_FROM_SQLITE"];
+    if (dbInfo.IsSqlServer && !string.IsNullOrWhiteSpace(migrateFromSqlite))
+    {
+        await SqliteToSqlServerMigrator.MigrateAsync(migrateFromSqlite, db, logger);
+    }
+    else
+    {
+        await db.Database.EnsureCreatedAsync();
+    }
+
+    if (dbInfo.IsSqlite)
+    {
+        await EnsureEventSchemaAsync(db);
+        await EnsureRecipeSchemaAsync(db);
+        await EnsureSocialSchemaAsync(db);
+        await EnsureFamilySchemaAsync(db);
+        await EnsureBudgetSchemaAsync(db);
+        await EnsurePetShareSchemaAsync(db);
+    }
+
     await EnsureFriendCodesAsync(db, users);
 }
 

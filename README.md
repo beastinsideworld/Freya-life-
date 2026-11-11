@@ -81,13 +81,21 @@ Sur le serveur (réseau Traefik `traefik_proxy` déjà présent) :
 
 L’API publique est `https://freya-life-api.bariserv.net` (zone DNS déjà créée).
 
+En production l’API utilise **SQL Server** sur l’hôte (`host.docker.internal`, base `FreyaLife`). Le SQLite local reste pour le docker-compose de dev.
+
 ```bash
 # .env à côté de compose.prod.yaml
 JWT_KEY=une-cle-secrete-d-au-moins-32-caracteres
+SQL_PASSWORD=MonMdp
+
+# Migration one-shot des données SQLite existantes (volume /app/data) :
+MIGRATE_FROM_SQLITE=/app/data/freya.db
 
 podman compose -f compose.prod.yaml pull
 podman compose -f compose.prod.yaml up -d
 ```
+
+Après un démarrage réussi avec migration, **retire** `MIGRATE_FROM_SQLITE` du `.env` et relance. La migration est ignorée si SQL Server a déjà des utilisateurs.
 
 `API_HOST` vaut par défaut `freya-life-api.bariserv.net`. Variables utiles : `REGISTRY`, `TAG`, `JWT_ISSUER`, `JWT_AUDIENCE`, `CORS_ORIGINS`, `TRAEFIK_CERT_RESOLVER`.
 

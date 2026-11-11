@@ -141,6 +141,7 @@ public class FreyaDbContext : IdentityDbContext<AppUser>
             e.HasKey(x => x.Id);
             e.HasIndex(x => new { x.UserId, x.Year, x.Month }).IsUnique();
             e.Property(x => x.UserId).HasMaxLength(450).IsRequired();
+            e.Property(x => x.Salary).HasPrecision(18, 2);
             e.HasMany(x => x.Allocations).WithOne(x => x.BudgetMonth!).HasForeignKey(x => x.BudgetMonthId);
             e.HasMany(x => x.Movements).WithOne(x => x.BudgetMonth!).HasForeignKey(x => x.BudgetMonthId);
         });
@@ -150,6 +151,7 @@ public class FreyaDbContext : IdentityDbContext<AppUser>
             e.HasKey(x => x.Id);
             e.Property(x => x.Label).HasMaxLength(120).IsRequired();
             e.Property(x => x.Kind).HasMaxLength(20).IsRequired();
+            e.Property(x => x.PlannedAmount).HasPrecision(18, 2);
         });
 
         builder.Entity<BudgetMovement>(e =>
@@ -157,6 +159,7 @@ public class FreyaDbContext : IdentityDbContext<AppUser>
             e.HasKey(x => x.Id);
             e.Property(x => x.Label).HasMaxLength(120).IsRequired();
             e.Property(x => x.Kind).HasMaxLength(20).IsRequired();
+            e.Property(x => x.Amount).HasPrecision(18, 2);
             e.Property(x => x.Note).HasMaxLength(500);
             e.Property(x => x.Category).HasMaxLength(80);
             e.Property(x => x.AccountName).HasMaxLength(80);
@@ -177,6 +180,8 @@ public class FreyaDbContext : IdentityDbContext<AppUser>
             e.Property(x => x.UserId).HasMaxLength(450).IsRequired();
             e.Property(x => x.Label).HasMaxLength(120).IsRequired();
             e.Property(x => x.Icon).HasMaxLength(16).IsRequired();
+            e.Property(x => x.Balance).HasPrecision(18, 2);
+            e.Property(x => x.PerformancePct).HasPrecision(18, 2);
         });
 
         builder.Entity<BudgetProject>(e =>
@@ -186,6 +191,14 @@ public class FreyaDbContext : IdentityDbContext<AppUser>
             e.Property(x => x.UserId).HasMaxLength(450).IsRequired();
             e.Property(x => x.Label).HasMaxLength(160).IsRequired();
             e.Property(x => x.Icon).HasMaxLength(16).IsRequired();
+            e.Property(x => x.TargetAmount).HasPrecision(18, 2);
+            e.Property(x => x.SavedAmount).HasPrecision(18, 2);
+            e.Property(x => x.MonthlyContribution).HasPrecision(18, 2);
+        });
+
+        builder.Entity<TripBudgetLine>(e =>
+        {
+            e.Property(x => x.Amount).HasPrecision(18, 2);
         });
 
         builder.Entity<PetProfileShare>(e =>
