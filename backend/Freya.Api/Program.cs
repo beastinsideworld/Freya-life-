@@ -98,7 +98,6 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<FreyaDbContext>();
     var users = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
-<<<<<<< Updated upstream
     var dbInfo = scope.ServiceProvider.GetRequiredService<DatabaseRuntimeInfo>();
     var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("DatabaseBootstrap");
 
@@ -116,22 +115,13 @@ using (var scope = app.Services.CreateScope())
     {
         await EnsureEventSchemaAsync(db);
         await EnsureRecipeSchemaAsync(db);
+        await PublishCatalogRecipesAsync(db);
         await EnsureSocialSchemaAsync(db);
         await EnsureFamilySchemaAsync(db);
         await EnsureBudgetSchemaAsync(db);
         await EnsurePetShareSchemaAsync(db);
     }
 
-=======
-    await db.Database.EnsureCreatedAsync();
-    await EnsureEventSchemaAsync(db);
-    await EnsureRecipeSchemaAsync(db);
-    await PublishCatalogRecipesAsync(db);
-    await EnsureSocialSchemaAsync(db);
-    await EnsureFamilySchemaAsync(db);
-    await EnsureBudgetSchemaAsync(db);
-    await EnsurePetShareSchemaAsync(db);
->>>>>>> Stashed changes
     await EnsureFriendCodesAsync(db, users);
 }
 
