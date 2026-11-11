@@ -1,20 +1,54 @@
+name: freya
+
 services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: freya-sql
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "Freya_Local_Dev_2026!"
+      MSSQL_PID: Developer
+    ports:
+      - "1433:1433"
+    volumes:
+      - freya-sql:/var/opt/mssql
+    shm_size: 1gb
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/127.0.0.1/1433'"]
+      interval: 5s
+      timeout: 5s
+      retries: 40
+      start_period: 25s
+
   api:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: freya-api
     environment:
-      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__Default: Data Source=/app/data/freya.db
+      ConnectionStrings__Default: Server=sqlserver,1433;Database=FreyaLife;User Id=sa;Password=Freya_Local_Dev_2026!;TrustServerCertificate=True;Encrypt=True
+      # Monte le dossier API pour reprendre un freya.db local s’il existe
+      MIGRATE_FROM_SQLITE: /migrate/freya.db
       Jwt__Key: FreyaDockerSecretKey_ChangeMe_AtLeast32Chars!
       Jwt__Issuer: Freya
       Jwt__Audience: Freya
     volumes:
-      - freya-data:/app/data
+      - ./backend/Freya.Api:/migrate:ro
+    depends_on:
+      sqlserver:
+        condition: service_healthy
     ports:
       - "5180:8080"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 40
+      start_period: 20s
 
   web:
     build:
@@ -22,9 +56,11 @@ services:
       dockerfile: Dockerfile
     container_name: freya-web
     depends_on:
-      - api
+      api:
+        condition: service_healthy
     ports:
       - "4200:80"
+    restart: unless-stopped
 
 volumes:
-  freya-data:
+  freya-sql:

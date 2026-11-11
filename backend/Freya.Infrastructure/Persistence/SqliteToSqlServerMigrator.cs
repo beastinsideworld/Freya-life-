@@ -1,21 +1,52 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace Freya.Infrastructure.Persistence;
 
 public static class SqliteToSqlServerMigrator
 {
+    public static async Task<int> TryMigrateAsync(
+        FreyaDbContext target,
+        IConfiguration configuration,
+        ILogger logger,
+        CancellationToken cancellationToken = default)
+    {
+        var candidates = new List<string>();
+        var configured = configuration["MIGRATE_FROM_SQLITE"];
+        if (!string.IsNullOrWhiteSpace(configured))
+        {
+            candidates.Add(configured.Trim());
+        }
+
+        candidates.AddRange([
+            Path.Combine(AppContext.BaseDirectory, "freya.db"),
+            Path.Combine(Directory.GetCurrentDirectory(), "freya.db"),
+            "/app/data/freya.db",
+            "/migrate/freya.db"
+        ]);
+
+        foreach (var candidate in candidates.Distinct(StringComparer.OrdinalIgnoreCase))
+        {
+            if (!File.Exists(candidate)) continue;
+
+            var path = Path.GetFullPath(candidate);
+            logger.LogInformation("Migration SQLite → SQL Server depuis {Path}", path);
+            return await MigrateAsync(path, target, logger, cancellationToken);
+        }
+
+        logger.LogInformation("Aucun fichier SQLite trouvé — pas de migration.");
+        return 0;
+    }
+
     public static async Task<int> MigrateAsync(
-        string sqlitePathOrConnection,
+        string sqlitePath,
         FreyaDbContext target,
         ILogger logger,
         CancellationToken cancellationToken = default)
     {
-        var sqliteCs = sqlitePathOrConnection.Contains('=', StringComparison.Ordinal)
-            ? sqlitePathOrConnection
-            : $"Data Source={sqlitePathOrConnection}";
-
+        var sqliteCs = $"Data Source={sqlitePath}";
         var sourceOptions = new DbContextOptionsBuilder<FreyaDbContext>()
             .UseSqlite(sqliteCs)
             .Options;
@@ -67,7 +98,26 @@ public static class SqliteToSqlServerMigrator
 
         await target.SaveChangesAsync(cancellationToken);
         logger.LogInformation("Migration SQLite → SQL Server terminée : {Count} lignes copiées.", copied);
+
+        TryArchiveSqliteFile(sqlitePath, logger);
         return copied;
+    }
+
+    private static void TryArchiveSqliteFile(string sqlitePath, ILogger logger)
+    {
+        if (!File.Exists(sqlitePath)) return;
+
+        try
+        {
+            var archive = sqlitePath + ".migrated";
+            if (File.Exists(archive)) File.Delete(archive);
+            File.Move(sqlitePath, archive);
+            logger.LogInformation("SQLite archivé → {Archive}", archive);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Impossible d’archiver {Path} (monté en lecture seule ?)", sqlitePath);
+        }
     }
 
     private static async Task<int> CopyAsync<T>(
@@ -82,7 +132,6 @@ public static class SqliteToSqlServerMigrator
         }
         catch (Exception)
         {
-            // Table absente dans d’anciennes bases SQLite.
             return 0;
         }
 

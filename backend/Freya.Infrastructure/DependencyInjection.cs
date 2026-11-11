@@ -14,21 +14,8 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         var connectionString = DatabaseProvider.ResolveConnectionString(configuration);
-        var provider = DatabaseProvider.Resolve(configuration);
 
-        services.AddDbContext<FreyaDbContext>(options =>
-        {
-            if (provider == DatabaseProviderKind.SqlServer)
-            {
-                options.UseSqlServer(connectionString);
-            }
-            else
-            {
-                options.UseSqlite(connectionString);
-            }
-        });
-
-        services.AddSingleton(new DatabaseRuntimeInfo(provider, connectionString));
+        services.AddDbContext<FreyaDbContext>(options => options.UseSqlServer(connectionString));
 
         services
             .AddIdentityCore<AppUser>(options =>

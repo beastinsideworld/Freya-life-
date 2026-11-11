@@ -10,9 +10,8 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
-      Database__Provider: SqlServer
       ConnectionStrings__Default: Server=host.docker.internal;Database=FreyaLife;User Id=FreyaLife;Password=${SQL_PASSWORD:?SQL_PASSWORD requis};TrustServerCertificate=True;Encrypt=True
-      # Une fois : MIGRATE_FROM_SQLITE=/app/data/freya.db puis retire la variable
+      # Une fois pour reprendre l’ancien SQLite du volume : MIGRATE_FROM_SQLITE=/app/data/freya.db
       MIGRATE_FROM_SQLITE: ${MIGRATE_FROM_SQLITE:-}
       Jwt__Key: ${JWT_KEY:?JWT_KEY requis}
       Jwt__Issuer: ${JWT_ISSUER:-Freya}

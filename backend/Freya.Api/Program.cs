@@ -98,30 +98,11 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<FreyaDbContext>();
     var users = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
-    var dbInfo = scope.ServiceProvider.GetRequiredService<DatabaseRuntimeInfo>();
     var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("DatabaseBootstrap");
 
-    var migrateFromSqlite = builder.Configuration["MIGRATE_FROM_SQLITE"];
-    if (dbInfo.IsSqlServer && !string.IsNullOrWhiteSpace(migrateFromSqlite))
-    {
-        await SqliteToSqlServerMigrator.MigrateAsync(migrateFromSqlite, db, logger);
-    }
-    else
-    {
-        await db.Database.EnsureCreatedAsync();
-    }
-
-    if (dbInfo.IsSqlite)
-    {
-        await EnsureEventSchemaAsync(db);
-        await EnsureRecipeSchemaAsync(db);
-        await PublishCatalogRecipesAsync(db);
-        await EnsureSocialSchemaAsync(db);
-        await EnsureFamilySchemaAsync(db);
-        await EnsureBudgetSchemaAsync(db);
-        await EnsurePetShareSchemaAsync(db);
-    }
-
+    await SqliteToSqlServerMigrator.TryMigrateAsync(db, builder.Configuration, logger);
+    await db.Database.EnsureCreatedAsync();
+    await PublishCatalogRecipesAsync(db);
     await EnsureFriendCodesAsync(db, users);
 }
 
@@ -1841,66 +1822,23 @@ static DateOnly StartOfWeek(DateOnly date)
     return date.AddDays(-diff);
 }
 
-static async Task EnsureEventSchemaAsync(FreyaDbContext db)
-{
-    try
-    {
-        await db.Database.ExecuteSqlRawAsync("""ALTER TABLE "Events" ADD COLUMN "EndDate" TEXT NULL""");
-    }
-    catch
-    {
-        /* column may already exist */
-    }
-
-    try
-    {
-        await db.Database.ExecuteSqlRawAsync("""ALTER TABLE "Events" ADD COLUMN "AllDay" INTEGER NOT NULL DEFAULT 0""");
-    }
-    catch
-    {
-        /* column may already exist */
-    }
-}
-
-static async Task EnsureRecipeSchemaAsync(FreyaDbContext db)
-{
-    try
-    {
-        await db.Database.ExecuteSqlRawAsync("""ALTER TABLE "Recipes" ADD COLUMN "Ingredients" TEXT NULL""");
-    }
-    catch
-    {
-        /* column may already exist */
-    }
-
-    try
-    {
-        await db.Database.ExecuteSqlRawAsync("""ALTER TABLE "Recipes" ADD COLUMN "Kcal" INTEGER NULL""");
-    }
-    catch
-    {
-        /* column may already exist */
-    }
-
-    try
-    {
-        await db.Database.ExecuteSqlRawAsync("""ALTER TABLE "MealSlots" ADD COLUMN "Kcal" INTEGER NULL""");
-    }
-    catch
-    {
-        /* column may already exist */
-    }
-}
-
 /// <summary>Recettes importées (Croq-Kilos, etc.) : UserId null pour que tout le monde les voie.</summary>
 static async Task PublishCatalogRecipesAsync(FreyaDbContext db)
 {
     const string croqMarker = "croq-kilos:";
 
-    await db.Database.ExecuteSqlRawAsync($"""
-        UPDATE "Recipes" SET "UserId" = NULL
-        WHERE "Categories" LIKE '%{croqMarker}%';
-        """);
+    var ownedCatalog = await db.Recipes
+        .Where(r => r.UserId != null && r.Categories.Contains(croqMarker))
+        .ToListAsync();
+    if (ownedCatalog.Count > 0)
+    {
+        foreach (var recipe in ownedCatalog)
+        {
+            recipe.UserId = null;
+        }
+
+        await db.SaveChangesAsync();
+    }
 
     var catalog = await db.Recipes
         .Where(r => r.UserId == null && r.Categories.Contains(croqMarker))
@@ -1945,266 +1883,6 @@ static async Task PublishCatalogRecipesAsync(FreyaDbContext db)
         db.Recipes.RemoveRange(dupes);
         await db.SaveChangesAsync();
     }
-}
-
-static async Task EnsureSocialSchemaAsync(FreyaDbContext db)
-{
-    try
-    {
-        await db.Database.ExecuteSqlRawAsync("""ALTER TABLE "AspNetUsers" ADD COLUMN "FriendCode" INTEGER NOT NULL DEFAULT 0""");
-    }
-    catch
-    {
-        /* column may already exist */
-    }
-
-    try
-    {
-        await db.Database.ExecuteSqlRawAsync("""ALTER TABLE "AspNetUsers" ADD COLUMN "AvatarUrl" TEXT NULL""");
-    }
-    catch
-    {
-        /* column may already exist */
-    }
-
-    await db.Database.ExecuteSqlRawAsync("""
-        CREATE TABLE IF NOT EXISTS "Friendships" (
-            "Id" TEXT NOT NULL CONSTRAINT "PK_Friendships" PRIMARY KEY,
-            "UserId" TEXT NOT NULL,
-            "FriendUserId" TEXT NOT NULL,
-            "CreatedAtUtc" TEXT NOT NULL
-        );
-        """);
-
-    await db.Database.ExecuteSqlRawAsync("""
-        CREATE UNIQUE INDEX IF NOT EXISTS "IX_Friendships_UserId_FriendUserId"
-        ON "Friendships" ("UserId", "FriendUserId");
-        """);
-
-    await db.Database.ExecuteSqlRawAsync("""
-        CREATE TABLE IF NOT EXISTS "Conversations" (
-            "Id" TEXT NOT NULL CONSTRAINT "PK_Conversations" PRIMARY KEY,
-            "UserAId" TEXT NOT NULL,
-            "UserBId" TEXT NOT NULL,
-            "CreatedAtUtc" TEXT NOT NULL,
-            "LastMessageAtUtc" TEXT NULL
-        );
-        """);
-
-    await db.Database.ExecuteSqlRawAsync("""
-        CREATE UNIQUE INDEX IF NOT EXISTS "IX_Conversations_UserAId_UserBId"
-        ON "Conversations" ("UserAId", "UserBId");
-        """);
-
-    await db.Database.ExecuteSqlRawAsync("""
-        CREATE TABLE IF NOT EXISTS "ChatMessages" (
-            "Id" TEXT NOT NULL CONSTRAINT "PK_ChatMessages" PRIMARY KEY,
-            "ConversationId" TEXT NOT NULL,
-            "SenderId" TEXT NOT NULL,
-            "Body" TEXT NOT NULL,
-            "SentAtUtc" TEXT NOT NULL,
-            CONSTRAINT "FK_ChatMessages_Conversations_ConversationId"
-                FOREIGN KEY ("ConversationId") REFERENCES "Conversations" ("Id") ON DELETE CASCADE
-        );
-        """);
-
-    await db.Database.ExecuteSqlRawAsync("""
-        CREATE INDEX IF NOT EXISTS "IX_ChatMessages_ConversationId_SentAtUtc"
-        ON "ChatMessages" ("ConversationId", "SentAtUtc");
-
-        CREATE TABLE IF NOT EXISTS "ConversationReadStates" (
-            "Id" TEXT NOT NULL CONSTRAINT "PK_ConversationReadStates" PRIMARY KEY,
-            "ConversationId" TEXT NOT NULL,
-            "UserId" TEXT NOT NULL,
-            "LastReadAtUtc" TEXT NOT NULL,
-            CONSTRAINT "FK_ConversationReadStates_Conversations_ConversationId"
-                FOREIGN KEY ("ConversationId") REFERENCES "Conversations" ("Id") ON DELETE CASCADE
-        );
-
-        CREATE UNIQUE INDEX IF NOT EXISTS "IX_ConversationReadStates_ConversationId_UserId"
-        ON "ConversationReadStates" ("ConversationId", "UserId");
-        """);
-}
-
-static async Task EnsureFamilySchemaAsync(FreyaDbContext db)
-{
-    await db.Database.ExecuteSqlRawAsync("""
-        CREATE TABLE IF NOT EXISTS "Families" (
-            "Id" TEXT NOT NULL CONSTRAINT "PK_Families" PRIMARY KEY,
-            "Name" TEXT NOT NULL,
-            "InviteCode" INTEGER NOT NULL,
-            "CreatedByUserId" TEXT NOT NULL,
-            "CreatedAtUtc" TEXT NOT NULL
-        );
-        """);
-
-    await db.Database.ExecuteSqlRawAsync("""
-        CREATE UNIQUE INDEX IF NOT EXISTS "IX_Families_InviteCode"
-        ON "Families" ("InviteCode");
-        """);
-
-    await db.Database.ExecuteSqlRawAsync("""
-        CREATE TABLE IF NOT EXISTS "FamilyMembers" (
-            "Id" TEXT NOT NULL CONSTRAINT "PK_FamilyMembers" PRIMARY KEY,
-            "FamilyId" TEXT NOT NULL,
-            "UserId" TEXT NOT NULL,
-            "JoinedAtUtc" TEXT NOT NULL,
-            CONSTRAINT "FK_FamilyMembers_Families_FamilyId"
-                FOREIGN KEY ("FamilyId") REFERENCES "Families" ("Id") ON DELETE CASCADE
-        );
-        """);
-
-    await db.Database.ExecuteSqlRawAsync("""
-        CREATE UNIQUE INDEX IF NOT EXISTS "IX_FamilyMembers_FamilyId_UserId"
-        ON "FamilyMembers" ("FamilyId", "UserId");
-        """);
-
-    await db.Database.ExecuteSqlRawAsync("""
-        CREATE TABLE IF NOT EXISTS "PlanningSnapshots" (
-            "UserId" TEXT NOT NULL CONSTRAINT "PK_PlanningSnapshots" PRIMARY KEY,
-            "ObjectivesJson" TEXT NOT NULL,
-            "RoomsJson" TEXT NOT NULL,
-            "TasksJson" TEXT NOT NULL,
-            "UpdatedAtUtc" TEXT NOT NULL
-        );
-        """);
-}
-
-static async Task EnsureBudgetSchemaAsync(FreyaDbContext db)
-{
-    await db.Database.ExecuteSqlRawAsync("""
-        CREATE TABLE IF NOT EXISTS "PersonalBudgetMonths" (
-            "Id" TEXT NOT NULL CONSTRAINT "PK_PersonalBudgetMonths" PRIMARY KEY,
-            "UserId" TEXT NOT NULL,
-            "Year" INTEGER NOT NULL,
-            "Month" INTEGER NOT NULL,
-            "Salary" TEXT NOT NULL,
-            "Note" TEXT NULL
-        );
-        """);
-
-    await db.Database.ExecuteSqlRawAsync("""
-        CREATE UNIQUE INDEX IF NOT EXISTS "IX_PersonalBudgetMonths_UserId_Year_Month"
-        ON "PersonalBudgetMonths" ("UserId", "Year", "Month");
-        """);
-
-    await db.Database.ExecuteSqlRawAsync("""
-        CREATE TABLE IF NOT EXISTS "BudgetAllocations" (
-            "Id" TEXT NOT NULL CONSTRAINT "PK_BudgetAllocations" PRIMARY KEY,
-            "BudgetMonthId" TEXT NOT NULL,
-            "Label" TEXT NOT NULL,
-            "Kind" TEXT NOT NULL,
-            "PlannedAmount" TEXT NOT NULL,
-            CONSTRAINT "FK_BudgetAllocations_PersonalBudgetMonths_BudgetMonthId"
-                FOREIGN KEY ("BudgetMonthId") REFERENCES "PersonalBudgetMonths" ("Id") ON DELETE CASCADE
-        );
-        """);
-
-    await db.Database.ExecuteSqlRawAsync("""
-        CREATE TABLE IF NOT EXISTS "BudgetMovements" (
-            "Id" TEXT NOT NULL CONSTRAINT "PK_BudgetMovements" PRIMARY KEY,
-            "BudgetMonthId" TEXT NOT NULL,
-            "Label" TEXT NOT NULL,
-            "Kind" TEXT NOT NULL,
-            "Amount" TEXT NOT NULL,
-            "Date" TEXT NOT NULL,
-            "Note" TEXT NULL,
-            CONSTRAINT "FK_BudgetMovements_PersonalBudgetMonths_BudgetMonthId"
-                FOREIGN KEY ("BudgetMonthId") REFERENCES "PersonalBudgetMonths" ("Id") ON DELETE CASCADE
-        );
-        """);
-
-    await db.Database.ExecuteSqlRawAsync("""
-        CREATE TABLE IF NOT EXISTS "BudgetShares" (
-            "Id" TEXT NOT NULL CONSTRAINT "PK_BudgetShares" PRIMARY KEY,
-            "OwnerUserId" TEXT NOT NULL,
-            "ViewerUserId" TEXT NOT NULL,
-            "ShareSalary" INTEGER NOT NULL,
-            "ShareAllocations" INTEGER NOT NULL,
-            "ShareSavings" INTEGER NOT NULL,
-            "ShareMovements" INTEGER NOT NULL,
-            "UpdatedAtUtc" TEXT NOT NULL
-        );
-        """);
-
-    await db.Database.ExecuteSqlRawAsync("""
-        CREATE UNIQUE INDEX IF NOT EXISTS "IX_BudgetShares_OwnerUserId_ViewerUserId"
-        ON "BudgetShares" ("OwnerUserId", "ViewerUserId");
-        """);
-
-    try
-    {
-        await db.Database.ExecuteSqlRawAsync("""ALTER TABLE "BudgetMovements" ADD COLUMN "Category" TEXT NULL""");
-    }
-    catch
-    {
-        /* column may already exist */
-    }
-
-    try
-    {
-        await db.Database.ExecuteSqlRawAsync("""ALTER TABLE "BudgetMovements" ADD COLUMN "AccountName" TEXT NULL""");
-    }
-    catch
-    {
-        /* column may already exist */
-    }
-
-    await db.Database.ExecuteSqlRawAsync("""
-        CREATE TABLE IF NOT EXISTS "BudgetAccounts" (
-            "Id" TEXT NOT NULL CONSTRAINT "PK_BudgetAccounts" PRIMARY KEY,
-            "UserId" TEXT NOT NULL,
-            "Label" TEXT NOT NULL,
-            "Icon" TEXT NOT NULL,
-            "Balance" TEXT NOT NULL,
-            "PerformancePct" TEXT NULL,
-            "SortOrder" INTEGER NOT NULL
-        );
-        """);
-
-    await db.Database.ExecuteSqlRawAsync("""
-        CREATE INDEX IF NOT EXISTS "IX_BudgetAccounts_UserId"
-        ON "BudgetAccounts" ("UserId");
-        """);
-
-    await db.Database.ExecuteSqlRawAsync("""
-        CREATE TABLE IF NOT EXISTS "BudgetProjects" (
-            "Id" TEXT NOT NULL CONSTRAINT "PK_BudgetProjects" PRIMARY KEY,
-            "UserId" TEXT NOT NULL,
-            "Label" TEXT NOT NULL,
-            "Icon" TEXT NOT NULL,
-            "TargetAmount" TEXT NOT NULL,
-            "SavedAmount" TEXT NOT NULL,
-            "MonthlyContribution" TEXT NOT NULL,
-            "Archived" INTEGER NOT NULL,
-            "CompletedOn" TEXT NULL,
-            "SortOrder" INTEGER NOT NULL
-        );
-        """);
-
-    await db.Database.ExecuteSqlRawAsync("""
-        CREATE INDEX IF NOT EXISTS "IX_BudgetProjects_UserId"
-        ON "BudgetProjects" ("UserId");
-        """);
-}
-
-static async Task EnsurePetShareSchemaAsync(FreyaDbContext db)
-{
-    await db.Database.ExecuteSqlRawAsync("""
-        CREATE TABLE IF NOT EXISTS "PetProfileShares" (
-            "Id" TEXT NOT NULL CONSTRAINT "PK_PetProfileShares" PRIMARY KEY,
-            "Token" TEXT NOT NULL,
-            "OwnerUserId" TEXT NOT NULL,
-            "OwnerName" TEXT NOT NULL,
-            "PetPayloadJson" TEXT NOT NULL,
-            "CreatedAtUtc" TEXT NOT NULL
-        );
-        """);
-
-    await db.Database.ExecuteSqlRawAsync("""
-        CREATE UNIQUE INDEX IF NOT EXISTS "IX_PetProfileShares_Token"
-        ON "PetProfileShares" ("Token");
-        """);
 }
 
 static async Task EnsureFriendCodesAsync(FreyaDbContext db, UserManager<AppUser> users)

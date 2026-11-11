@@ -18,12 +18,15 @@ Si `dotnet` n’est pas dans le PATH Windows, ajoute :
 
 ## Lancer avec Podman (recommandé)
 
+SQL Server tourne dans Podman (`freya-sql`, port `1433`). Au premier démarrage, si un `backend/Freya.Api/freya.db` existe, ses données sont migrées vers SQL Server.
+
 ```powershell
 podman compose up --build -d
 ```
 
 - App : http://localhost:4200  
 - API / Swagger : http://localhost:5180/swagger  
+- SQL Server : `localhost,1433` / sa / `Freya_Local_Dev_2026!` / base `FreyaLife`
 
 Si `localhost` ne répond pas (fréquent avec Podman Machine / WSL), utilise l’IP de la machine :
 
@@ -39,11 +42,12 @@ Arrêt :
 podman compose down
 ```
 
-## Lancer en local (sans conteneurs)
+## Lancer en local (API sur l’hôte)
 
-### API
+Démarre au moins SQL Server :
 
 ```powershell
+podman compose up sqlserver -d
 cd backend
 dotnet run --project Freya.Api
 ```
@@ -51,7 +55,7 @@ dotnet run --project Freya.Api
 - Swagger : http://localhost:5180/swagger  
 - API : http://localhost:5180/api/v1  
 
-Base SQLite créée automatiquement (`freya.db`).
+Si un `Freya.Api/freya.db` est présent, il est importé une fois puis renommé en `freya.db.migrated`.
 
 ### Front
 
@@ -81,21 +85,21 @@ Sur le serveur (réseau Traefik `traefik_proxy` déjà présent) :
 
 L’API publique est `https://freya-life-api.bariserv.net` (zone DNS déjà créée).
 
-En production l’API utilise **SQL Server** sur l’hôte (`host.docker.internal`, base `FreyaLife`). Le SQLite local reste pour le docker-compose de dev.
+En production l’API utilise **SQL Server** sur l’hôte (`host.docker.internal`, base `FreyaLife`).
 
 ```bash
 # .env à côté de compose.prod.yaml
 JWT_KEY=une-cle-secrete-d-au-moins-32-caracteres
 SQL_PASSWORD=MonMdp
 
-# Migration one-shot des données SQLite existantes (volume /app/data) :
+# Migration one-shot de l’ancien SQLite du volume (optionnel) :
 MIGRATE_FROM_SQLITE=/app/data/freya.db
 
 podman compose -f compose.prod.yaml pull
 podman compose -f compose.prod.yaml up -d
 ```
 
-Après un démarrage réussi avec migration, **retire** `MIGRATE_FROM_SQLITE` du `.env` et relance. La migration est ignorée si SQL Server a déjà des utilisateurs.
+Après migration réussie, retire `MIGRATE_FROM_SQLITE`. Elle est ignorée si SQL Server a déjà des utilisateurs.
 
 `API_HOST` vaut par défaut `freya-life-api.bariserv.net`. Variables utiles : `REGISTRY`, `TAG`, `JWT_ISSUER`, `JWT_AUDIENCE`, `CORS_ORIGINS`, `TRAEFIK_CERT_RESOLVER`.
 
