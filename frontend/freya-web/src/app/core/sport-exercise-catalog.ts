@@ -47,8 +47,47 @@ const MUSCU: ExerciseTemplate[] = [
   T('mp-triceps', 'Extensions triceps', 'Bras', '🦾', 3, 12, 20, 60)
 ];
 
+const SQUAT_VARIANTS: ExerciseTemplate[] = [
+  T('sq-low-bar', 'Squat low bar', 'Jambes', '🦵', 4, 5, 80, 180, 8),
+  T('sq-high-bar', 'Squat high bar', 'Jambes', '🦵', 4, 5, 75, 180, 8),
+  T('sq-tempo', 'Tempo squat', 'Jambes', '🦵', 3, 5, 60, 180, 7),
+  T('sq-front', 'Front squat', 'Jambes', '🦵', 4, 6, 60, 180, 8),
+  T('sq-pause', 'Pause squat', 'Jambes', '🦵', 3, 5, 70, 180, 8),
+  T('sq-box', 'Box squat', 'Jambes', '🦵', 4, 5, 80, 180, 7),
+  T('sq-pin', 'Pin squat', 'Jambes', '🦵', 4, 3, 80, 180, 8),
+  T('sq-gobelet', 'Gobelet squat', 'Jambes', '🦵', 3, 12, 16, 90, 7),
+  T('sq-zercher', 'Zercher squat', 'Jambes', '🦵', 4, 6, 50, 180, 8),
+  T('sq-one-half', 'Squat 1.5', 'Jambes', '🦵', 3, 6, 60, 180, 8)
+];
+
+const DEADLIFT_VARIANTS: ExerciseTemplate[] = [
+  T('dl-sumo', 'Sumo deadlift', 'Chaîne postérieure', '💪', 4, 5, 100, 180, 8),
+  T('dl-conventional', 'Deadlift', 'Chaîne postérieure', '💪', 4, 5, 100, 180, 8),
+  T('dl-halt', 'Halt deadlift', 'Chaîne postérieure', '💪', 3, 10, 24, 90, 7),
+  T('dl-halteres', 'Haltères deadlift', 'Chaîne postérieure', '💪', 3, 10, 24, 90, 7),
+  T('dl-pause', 'Pause deadlift', 'Chaîne postérieure', '💪', 4, 3, 80, 180, 8),
+  T('dl-romanian', 'Roumanian deadlift', 'Chaîne postérieure', '💪', 3, 8, 70, 120, 7),
+  T('dl-deficit', 'Déficit deadlift', 'Chaîne postérieure', '💪', 4, 5, 80, 180, 8),
+  T('dl-rack', 'Deadlift block pull / rack pull', 'Chaîne postérieure', '💪', 4, 3, 120, 180, 8),
+  T('dl-snatch', 'Snatch grip deadlift', 'Chaîne postérieure', '💪', 4, 5, 70, 180, 8)
+];
+
+const PRESS_VARIANTS: ExerciseTemplate[] = [
+  T('pr-larsen', 'Larsen press', 'Pectoraux', '🏋️', 4, 6, 60, 180, 8),
+  T('pr-2ct', '2 ct bench', 'Pectoraux', '🏋️', 3, 5, 55, 180, 7),
+  T('pr-3ct', '3 ct bench', 'Pectoraux', '🏋️', 3, 5, 50, 180, 7),
+  T('pr-close', 'Close grip bench', 'Pectoraux', '🏋️', 4, 8, 50, 120, 7),
+  T('pr-decline', 'Bench décliné', 'Pectoraux', '🏋️', 4, 8, 55, 120, 7),
+  T('pr-pin-db', 'Pin press bench haltères', 'Pectoraux', '🏋️', 3, 8, 20, 120, 7),
+  T('pr-spoto', 'Spoto press', 'Pectoraux', '🏋️', 4, 5, 55, 180, 8),
+  T('pr-bucheron', 'Rowing bucheron', 'Dos', '💪', 3, 10, 20, 90, 7)
+];
+
 const FORCE = [
   ...MUSCU,
+  ...SQUAT_VARIANTS,
+  ...DEADLIFT_VARIANTS,
+  ...PRESS_VARIANTS,
   T('f-squat-5', 'Squat 5×5', 'Jambes', '🦵', 5, 5, 90, 180, 8),
   T('f-bench-5', 'Bench 5×5', 'Pectoraux', '🏋️', 5, 5, 70, 180, 8)
 ];
@@ -167,6 +206,22 @@ const BY_KIND: Record<SportKind, ExerciseTemplate[]> = {
   mobilite: MOBILITE,
   autre: GENERIC
 };
+
+export function strengthLiftTemplates(): ExerciseTemplate[] {
+  return FORCE;
+}
+
+export function squatVariantTemplates(): ExerciseTemplate[] {
+  return SQUAT_VARIANTS;
+}
+
+export function deadliftVariantTemplates(): ExerciseTemplate[] {
+  return DEADLIFT_VARIANTS;
+}
+
+export function pressVariantTemplates(): ExerciseTemplate[] {
+  return PRESS_VARIANTS;
+}
 
 export function exerciseTemplatesForDay(
   disciplineId: string | null | undefined,

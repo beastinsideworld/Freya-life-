@@ -563,13 +563,76 @@
 
 .exercise-list li {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr);
   gap: 0.45rem 0.65rem;
-  align-items: center;
+  align-items: start;
   padding: 0.65rem;
   border-radius: 0.85rem;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid color-mix(in srgb, var(--contour) 8%, transparent);
+}
+
+.ex-main {
+  display: grid;
+  gap: 0.28rem;
+  min-width: 0;
+}
+
+.ex-set-block {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.ex-add-line {
+  justify-self: start;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-card, var(--title, var(--text)));
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.ex-live-line {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  gap: 0.4rem;
+  align-items: end;
+  margin-top: 0.15rem;
+
+  label {
+    display: grid;
+    gap: 0.18rem;
+    min-width: 0;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--text-card, var(--title, var(--text)));
+  }
+
+  input {
+    width: 100%;
+    min-height: 2.2rem;
+    margin: 0;
+    padding: 0.3rem 0.45rem;
+    border-radius: 0.55rem;
+    border: 1px solid color-mix(in srgb, var(--text-on-card, var(--text)) 40%, var(--contour, transparent));
+    background: var(--bg-secondary, var(--bg-card));
+    color: var(--text-on-card, var(--text-card, var(--text)));
+    font: inherit;
+    font-weight: 700;
+  }
+
+  .check,
+  .ex-line-spacer {
+    width: 2.2rem;
+    height: 2.2rem;
+    align-self: end;
+  }
 }
 
 .ex-edit-hint {
@@ -657,6 +720,93 @@
 
 .exercise-config-actions {
   margin-top: 0.85rem;
+}
+
+.exercise-library {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.library-add {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.6rem;
+  align-items: end;
+  margin-bottom: 0.8rem;
+}
+
+.library-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 18rem;
+  overflow: auto;
+  border: 1px solid var(--contour, #c45c1a);
+  border-radius: 0.7rem;
+  background: var(--bg-secondary, #180a00);
+}
+
+.library-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.55rem 0.75rem;
+  color: var(--ivory, #fff5ec);
+  border-bottom: 1px solid color-mix(in srgb, var(--contour, #c45c1a) 45%, transparent);
+}
+
+.library-list li:last-child {
+  border-bottom: 0;
+}
+
+.exercise-name-field {
+  position: relative;
+  z-index: 6;
+}
+
+.exercise-name-menu {
+  position: absolute;
+  top: calc(100% - 0.15rem);
+  left: 0;
+  right: 0;
+  z-index: 8;
+  display: grid;
+  gap: 0.15rem;
+  max-height: 13rem;
+  margin: 0;
+  padding: 0.35rem;
+  overflow: auto;
+  list-style: none;
+  border-radius: 0.8rem;
+  border: 1.5px solid var(--contour, #c45c1a);
+  background-color: var(--bg-secondary, #180a00);
+  background-image: linear-gradient(
+    160deg,
+    var(--bordeaux-lit, #3d1e02) 0%,
+    var(--bg-card, #251201) 55%,
+    var(--bg-secondary, #180a00) 100%
+  );
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.4);
+
+  button {
+    width: 100%;
+    margin: 0;
+    padding: 0.55rem 0.7rem;
+    border: 0;
+    border-radius: 0.55rem;
+    background: transparent;
+    color: var(--ivory, #fff5ec);
+    font: inherit;
+    font-weight: 700;
+    text-align: left;
+    cursor: pointer;
+
+    &:hover,
+    &.active {
+      background: color-mix(in srgb, var(--contour, #c45c1a) 42%, var(--bg-secondary, #180a00));
+    }
+  }
 }
 
 .meal-emoji,
@@ -1360,6 +1510,46 @@
   justify-content: space-between;
   color: var(--muted);
   font-size: 0.72rem;
+}
+
+.records-list li.record-edit {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+}
+
+.record-fields {
+  display: grid;
+  gap: 0.4rem;
+  min-width: 0;
+
+  label {
+    display: grid;
+    gap: 0.18rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--text-card, var(--title, var(--text)));
+  }
+
+  input {
+    width: 100%;
+    min-height: 2.2rem;
+    margin: 0;
+    padding: 0.3rem 0.5rem;
+    border-radius: 0.55rem;
+    border: 1px solid color-mix(in srgb, var(--text-on-card, var(--text)) 40%, var(--contour, transparent));
+    background: var(--bg-secondary, var(--bg-card));
+    color: var(--text-on-card, var(--text-card, var(--text)));
+    font: inherit;
+    font-weight: 700;
+  }
+
+  .btn.tiny {
+    justify-self: start;
+  }
+}
+
+.record-add {
+  margin-top: 0.7rem;
 }
 
 .records-list .pr {

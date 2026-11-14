@@ -380,6 +380,15 @@ export interface WeeklyTrainingGoal {
   veloTarget: number;
 }
 
+export interface ExerciseSetLine {
+  id: string;
+  sets: number;
+  reps: number;
+  loadKg: number | null;
+  done: boolean;
+  failed?: boolean;
+}
+
 export interface SportExercise {
   id: string;
   /** Id du catalogue (sport-exercise-catalog) pour suivre le record par exercice. */
@@ -390,6 +399,8 @@ export interface SportExercise {
   sets: number;
   reps: number;
   loadKg: number | null;
+  /** Lignes supplémentaires de séries, reps et poids, sous la ligne principale. */
+  setLines?: ExerciseSetLine[];
   restSec: number;
   rpe: number;
   done: boolean;
@@ -409,15 +420,23 @@ export function exerciseTrackKey(templateId: string | undefined | null, name: st
     .replace(/^-|-$/g, '');
 }
 
+function loadCounts(done: boolean, failed: boolean | undefined, sessionCompleted: boolean, loadKg: number | null): boolean {
+  if (failed || loadKg == null || loadKg <= 0) return false;
+  return done || sessionCompleted;
+}
+
 function buildExercisePersonalBests(sessions: DaySession[]): Record<string, number> {
   const map: Record<string, number> = {};
   for (const session of sessions) {
     for (const ex of session.exercises) {
-      if (ex.loadKg == null || ex.loadKg <= 0) continue;
-      if (ex.failed) continue;
-      if (!ex.done && !session.completed) continue;
       const key = exerciseTrackKey(ex.templateId, ex.name);
-      map[key] = Math.max(map[key] ?? 0, ex.loadKg);
+      if (loadCounts(ex.done, ex.failed, session.completed, ex.loadKg) && ex.loadKg != null) {
+        map[key] = Math.max(map[key] ?? 0, ex.loadKg);
+      }
+      for (const line of ex.setLines ?? []) {
+        if (!loadCounts(line.done, line.failed, session.completed, line.loadKg) || line.loadKg == null) continue;
+        map[key] = Math.max(map[key] ?? 0, line.loadKg);
+      }
     }
   }
   return map;
@@ -477,6 +496,12 @@ export interface VolumeWeekPoint {
   autres: number;
 }
 
+export interface CustomExercise {
+  id: string;
+  name: string;
+  key: string;
+}
+
 export interface SportState {
   goal: SportGoal;
   targets: MacroTargets;
@@ -494,19 +519,31 @@ export interface SportState {
   doneSessions: number;
   avgNutrition: MacroCurrent;
   avgTargets: MacroTargets;
+  customExercises: CustomExercise[];
+  hiddenExerciseKeys: string[];
 }
 
 const STORAGE_KEY = 'freya.sport.v2';
 
+function exerciseSeriesCount(ex: SportExercise): number {
+  return ex.sets + (ex.setLines ?? []).reduce((sum, line) => sum + line.sets, 0);
+}
+
+function exerciseVolumeKg(ex: SportExercise): number {
+  const extra = (ex.setLines ?? []).reduce((sum, line) => sum + line.sets * line.reps * (line.loadKg ?? 0), 0);
+  return ex.sets * ex.reps * (ex.loadKg ?? 0) + extra;
+}
+
 function recomputeSession(session: DaySession): DaySession {
   const exercises = session.exercises;
-  const seriesTotal = exercises.reduce((sum, ex) => sum + ex.sets, 0);
-  const volumeKg = Math.round(
-    exercises.reduce((sum, ex) => sum + ex.sets * ex.reps * (ex.loadKg ?? 0), 0)
-  );
+  const seriesTotal = exercises.reduce((sum, ex) => sum + exerciseSeriesCount(ex), 0);
+  const volumeKg = Math.round(exercises.reduce((sum, ex) => sum + exerciseVolumeKg(ex), 0));
   const exerciseCount = exercises.length;
-  const restMin = exercises.reduce((sum, ex) => sum + Math.max(0, ex.sets - 1) * (ex.restSec / 60), 0);
-  const workMin = exercises.reduce((sum, ex) => sum + ex.sets * (ex.reps > 15 ? 1.2 : 2), 0);
+  const restMin = exercises.reduce((sum, ex) => sum + Math.max(0, exerciseSeriesCount(ex) - 1) * (ex.restSec / 60), 0);
+  const workMin = exercises.reduce((sum, ex) => {
+    const heavy = ex.reps > 15 || (ex.setLines ?? []).some((line) => line.reps > 15);
+    return sum + exerciseSeriesCount(ex) * (heavy ? 1.2 : 2);
+  }, 0);
   const durationMin = exerciseCount > 0 ? Math.max(20, Math.round(restMin + workMin)) : session.durationMin;
   const kcalPerMin =
     session.kind === 'musculation' ? 6.5 : session.kind === 'course' || session.kind === 'natation' ? 9.5 : 7;
@@ -860,8 +897,46 @@ function demoState(): SportState {
     plannedSessions: 26,
     doneSessions: 24,
     avgNutrition: { kcal: 2230, proteinG: 148, carbsG: 270, fatG: 72 },
-    avgTargets: { kcal: 2200, proteinG: 150, carbsG: 275, fatG: 70 }
+    avgTargets: { kcal: 2200, proteinG: 150, carbsG: 275, fatG: 70 },
+    customExercises: [],
+    hiddenExerciseKeys: []
   };
+}
+
+function normalizeSetLine(raw: Partial<ExerciseSetLine> | null | undefined): ExerciseSetLine | null {
+  if (!raw || typeof raw.id !== 'string' || !raw.id) return null;
+  const load = Number(raw.loadKg);
+  return {
+    id: raw.id,
+    sets: Math.max(1, Math.round(Number(raw.sets) || 1)),
+    reps: Math.max(1, Math.round(Number(raw.reps) || 1)),
+    loadKg: raw.loadKg == null || !Number.isFinite(load) || load < 0 ? null : load,
+    done: raw.done === true && raw.failed !== true,
+    failed: raw.failed === true && raw.done !== true
+  };
+}
+
+function normalizeExercise(ex: SportExercise): SportExercise {
+  const setLines = Array.isArray(ex.setLines)
+    ? ex.setLines.map((line) => normalizeSetLine(line)).filter((line): line is ExerciseSetLine => line != null)
+    : [];
+  return { ...ex, setLines };
+}
+
+function normalizeCustomExercises(raw: unknown): CustomExercise[] {
+  if (!Array.isArray(raw)) return [];
+  const seen = new Set<string>();
+  const list: CustomExercise[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== 'object') continue;
+    const entry = item as Partial<CustomExercise>;
+    const name = typeof entry.name === 'string' ? entry.name.trim() : '';
+    const key = typeof entry.key === 'string' ? entry.key : '';
+    if (name.length < 2 || !key || seen.has(key)) continue;
+    seen.add(key);
+    list.push({ id: typeof entry.id === 'string' && entry.id ? entry.id : createId(), name, key });
+  }
+  return list;
 }
 
 function normalizeGoal(raw: Partial<SportGoal> | undefined, fallbackWeight: number): SportGoal {
@@ -902,7 +977,8 @@ function normalizeSessionsAndDays(sessions: DaySession[], weekDays: WeekDayCard[
 } {
   const normSessions = sessions.map((s) => ({
     ...s,
-    disciplineId: s.disciplineId ?? defaultDisciplineIdForKind(s.kind)
+    disciplineId: s.disciplineId ?? defaultDisciplineIdForKind(s.kind),
+    exercises: s.exercises.map(normalizeExercise)
   }));
   const normDays = weekDays.map((d) => {
     const session = normSessions.find((s) => s.date === d.date);
@@ -944,7 +1020,11 @@ function loadState(): SportState {
       current: parsed.current ?? seeded.current,
       weeklyGoal: parsed.weeklyGoal ?? seeded.weeklyGoal,
       avgNutrition: parsed.avgNutrition ?? seeded.avgNutrition,
-      avgTargets: parsed.avgTargets ?? seeded.avgTargets
+      avgTargets: parsed.avgTargets ?? seeded.avgTargets,
+      customExercises: normalizeCustomExercises(parsed.customExercises),
+      hiddenExerciseKeys: Array.isArray(parsed.hiddenExerciseKeys)
+        ? parsed.hiddenExerciseKeys.filter((key): key is string => typeof key === 'string' && key.length > 0)
+        : []
     };
     // Recalcule les cibles macros si le profil est complet
     const energy = computeEnergy(merged.goal);
@@ -985,6 +1065,8 @@ export class SportStore {
   readonly doneSessions = computed(() => this.state().doneSessions);
   readonly avgNutrition = computed(() => this.state().avgNutrition);
   readonly avgTargets = computed(() => this.state().avgTargets);
+  readonly customExercises = computed(() => this.state().customExercises);
+  readonly hiddenExerciseKeys = computed(() => this.state().hiddenExerciseKeys);
 
   readonly selectedSession = computed(() => {
     const date = this.selectedDate();
@@ -1002,6 +1084,59 @@ export class SportStore {
   personalBestForTemplate(templateId: string): number | null {
     const kg = this.exercisePersonalBests()[templateId];
     return kg != null && kg > 0 ? kg : null;
+  }
+
+  updateRecord(id: string, patch: { name?: string; value?: string }): void {
+    this.patch((s) => ({
+      ...s,
+      records: s.records.map((rec) =>
+        rec.id === id
+          ? {
+              ...rec,
+              name: patch.name != null ? patch.name : rec.name,
+              value: patch.value != null ? patch.value : rec.value
+            }
+          : rec
+      )
+    }));
+  }
+
+  addRecord(): void {
+    this.patch((s) => ({
+      ...s,
+      records: [
+        ...s.records,
+        { id: createId(), name: 'Nouvel exercice', value: '', emoji: '🏋️' }
+      ]
+    }));
+  }
+
+  removeRecord(id: string): void {
+    this.patch((s) => ({
+      ...s,
+      records: s.records.filter((rec) => rec.id !== id)
+    }));
+  }
+
+  addCustomExercise(name: string, key: string): void {
+    const trimmed = name.trim();
+    if (trimmed.length < 2 || !key) return;
+    this.patch((s) => ({
+      ...s,
+      hiddenExerciseKeys: s.hiddenExerciseKeys.filter((item) => item !== key),
+      customExercises: s.customExercises.some((item) => item.key === key)
+        ? s.customExercises.map((item) => (item.key === key ? { ...item, name: trimmed } : item))
+        : [...s.customExercises, { id: createId(), name: trimmed, key }]
+    }));
+  }
+
+  hideExercise(key: string): void {
+    if (!key) return;
+    this.patch((s) => ({
+      ...s,
+      hiddenExerciseKeys: s.hiddenExerciseKeys.includes(key) ? s.hiddenExerciseKeys : [...s.hiddenExerciseKeys, key],
+      customExercises: s.customExercises.filter((item) => item.key !== key)
+    }));
   }
 
   readonly currentWeight = computed(() => {
@@ -1171,6 +1306,7 @@ export class SportStore {
           sets,
           reps,
           loadKg,
+          setLines: [],
           restSec: overrides?.restSec != null ? Math.max(0, Math.round(overrides.restSec)) : template.defaultRestSec,
           rpe: overrides?.rpe != null ? Math.min(10, Math.max(1, Math.round(overrides.rpe))) : template.defaultRpe,
           done: false,
@@ -1220,6 +1356,69 @@ export class SportStore {
     }));
   }
 
+  addExerciseSetLine(sessionId: string, exerciseId: string, afterLineId: string | null): void {
+    this.patch((s) => ({
+      ...s,
+      sessions: s.sessions.map((session) => {
+        if (session.id !== sessionId) return session;
+        const exercises = session.exercises.map((ex) => {
+          if (ex.id !== exerciseId) return ex;
+          const lines = ex.setLines ?? [];
+          const source = afterLineId
+            ? lines.find((line) => line.id === afterLineId)
+            : { sets: ex.sets, reps: ex.reps, loadKg: ex.loadKg };
+          const next: ExerciseSetLine = {
+            id: createId(),
+            sets: Math.max(1, Math.round(source?.sets ?? ex.sets)),
+            reps: Math.max(1, Math.round(source?.reps ?? ex.reps)),
+            loadKg: source?.loadKg ?? ex.loadKg,
+            done: false,
+            failed: false
+          };
+          if (!afterLineId) return { ...ex, setLines: [next, ...lines] };
+          const index = lines.findIndex((line) => line.id === afterLineId);
+          if (index < 0) return { ...ex, setLines: [...lines, next] };
+          const setLines = lines.slice();
+          setLines.splice(index + 1, 0, next);
+          return { ...ex, setLines };
+        });
+        return recomputeSession({ ...session, exercises });
+      })
+    }));
+  }
+
+  updateExerciseSetLine(
+    sessionId: string,
+    exerciseId: string,
+    lineId: string,
+    input: { sets?: number; reps?: number; loadKg?: number | null }
+  ): void {
+    this.patch((s) => ({
+      ...s,
+      sessions: s.sessions.map((session) => {
+        if (session.id !== sessionId) return session;
+        const exercises = session.exercises.map((ex) => {
+          if (ex.id !== exerciseId) return ex;
+          const setLines = (ex.setLines ?? []).map((line) => {
+            if (line.id !== lineId) return line;
+            const sets =
+              input.sets != null && Number.isFinite(input.sets) ? Math.max(1, Math.round(input.sets)) : line.sets;
+            const reps =
+              input.reps != null && Number.isFinite(input.reps) ? Math.max(1, Math.round(input.reps)) : line.reps;
+            let loadKg = line.loadKg;
+            if ('loadKg' in input) {
+              const raw = input.loadKg;
+              loadKg = raw == null || !Number.isFinite(raw) || raw < 0 ? null : raw;
+            }
+            return { ...line, sets, reps, loadKg };
+          });
+          return { ...ex, setLines };
+        });
+        return recomputeSession({ ...session, exercises });
+      })
+    }));
+  }
+
   removeExercise(sessionId: string, exerciseId: string): void {
     this.patch((s) => ({
       ...s,
@@ -1228,6 +1427,31 @@ export class SportStore {
         const exercises = session.exercises.filter((ex) => ex.id !== exerciseId);
         return recomputeSession({ ...session, exercises });
       })
+    }));
+  }
+
+  cycleExerciseSetLine(sessionId: string, exerciseId: string, lineId: string): void {
+    this.patch((s) => ({
+      ...s,
+      sessions: s.sessions.map((session) =>
+        session.id !== sessionId
+          ? session
+          : {
+              ...session,
+              exercises: session.exercises.map((ex) => {
+                if (ex.id !== exerciseId) return ex;
+                return {
+                  ...ex,
+                  setLines: (ex.setLines ?? []).map((line) => {
+                    if (line.id !== lineId) return line;
+                    if (!line.done && !line.failed) return { ...line, done: true, failed: false };
+                    if (line.done) return { ...line, done: false, failed: true };
+                    return { ...line, done: false, failed: false };
+                  })
+                };
+              })
+            }
+      )
     }));
   }
 
@@ -1258,9 +1482,12 @@ export class SportStore {
           ? {
               ...session,
               completed: true,
-              exercises: session.exercises.map((ex) =>
-                ex.failed ? { ...ex, done: false, failed: true } : { ...ex, done: true, failed: false }
-              )
+              exercises: session.exercises.map((ex) => ({
+                ...(ex.failed ? { ...ex, done: false, failed: true } : { ...ex, done: true, failed: false }),
+                setLines: (ex.setLines ?? []).map((line) =>
+                  line.failed ? { ...line, done: false, failed: true } : { ...line, done: true, failed: false }
+                )
+              }))
             }
           : session
       ),

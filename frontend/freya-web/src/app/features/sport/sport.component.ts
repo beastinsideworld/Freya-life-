@@ -27,7 +27,10 @@ import {
   exerciseTrackKey
 } from '../../core/sport.store';
 import {
+  deadliftVariantTemplates,
   exerciseTemplatesForDay,
+  pressVariantTemplates,
+  squatVariantTemplates,
   strengthLiftTemplates,
   type ExerciseTemplate
 } from '../../core/sport-exercise-catalog';
@@ -153,6 +156,10 @@ export class SportComponent {
   draftExerciseRestSec = 90;
   draftExerciseRpe = 7;
   readonly savedExerciseKey = signal<string | null>(null);
+  readonly exerciseNameQuery = signal('');
+  readonly exerciseNameMenuOpen = signal(false);
+  readonly exerciseLibraryOpen = signal(false);
+  libraryExerciseName = '';
 
   draftSessionTitle = '';
   draftSessionDetail = '';
@@ -180,14 +187,19 @@ export class SportComponent {
     const forceDay = session?.disciplineId === 'force';
     const strengthDay = forceDay || session?.disciplineId === 'musculation' || session?.kind === 'musculation';
     const dayTemplates = exerciseTemplatesForDay(session?.disciplineId, session?.kind ?? null);
-    const templates = strengthDay
-      ? [
-          ...dayTemplates,
-          ...strengthLiftTemplates().filter(
-            (template) => !dayTemplates.some((existing) => foldExerciseQuery(existing.name) === foldExerciseQuery(template.name))
-          )
-        ]
-      : dayTemplates;
+    const seen = new Set(dayTemplates.map((template) => foldExerciseQuery(template.name)));
+    const extras = [
+      ...(strengthDay ? strengthLiftTemplates() : []),
+      ...squatVariantTemplates(),
+      ...deadliftVariantTemplates(),
+      ...pressVariantTemplates()
+    ].filter((template) => {
+      const key = foldExerciseQuery(template.name);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    const templates = [...dayTemplates, ...extras];
     const byName = new Map<string, SavedExerciseOption>();
 
     for (const template of templates) {
@@ -217,13 +229,42 @@ export class SportComponent {
       }
     }
 
-    if (forceDay) {
-      return templates
-        .map((template) => byName.get(foldExerciseQuery(template.name)))
-        .filter((option): option is SavedExerciseOption => option != null);
+    const hidden = new Set(this.store.hiddenExerciseKeys());
+    for (const key of [...byName.keys()]) {
+      if (hidden.has(key)) byName.delete(key);
+    }
+    for (const custom of this.store.customExercises()) {
+      if (!custom.name || hidden.has(custom.key) || byName.has(custom.key)) continue;
+      byName.set(
+        custom.key,
+        savedExerciseOption({
+          id: custom.id,
+          name: custom.name,
+          muscle: '',
+          emoji: '🏋️',
+          defaultSets: 3,
+          defaultReps: 10,
+          defaultLoadKg: null,
+          defaultRestSec: 90,
+          defaultRpe: 7
+        })
+      );
     }
 
-    return [...byName.values()].sort((a, b) => a.name.localeCompare(b.name, 'fr', { sensitivity: 'base' }));
+    const list = [...byName.values()].sort((a, b) => a.name.localeCompare(b.name, 'fr', { sensitivity: 'base' }));
+    if (forceDay) {
+      const allowed = new Set(templates.map((template) => foldExerciseQuery(template.name)));
+      for (const custom of this.store.customExercises()) allowed.add(custom.key);
+      return list.filter((option) => allowed.has(option.key));
+    }
+    return list;
+  });
+
+  readonly filteredSavedExercises = computed(() => {
+    const query = foldExerciseQuery(this.exerciseNameQuery());
+    const options = this.savedExerciseOptions();
+    if (!query) return options;
+    return options.filter((option) => foldExerciseQuery(option.name).includes(query));
   });
 
   draftType: GoalType = 'prise_seche';
@@ -249,6 +290,25 @@ export class SportComponent {
       activity: this.draftActivity
     });
   });
+
+  readonly weightPoints = computed(() => {
+    const hist = this.store.weightHistory();
+    if (!hist.length) return [];
+    const min = Math.min(...hist.map((p) => p.kg));
+    const max = Math.max(...hist.map((p) => p.kg));
+    const span = Math.max(0.5, max - min);
+    return hist.map((p, i) => ({
+      ...p,
+      x: hist.length <= 1 ? 50 : (i / (hist.length - 1)) * 100,
+      y: 100 - ((p.kg - min) / span) * 78 - 8
+    }));
+  });
+
+  readonly weightPolyline = computed(() =>
+    this.weightPoints()
+      .map((p) => `${p.x},${p.y}`)
+      .join(' ')
+  );
 
   readonly loadMax = computed(() => Math.max(1, ...this.store.loadProgress().map((p) => p.kg)));
   readonly volumeMax = computed(() =>
@@ -450,6 +510,37 @@ export class SportComponent {
     this.closeSessionEditor();
   }
 
+  toggleExerciseLibrary(): void {
+    if (this.exerciseLibraryOpen()) {
+      this.closeExerciseLibrary();
+      return;
+    }
+    this.libraryExerciseName = '';
+    this.exerciseLibraryOpen.set(true);
+  }
+
+  closeExerciseLibrary(): void {
+    this.exerciseLibraryOpen.set(false);
+    this.libraryExerciseName = '';
+  }
+
+  addLibraryExercise(): void {
+    const name = this.libraryExerciseName.trim();
+    if (name.length < 2) return;
+    this.store.addCustomExercise(name, foldExerciseQuery(name));
+    this.libraryExerciseName = '';
+  }
+
+  removeLibraryExercise(key: string): void {
+    this.store.hideExercise(key);
+    if (this.savedExerciseKey() === key) {
+      this.savedExerciseKey.set(null);
+      this.pendingExerciseTemplate = null;
+      this.draftExerciseName = '';
+      this.exerciseNameQuery.set('');
+    }
+  }
+
   openExercisePicker(): void {
     if (!this.requireSession()) return;
     this.pendingExerciseTemplate = null;
@@ -462,7 +553,10 @@ export class SportComponent {
     this.draftExerciseRestSec = 90;
     this.draftExerciseRpe = 7;
     this.savedExerciseKey.set(null);
+    this.exerciseNameQuery.set('');
+    this.exerciseNameMenuOpen.set(false);
     this.sessionEditOpen.set(false);
+    this.closeExerciseLibrary();
     this.exerciseConfigureOpen.set(true);
   }
 
@@ -491,6 +585,47 @@ export class SportComponent {
     this.openExerciseEdit(exerciseId);
   }
 
+  updateSessionExercise(
+    sessionId: string,
+    exerciseId: string,
+    patch: { sets?: number | string; reps?: number | string; loadKg?: number | null | string }
+  ): void {
+    const input: { sets?: number; reps?: number; loadKg?: number | null } = {};
+    if (patch.sets != null && patch.sets !== '') {
+      input.sets = Math.max(1, Math.round(Number(patch.sets) || 1));
+    }
+    if (patch.reps != null && patch.reps !== '') {
+      input.reps = Math.max(1, Math.round(Number(patch.reps) || 1));
+    }
+    if ('loadKg' in patch) {
+      input.loadKg = this.parseExerciseLoadKg(patch.loadKg ?? null);
+    }
+    this.store.updateExercise(sessionId, exerciseId, input);
+  }
+
+  addExerciseSetLine(sessionId: string, exerciseId: string, afterLineId: string | null): void {
+    this.store.addExerciseSetLine(sessionId, exerciseId, afterLineId);
+  }
+
+  updateSessionExerciseLine(
+    sessionId: string,
+    exerciseId: string,
+    lineId: string,
+    patch: { sets?: number | string; reps?: number | string; loadKg?: number | null | string }
+  ): void {
+    const input: { sets?: number; reps?: number; loadKg?: number | null } = {};
+    if (patch.sets != null && patch.sets !== '') {
+      input.sets = Math.max(1, Math.round(Number(patch.sets) || 1));
+    }
+    if (patch.reps != null && patch.reps !== '') {
+      input.reps = Math.max(1, Math.round(Number(patch.reps) || 1));
+    }
+    if ('loadKg' in patch) {
+      input.loadKg = this.parseExerciseLoadKg(patch.loadKg ?? null);
+    }
+    this.store.updateExerciseSetLine(sessionId, exerciseId, lineId, input);
+  }
+
   saveExpandedExercise(): void {
     const session = this.store.selectedSession();
     const exerciseId = this.expandedExerciseId();
@@ -506,9 +641,33 @@ export class SportComponent {
 
   closeExerciseConfigure(): void {
     this.exerciseConfigureOpen.set(false);
+    this.closeExerciseLibrary();
     this.pendingExerciseTemplate = null;
     this.editingExerciseId = null;
     this.savedExerciseKey.set(null);
+    this.exerciseNameQuery.set('');
+    this.exerciseNameMenuOpen.set(false);
+  }
+
+  onExerciseNameQuery(value: string): void {
+    this.exerciseNameQuery.set(value);
+    this.draftExerciseName = value;
+    this.exerciseNameMenuOpen.set(true);
+    const selected = this.savedExerciseOptions().find((option) => option.key === this.savedExerciseKey());
+    if (!selected || foldExerciseQuery(selected.name) !== foldExerciseQuery(value)) {
+      this.savedExerciseKey.set(null);
+      this.pendingExerciseTemplate = null;
+    }
+  }
+
+  closeExerciseNameMenuSoon(): void {
+    window.setTimeout(() => this.exerciseNameMenuOpen.set(false), 150);
+  }
+
+  pickSavedExercise(option: SavedExerciseOption): void {
+    this.onSavedExerciseSelect(option.key);
+    this.exerciseNameQuery.set(option.name);
+    this.exerciseNameMenuOpen.set(false);
   }
 
   pickLoadExercise(name: string): void {
