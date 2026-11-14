@@ -14,6 +14,7 @@ using Freya.Infrastructure.Auth;
 using Freya.Infrastructure.Identity;
 using Freya.Infrastructure.Persistence;
 using Freya.Api;
+using Freya.Api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -72,6 +73,10 @@ builder.Services.AddHttpClient("CroqKilos", client =>
     client.Timeout = TimeSpan.FromSeconds(60);
 });
 builder.Services.AddSingleton<CroqKilosRecipeSyncService>();
+builder.Services.AddSingleton<AlertChannelMap>();
+builder.Services.AddScoped<AlertQueue>();
+builder.Services.AddHttpClient("alerts");
+builder.Services.AddHostedService<AlertWorker>();
 
 var corsOrigins = (builder.Configuration["CORS_ORIGINS"] ?? string.Empty)
     .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
@@ -102,6 +107,8 @@ using (var scope = app.Services.CreateScope())
 
     await SqliteToSqlServerMigrator.TryMigrateAsync(db, builder.Configuration, logger);
     await db.Database.EnsureCreatedAsync();
+    await EnsureRecipeCreatedAtAsync(db);
+    await BackfillCroqRecipeDatesAsync(db);
     await PublishCatalogRecipesAsync(db);
     await EnsureFriendCodesAsync(db, users);
 }
@@ -574,7 +581,7 @@ api.MapGet("/recipes", async (string? q, string? category, ICurrentUser current,
         query = query.Where(r => r.Categories.ToLower().Contains(cat));
     }
 
-    var recipes = await query.OrderBy(r => r.Title).Take(500).ToListAsync();
+    var recipes = await query.OrderByDescending(r => r.CreatedAtUtc).ThenBy(r => r.Title).Take(2000).ToListAsync();
     return Results.Ok(recipes);
 }).RequireAuthorization();
 
@@ -596,7 +603,8 @@ api.MapPost("/recipes", async (RecipeCreateRequest request, ICurrentUser current
         ImageUrl = request.ImageUrl,
         Instructions = request.Instructions,
         Ingredients = request.Ingredients,
-        Kcal = request.Kcal
+        Kcal = request.Kcal,
+        CreatedAtUtc = DateTime.UtcNow
     };
 
     db.Recipes.Add(entity);
@@ -1005,7 +1013,8 @@ api.MapPost("/chat/conversations/{id:guid}/messages", async (
     Guid id,
     SendMessageRequest request,
     ICurrentUser current,
-    FreyaDbContext db) =>
+    FreyaDbContext db,
+    AlertQueue alerts) =>
 {
     if (current.UserId is null)
     {
@@ -1042,6 +1051,15 @@ api.MapPost("/chat/conversations/{id:guid}/messages", async (
     conversation.LastMessageAtUtc = message.SentAtUtc;
     db.ChatMessages.Add(message);
     await db.SaveChangesAsync();
+
+    var recipientId = conversation.UserAId == current.UserId ? conversation.UserBId : conversation.UserAId;
+    var recipient = await db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == recipientId);
+    var sender = await db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == current.UserId);
+    if (recipient is not null)
+    {
+        var senderName = string.IsNullOrWhiteSpace(sender?.DisplayName) ? "Message" : sender.DisplayName;
+        await alerts.NotifyUserAsync(recipient, senderName + " : Message", "Tu as reçu un message.", "freya.chat");
+    }
 
     return Results.Ok(new ChatMessageDto(message.Id, message.SenderId, message.Body, message.SentAtUtc, true));
 }).RequireAuthorization();
@@ -1146,7 +1164,7 @@ api.MapPost("/families", async (CreateFamilyRequest request, ICurrentUser curren
     return Results.Ok(new FamilyDto(family.Id, family.Name, family.InviteCode, 1, true));
 }).RequireAuthorization();
 
-api.MapPost("/families/join", async (JoinFamilyRequest request, ICurrentUser current, FreyaDbContext db) =>
+api.MapPost("/families/join", async (JoinFamilyRequest request, ICurrentUser current, FreyaDbContext db, AlertQueue alerts) =>
 {
     if (current.UserId is null)
     {
@@ -1178,6 +1196,10 @@ api.MapPost("/families/join", async (JoinFamilyRequest request, ICurrentUser cur
         JoinedAtUtc = DateTime.UtcNow
     });
     await db.SaveChangesAsync();
+
+    var member = await db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == current.UserId);
+    var memberName = string.IsNullOrWhiteSpace(member?.DisplayName) ? "Quelqu'un" : member.DisplayName;
+    await alerts.NotifyBothAsync(memberName + " a rejoint la famille", family.Name, "freya.family");
 
     var count = await db.FamilyMembers.CountAsync(m => m.FamilyId == family.Id);
     return Results.Ok(new FamilyDto(family.Id, family.Name, family.InviteCode, count, family.CreatedByUserId == current.UserId));
@@ -1698,7 +1720,7 @@ api.MapGet("/budget/shares", async (ICurrentUser current, FreyaDbContext db) =>
     return Results.Ok(result);
 }).RequireAuthorization();
 
-api.MapPut("/budget/shares", async (UpsertBudgetShareRequest request, ICurrentUser current, FreyaDbContext db) =>
+api.MapPut("/budget/shares", async (UpsertBudgetShareRequest request, ICurrentUser current, FreyaDbContext db, AlertQueue alerts) =>
 {
     if (current.UserId is null) return Results.Unauthorized();
     if (string.IsNullOrWhiteSpace(request.ViewerUserId) || request.ViewerUserId == current.UserId)
@@ -1747,6 +1769,10 @@ api.MapPut("/budget/shares", async (UpsertBudgetShareRequest request, ICurrentUs
     existing.ShareMovements = request.ShareMovements;
     existing.UpdatedAtUtc = DateTime.UtcNow;
     await db.SaveChangesAsync();
+
+    var owner = await db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == current.UserId);
+    var ownerName = string.IsNullOrWhiteSpace(owner?.DisplayName) ? "Quelqu'un" : owner.DisplayName;
+    await alerts.NotifyUserAsync(viewer, ownerName + " a partagé son budget", "Un budget est partagé avec toi.", "freya.budget");
 
     return Results.Ok(new BudgetShareDto(
         existing.ViewerUserId,
@@ -1820,6 +1846,84 @@ static DateOnly StartOfWeek(DateOnly date)
 {
     var diff = ((int)date.DayOfWeek + 6) % 7;
     return date.AddDays(-diff);
+}
+
+static async Task EnsureRecipeCreatedAtAsync(FreyaDbContext db)
+{
+    var provider = db.Database.ProviderName ?? string.Empty;
+    if (provider.Contains("SqlServer", StringComparison.OrdinalIgnoreCase))
+    {
+        await db.Database.ExecuteSqlRawAsync("""
+            IF COL_LENGTH('dbo.Recipes', 'CreatedAtUtc') IS NULL
+                ALTER TABLE dbo.Recipes ADD CreatedAtUtc datetime2 NOT NULL
+                    CONSTRAINT DF_Recipes_CreatedAtUtc DEFAULT (SYSUTCDATETIME());
+            """);
+        return;
+    }
+
+    try
+    {
+        await db.Database.ExecuteSqlRawAsync("""
+            ALTER TABLE "Recipes" ADD COLUMN "CreatedAtUtc" TEXT NOT NULL DEFAULT (datetime('now'));
+            """);
+    }
+    catch
+    {
+        /* colonne déjà présente */
+    }
+}
+
+static async Task BackfillCroqRecipeDatesAsync(FreyaDbContext db)
+{
+    const string marker = "croq-kilos:";
+    var catalog = await db.Recipes.Where(r => r.Categories.Contains(marker)).ToListAsync();
+    var changed = false;
+    foreach (var recipe in catalog)
+    {
+        var croqId = ReadCroqId(recipe.Categories, marker);
+        if (croqId is null)
+        {
+            continue;
+        }
+
+        var created = RecipeCreatedAtFromCroqId(croqId.Value);
+        if (recipe.CreatedAtUtc == created)
+        {
+            continue;
+        }
+
+        recipe.CreatedAtUtc = created;
+        changed = true;
+    }
+
+    if (changed)
+    {
+        await db.SaveChangesAsync();
+    }
+}
+
+static int? ReadCroqId(string categories, string marker)
+{
+    foreach (var part in categories.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+    {
+        if (!part.StartsWith(marker, StringComparison.OrdinalIgnoreCase))
+        {
+            continue;
+        }
+
+        if (int.TryParse(part[marker.Length..], out var id))
+        {
+            return id;
+        }
+    }
+
+    return null;
+}
+
+static DateTime RecipeCreatedAtFromCroqId(int croqId)
+{
+    var minutes = Math.Clamp(croqId, 0, 20_000_000);
+    return new DateTime(2015, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddMinutes(minutes);
 }
 
 /// <summary>Recettes importées (Croq-Kilos, etc.) : UserId null pour que tout le monde les voie.</summary>

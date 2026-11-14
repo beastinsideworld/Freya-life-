@@ -1,12 +1,25 @@
-<button
-  type="button"
-  class="idea-fab"
-  (click)="openModal()"
-  aria-label="Capturer une idée"
-  title="Nouvelle idée"
->
-  ✎
-</button>
+@if (!fab.hidden()) {
+  <button
+    type="button"
+    class="idea-fab"
+    [class.dragging]="dragging()"
+    [style.left.px]="fab.x()"
+    [style.top.px]="fab.y()"
+    (pointerdown)="onPointerDown($event)"
+    (pointermove)="onPointerMove($event)"
+    (pointerup)="onPointerUp($event)"
+    (pointercancel)="onPointerUp($event)"
+    (click)="onClick($event)"
+    aria-label="Capturer une idée. Maintiens pour le déplacer."
+    title="Nouvelle idée — glisse pour déplacer"
+  >
+    ✎
+  </button>
+}
+
+@if (dragging()) {
+  <div class="idea-drop" [class.over]="overDrop()">Retirer</div>
+}
 
 @if (open()) {
   <div class="modal-backdrop" (click)="closeModal()" role="presentation"></div>

@@ -35,6 +35,10 @@ services:
       Jwt__Key: FreyaDockerSecretKey_ChangeMe_AtLeast32Chars!
       Jwt__Issuer: Freya
       Jwt__Audience: Freya
+      API_ALERTS_KEY: ${API_ALERTS_KEY:-}
+      API_ALERTS_CHANNEL_FREYA: Freya
+      API_ALERTS_CHANNEL_BARI: Bari
+      API_ALERTS_CHANNEL_GENERAL: General
     volumes:
       - ./backend/Freya.Api:/migrate:ro
     depends_on:

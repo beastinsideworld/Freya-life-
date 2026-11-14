@@ -32,6 +32,7 @@ public class FreyaDbContext : IdentityDbContext<AppUser>
     public DbSet<BudgetAccount> BudgetAccounts => Set<BudgetAccount>();
     public DbSet<BudgetProject> BudgetProjects => Set<BudgetProject>();
     public DbSet<PetProfileShare> PetProfileShares => Set<PetProfileShare>();
+    public DbSet<PendingAlert> PendingAlerts => Set<PendingAlert>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -67,6 +68,7 @@ public class FreyaDbContext : IdentityDbContext<AppUser>
         {
             e.HasKey(x => x.Id);
             e.Property(x => x.Title).HasMaxLength(200).IsRequired();
+            e.HasIndex(x => x.CreatedAtUtc);
         });
 
         builder.Entity<Trip>(e =>
@@ -199,6 +201,16 @@ public class FreyaDbContext : IdentityDbContext<AppUser>
         builder.Entity<TripBudgetLine>(e =>
         {
             e.Property(x => x.Amount).HasPrecision(18, 2);
+        });
+
+        builder.Entity<PendingAlert>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => new { x.SentAtUtc, x.ClaimedAtUtc, x.Id });
+            e.Property(x => x.Channel).HasMaxLength(32).IsRequired();
+            e.Property(x => x.Title).HasMaxLength(200).IsRequired();
+            e.Property(x => x.Message).HasMaxLength(500).IsRequired();
+            e.Property(x => x.EventName).HasMaxLength(80).IsRequired();
         });
 
         builder.Entity<PetProfileShare>(e =>

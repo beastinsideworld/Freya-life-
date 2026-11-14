@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AppSettings, loadSettings, saveSettings } from '../../core/app-settings';
 import { AuthService } from '../../core/auth/auth.service';
@@ -15,6 +15,7 @@ import {
   applyTheme,
   findTheme
 } from '../../core/themes';
+import { IdeaFabStore } from '../../core/idea-fab.store';
 import { NavIconComponent } from '../../shared/nav-icon/nav-icon.component';
 
 @Component({
@@ -25,6 +26,7 @@ import { NavIconComponent } from '../../shared/nav-icon/nav-icon.component';
   styleUrl: './parametres.component.scss'
 })
 export class ParametresComponent implements OnInit {
+  readonly ideaFab = inject(IdeaFabStore);
   readonly saved = signal(false);
   readonly themeModalOpen = signal(false);
   readonly navTabsModalOpen = signal(false);

@@ -462,6 +462,31 @@ button.cell.filled:focus-visible {
   font-size: 1.15rem;
 }
 
+.recipe-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.recipe-sort select {
+  height: 100%;
+  min-height: 2.75rem;
+  max-width: 11.5rem;
+  border: 1px solid var(--border-soft);
+  background: var(--field-bg);
+  color: var(--ivory);
+  border-radius: var(--radius-pill);
+  padding: 0.55rem 0.7rem;
+  font: inherit;
+  font-size: 0.82rem;
+}
+
+.recipe-sort select:focus {
+  outline: none;
+  border-color: var(--contour);
+}
+
 .recipe-group {
   display: flex;
   flex-direction: column;

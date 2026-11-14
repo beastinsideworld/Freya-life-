@@ -2,9 +2,6 @@
   <header class="hero">
     <div class="icon" aria-hidden="true"><app-nav-icon name="repas" /></div>
     <h1>Repas</h1>
-    <p class="sub">
-      {{ tab() === 'semaine' ? 'Organise tes menus, tes courses et tes recettes' : 'Planifie, cuisine et organise tes repas' }}
-    </p>
   </header>
 
   <div class="seg tabs">
@@ -246,14 +243,29 @@
       <button type="button" class="btn primary" (click)="openRecipeModal()">+ Ajouter une recette</button>
     </div>
 
-    <label class="search">
-      <input
-        type="search"
-        [ngModel]="recipeQuery()"
-        (ngModelChange)="recipeQuery.set($event)"
-        placeholder="Rechercher une recette..."
-      >
-    </label>
+    <div class="recipe-toolbar">
+      <label class="search">
+        <input
+          type="search"
+          [ngModel]="recipeQuery()"
+          (ngModelChange)="recipeQuery.set($event)"
+          placeholder="Rechercher une recette..."
+        >
+      </label>
+      <label class="recipe-sort">
+        <select
+          [ngModel]="recipeSort()"
+          (ngModelChange)="recipeSort.set($event)"
+          name="recipeSort"
+          aria-label="Trier l’affichage des recettes"
+        >
+          <option value="recent">Plus récent</option>
+          <option value="ancien">Plus ancien</option>
+          <option value="kcal-desc">Plus calorique</option>
+          <option value="kcal-asc">Moins calorique</option>
+        </select>
+      </label>
+    </div>
     <div class="cats">
       @for (cat of recipeCategories(); track cat) {
         <button type="button" [class.active]="recipeCat() === cat.toLowerCase()" (click)="recipeCat.set(cat.toLowerCase())">
@@ -262,27 +274,22 @@
       }
     </div>
 
-    @for (group of recipeGroups(); track group.category) {
-      <section class="recipe-group">
-        <h3>{{ group.category }}</h3>
-        <div class="recipes">
-          @for (recipe of group.recipes; track recipe.id) {
-            <article class="recipe-card" (click)="openRecipeDetail(recipe)" role="button" tabindex="0">
-              <div
-                class="cover"
-                aria-hidden="true"
-                [style.background-image]="recipe.imageUrl ? 'url(' + recipe.imageUrl + ')' : null"
-                [class.has-photo]="!!recipe.imageUrl"
-              ></div>
-              <div class="info">
-                <h3>{{ recipe.title }}</h3>
-                <p>{{ recipe.durationMin }} min · {{ recipe.difficulty }} · {{ formatKcal(recipe.kcal) }}</p>
-              </div>
-            </article>
-          }
-        </div>
-      </section>
-    }
+    <div class="recipes">
+      @for (recipe of filteredRecipes(); track recipe.id) {
+        <article class="recipe-card" (click)="openRecipeDetail(recipe)" role="button" tabindex="0">
+          <div
+            class="cover"
+            aria-hidden="true"
+            [style.background-image]="recipe.imageUrl ? 'url(' + recipe.imageUrl + ')' : null"
+            [class.has-photo]="!!recipe.imageUrl"
+          ></div>
+          <div class="info">
+            <h3>{{ recipe.title }}</h3>
+            <p>{{ recipe.durationMin }} min · {{ recipe.difficulty }} · {{ formatKcal(recipe.kcal) }}</p>
+          </div>
+        </article>
+      }
+    </div>
   }
 
   @if (recipeModalOpen()) {

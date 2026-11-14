@@ -1,7 +1,5 @@
 .idea-fab {
   position: fixed;
-  top: calc(0.75rem + env(safe-area-inset-top));
-  right: 0.85rem;
   z-index: 46;
   width: 2.85rem;
   height: 2.85rem;
@@ -15,11 +13,48 @@
   padding: 0;
   display: grid;
   place-items: center;
+  touch-action: none;
+  cursor: grab;
+}
+
+.idea-fab.dragging {
+  z-index: 57;
+  cursor: grabbing;
+  transform: none;
+}
+
+.idea-drop {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--bottom-safe) + 0.45rem);
+  transform: translateX(-50%);
+  z-index: 56;
+  width: 9.5rem;
+  min-height: 3.1rem;
+  display: grid;
+  place-items: center;
+  padding: 0.45rem 0.7rem;
+  border-radius: 999px;
+  border: 1.5px dashed color-mix(in srgb, var(--ivory) 70%, transparent);
+  background: color-mix(in srgb, #1a1a1a 72%, transparent);
+  color: var(--ivory);
+  font-size: 0.82rem;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.idea-drop.over {
+  border-style: solid;
+  background: color-mix(in srgb, var(--accent) 78%, #1a1a1a);
 }
 
 .idea-fab:hover,
 .idea-fab:focus-visible {
-  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+
+.idea-fab.dragging:hover {
+  transform: none;
 }
 
 .idea-modal {
@@ -41,8 +76,7 @@
 }
 
 @media (min-width: 1024px) {
-  .idea-fab {
-    right: 1.25rem;
-    top: 1rem;
+  .idea-modal {
+    width: min(440px, calc(100vw - 1.5rem));
   }
 }

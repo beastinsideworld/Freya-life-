@@ -2,15 +2,6 @@
   <header class="hero">
     <div class="icon" aria-hidden="true"><app-nav-icon name="voyages" /></div>
     <h1>Voyages</h1>
-    <p class="sub">
-      {{
-        selectedInspiration()
-          ? 'Ajoute restos, visites et idées pour cette destination'
-          : selectedTrip()
-            ? 'Organise chaque destination en un seul endroit'
-            : 'Prépare, organise et suis tous tes voyages'
-      }}
-    </p>
   </header>
 
   @if (!selectedTrip() && !selectedInspiration()) {

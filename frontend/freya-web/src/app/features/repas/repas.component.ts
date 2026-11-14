@@ -55,6 +55,7 @@ interface Recipe {
   ingredients?: RecipeIngredient[];
   servings?: number;
   kcal?: number | null;
+  createdAt?: string | null;
 }
 
 @Component({
@@ -71,6 +72,7 @@ export class RepasComponent implements OnInit {
   readonly grocery = signal<GroceryItem[]>([]);
   readonly recipes = signal<Recipe[]>([]);
   readonly recipeQuery = signal('');
+  readonly recipeSort = signal<'recent' | 'ancien' | 'kcal-desc' | 'kcal-asc'>('recent');
   readonly recipeModalOpen = signal(false);
   readonly recipeDetail = signal<Recipe | null>(null);
   readonly recipePeople = signal(1);
@@ -157,11 +159,14 @@ export class RepasComponent implements OnInit {
   readonly filteredRecipes = computed(() => {
     const q = this.recipeQuery().trim().toLowerCase();
     const cat = this.recipeCat().toLowerCase();
-    return this.recipes().filter((r) => {
-      const okQ = !q || r.title.toLowerCase().includes(q);
-      const okC = cat === 'tout' || (r.categories || '').toLowerCase().includes(cat);
-      return okQ && okC;
-    });
+    this.recipeSort();
+    return this.recipes()
+      .filter((r) => {
+        const okQ = !q || r.title.toLowerCase().includes(q);
+        const okC = cat === 'tout' || (r.categories || '').toLowerCase().includes(cat);
+        return okQ && okC;
+      })
+      .sort((a, b) => this.compareRecipes(a, b));
   });
 
   readonly recipeCategories = computed(() => {
@@ -181,27 +186,7 @@ export class RepasComponent implements OnInit {
         const okC = this.recipeMatchesMealPickerCategory(recipe, cat);
         return okQ && okC;
       })
-      .sort((a, b) => {
-        const catCmp = this.primaryCategory(a).localeCompare(this.primaryCategory(b), 'fr');
-        return catCmp !== 0 ? catCmp : a.title.localeCompare(b.title, 'fr');
-      });
-  });
-
-  readonly recipeGroups = computed(() => {
-    const groups = new Map<string, Recipe[]>();
-    for (const recipe of this.filteredRecipes()) {
-      const category = this.primaryCategory(recipe);
-      const bucket = groups.get(category) ?? [];
-      bucket.push(recipe);
-      groups.set(category, bucket);
-    }
-
-    return [...groups.entries()]
-      .sort((a, b) => this.categoryRank(a[0]) - this.categoryRank(b[0]) || a[0].localeCompare(b[0], 'fr'))
-      .map(([category, recipes]) => ({
-        category,
-        recipes: [...recipes].sort((a, b) => a.title.localeCompare(b.title, 'fr'))
-      }));
+      .sort((a, b) => this.compareRecipeRecency(a, b));
   });
 
   readonly catalogSuggestions = computed(() => searchCatalog(this.articleQuery(), 8));
@@ -757,8 +742,44 @@ export class RepasComponent implements OnInit {
       instructions: item.instructions ?? null,
       ingredients: parsed.ingredients,
       servings: parsed.servings,
-      kcal: item.kcal != null ? Number(item.kcal) : null
+      kcal: item.kcal != null ? Number(item.kcal) : null,
+      createdAt: item.createdAtUtc ?? item.createdAt ?? null
     };
+  }
+
+  private compareRecipes(a: Recipe, b: Recipe): number {
+    const title = a.title.localeCompare(b.title, 'fr');
+    switch (this.recipeSort()) {
+      case 'ancien':
+        return this.compareRecipeRecency(b, a);
+      case 'kcal-desc':
+        return this.compareKcal(a, b, 'desc') || title;
+      case 'kcal-asc':
+        return this.compareKcal(a, b, 'asc') || title;
+      default:
+        return this.compareRecipeRecency(a, b);
+    }
+  }
+
+  private compareKcal(a: Recipe, b: Recipe, direction: 'asc' | 'desc'): number {
+    const left = this.kcalOrNull(a);
+    const right = this.kcalOrNull(b);
+    if (left == null && right == null) return 0;
+    if (left == null) return 1;
+    if (right == null) return -1;
+    return direction === 'desc' ? right - left : left - right;
+  }
+
+  private kcalOrNull(recipe: Recipe): number | null {
+    const kcal = recipe.kcal;
+    if (kcal == null || !Number.isFinite(kcal) || kcal <= 0) return null;
+    return kcal;
+  }
+
+  private compareRecipeRecency(a: Recipe, b: Recipe): number {
+    const recentA = Date.parse(a.createdAt ?? '') || 0;
+    const recentB = Date.parse(b.createdAt ?? '') || 0;
+    return recentB - recentA || a.title.localeCompare(b.title, 'fr');
   }
 
   private parseIngredients(raw: unknown): { ingredients: RecipeIngredient[]; servings: number } {

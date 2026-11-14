@@ -191,7 +191,8 @@ public sealed class CroqKilosRecipeSyncService
         var entity = existing ?? new Recipe
         {
             Id = Guid.NewGuid(),
-            UserId = null
+            UserId = null,
+            CreatedAtUtc = new DateTime(2015, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddMinutes(Math.Clamp(croqId, 0, 20_000_000))
         };
 
         entity.UserId = null;

@@ -13,4 +13,5 @@ public class Recipe
     public string? Instructions { get; set; }
     public string? Ingredients { get; set; }
     public int? Kcal { get; set; }
+    public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
 }

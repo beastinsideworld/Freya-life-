@@ -2,7 +2,6 @@
   <header class="hero">
     <div class="icon" aria-hidden="true"><app-nav-icon name="parametres" /></div>
     <h1>Paramètres</h1>
-    <p class="sub">Compte, amis, notifications et apparence</p>
   </header>
 
   <section class="panel profile-panel">
@@ -203,6 +202,14 @@
       </div>
       <button type="button" class="btn primary" (click)="openNavTabsModal()">Gérer</button>
     </div>
+  </section>
+
+  <section class="panel">
+    <h2>Stylo des idées</h2>
+    <p class="hint">
+      Maintiens le stylo vert pour le placer où tu veux. Dépose-le sur « Retirer », en bas au centre, pour le masquer.
+    </p>
+    <button type="button" class="btn" (click)="ideaFab.show()">Réafficher le stylo</button>
   </section>
 
   <section class="panel">
