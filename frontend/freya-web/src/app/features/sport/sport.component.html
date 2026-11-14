@@ -1,4 +1,4 @@
-<section class="page sport-page">
+<section class="page sport-page" [class.timer-docked]="timerDocked()" [style.--timer-dock-h.px]="timerDockHeight()">
   <header class="hero sport-hero">
     <div class="icon" aria-hidden="true">
       <img class="sport-ico" [src]="assetUrl(icons.banc)" alt="" draggable="false" />
@@ -83,28 +83,6 @@
 
     <section class="panel">
       <header class="card-head">
-        <h2>Mes repas du jour</h2>
-        <button type="button" class="btn small">Ajouter un repas +</button>
-      </header>
-      <ul class="meal-list">
-        @for (meal of store.meals(); track meal.id) {
-          <li>
-            <span class="meal-emoji" aria-hidden="true">
-              <img class="sport-ico" [src]="exerciseIconSrc(meal.emoji)" alt="" draggable="false" />
-            </span>
-            <div class="meal-main">
-              <strong>{{ meal.slot }}</strong>
-              <span>{{ meal.title }}</span>
-              <em>P {{ meal.proteinG }} · G {{ meal.carbsG }} · L {{ meal.fatG }}</em>
-            </div>
-            <strong class="meal-kcal">{{ meal.kcal }} kcal</strong>
-          </li>
-        }
-      </ul>
-    </section>
-
-    <section class="panel">
-      <header class="card-head">
         <h2>Objectif d’entraînement (semaine)</h2>
         <button type="button" class="ghost-link">Voir le programme ›</button>
       </header>
@@ -162,24 +140,6 @@
         <button type="button" class="ghost-link" (click)="setTab('progression')">Voir l’évolution ›</button>
       </section>
     </div>
-
-    <section class="panel">
-      <h2 class="quick-title">Accès rapides</h2>
-      <div class="quick-grid">
-        <button type="button">
-          <img class="sport-ico sport-ico--sm" [src]="assetUrl(icons.shaker)" alt="" aria-hidden="true" draggable="false" />
-          Ajouter un repas
-        </button>
-        <button type="button" (click)="setTab('entrainement')">
-          <img class="sport-ico sport-ico--sm" [src]="assetUrl(icons.banc)" alt="" aria-hidden="true" draggable="false" />
-          Nouvelle séance
-        </button>
-        <button type="button">
-          <img class="sport-ico sport-ico--sm" [src]="assetUrl(icons.programme)" alt="" aria-hidden="true" draggable="false" />
-          Modifier le programme
-        </button>
-      </div>
-    </section>
   }
 
   @if (tab() === 'entrainement') {
@@ -252,7 +212,7 @@
         </header>
         <ul class="exercise-list">
           @for (ex of session.exercises; track ex.id) {
-            <li [class.done]="ex.done" [class.editing]="expandedExerciseId() === ex.id">
+            <li [class.done]="ex.done" [class.failed]="ex.failed" [class.editing]="expandedExerciseId() === ex.id">
               <span class="ex-emoji" aria-hidden="true">
                 <img class="sport-ico" [src]="exerciseIconSrc(ex.emoji)" alt="" draggable="false" />
               </span>
@@ -280,9 +240,10 @@
                 type="button"
                 class="check"
                 [class.on]="ex.done"
-                (click)="store.toggleExercise(session.id, ex.id)"
-                [attr.aria-label]="ex.done ? 'Marquer non fait' : 'Marquer fait'"
-              >{{ ex.done ? '✓' : '' }}</button>
+                [class.fail]="ex.failed"
+                (click)="store.cycleExerciseResult(session.id, ex.id)"
+                [attr.aria-label]="ex.done ? 'Marquer la série en échec' : ex.failed ? 'Effacer le résultat' : 'Valider la série'"
+              >{{ ex.done ? '✓' : ex.failed ? '✕' : '' }}</button>
               @if (expandedExerciseId() === ex.id) {
                 <div class="ex-inline-editor" (click)="$event.stopPropagation()">
                   <label>
@@ -315,6 +276,44 @@
         <div class="session-actions">
           <button type="button" class="btn" (click)="openExercisePicker()">+ Ajouter un exercice</button>
           <button type="button" class="btn primary" (click)="store.completeSession(session.id)">▶ Terminer la séance</button>
+        </div>
+      </section>
+
+      <section #sessionTimer class="panel session-timer" [class.is-docked]="timerDocked()" aria-label="Minuteur">
+        <h2>Minuteur</h2>
+        <p class="timer-clock" aria-live="polite">{{ timerClock() }}</p>
+        <div class="timer-fields">
+          <label>
+            Minutes
+            <input
+              type="number"
+              min="0"
+              max="180"
+              name="timerMin"
+              [(ngModel)]="timerMin"
+              (ngModelChange)="onTimerEdit()"
+              [disabled]="timerRunning()"
+            />
+          </label>
+          <label>
+            Secondes
+            <input
+              type="number"
+              min="0"
+              max="59"
+              name="timerSec"
+              [(ngModel)]="timerSec"
+              (ngModelChange)="onTimerEdit()"
+              [disabled]="timerRunning()"
+            />
+          </label>
+        </div>
+        <div class="timer-actions">
+          <button type="button" class="btn primary" (click)="startSessionTimer()" [disabled]="timerRunning()">
+            {{ timerPaused() ? 'Reprendre' : 'Démarrer' }}
+          </button>
+          <button type="button" class="btn" (click)="pauseSessionTimer()" [disabled]="!timerRunning()">Pause</button>
+          <button type="button" class="btn" (click)="stopSessionTimer()">Arrêter</button>
         </div>
       </section>
 
@@ -356,27 +355,6 @@
 
     <section class="panel">
       <header class="card-head">
-        <h2>Évolution du poids</h2>
-        <span class="pill">{{ deltaLabel(store.weightDeltaPeriod()) }}</span>
-      </header>
-      <div class="weight-summary">
-        <strong>{{ numberFr(store.currentWeight(), 1) }} kg</strong>
-        <em [class.pos]="store.weightDeltaPeriod() <= 0">{{ deltaLabel(store.weightDeltaPeriod()) }} ({{ period() }})</em>
-      </div>
-      <svg class="big-chart" viewBox="0 0 100 48" preserveAspectRatio="none" aria-hidden="true">
-        <polyline [attr.points]="weightPolyline()" fill="none" stroke="currentColor" stroke-width="1.8" />
-        @for (p of weightPoints(); track p.date) {
-          <circle [attr.cx]="p.x" [attr.cy]="p.y" r="1.4" />
-        }
-      </svg>
-      <div class="chart-labels">
-        <span>{{ store.weightHistory()[0].label }}</span>
-        <span>{{ store.weightHistory()[store.weightHistory().length - 1].label }}</span>
-      </div>
-    </section>
-
-    <section class="panel">
-      <header class="card-head">
         <h2>Records personnels</h2>
       </header>
       <ul class="records-list">
@@ -398,11 +376,38 @@
     <section class="panel">
       <header class="card-head">
         <h2>Progression des charges</h2>
-        <select class="inline-select" [ngModel]="loadExercise()" (ngModelChange)="loadExercise.set($event)" name="loadExercise">
-          <option>Développé couché</option>
-          <option>Squat</option>
-          <option>Soulevé de terre</option>
-        </select>
+        <div class="load-select">
+          @if (loadMenuOpen()) {
+            <button type="button" class="load-select-backdrop" aria-label="Fermer la liste" (click)="loadMenuOpen.set(false)"></button>
+          }
+          <button
+            type="button"
+            class="load-select-btn"
+            [attr.aria-expanded]="loadMenuOpen()"
+            aria-haspopup="listbox"
+            (click)="loadMenuOpen.set(!loadMenuOpen())"
+          >
+            <span>{{ loadExercise() }}</span>
+            <span class="load-select-caret" aria-hidden="true">▾</span>
+          </button>
+          @if (loadMenuOpen()) {
+            <ul class="load-select-menu" role="listbox" aria-label="Exercice">
+              @for (name of loadExerciseOptions; track name) {
+                <li>
+                  <button
+                    type="button"
+                    role="option"
+                    [class.active]="loadExercise() === name"
+                    [attr.aria-selected]="loadExercise() === name"
+                    (click)="pickLoadExercise(name)"
+                  >
+                    {{ name }}
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+        </div>
       </header>
       <div class="bars">
         @for (point of store.loadProgress(); track point.label) {
@@ -545,21 +550,12 @@
       <label class="field">Taille (cm)
         <input type="number" min="120" max="230" [(ngModel)]="draftHeight" name="goalHeight" (ngModelChange)="onDraftChange()">
       </label>
-      <label class="field">Poids du jour (kg)
-        <input [(ngModel)]="draftWeight" name="goalWeight" inputmode="decimal" placeholder="76,0" (ngModelChange)="onDraftChange()">
-      </label>
       <label class="field wide">Niveau d’activité
         <select [(ngModel)]="draftActivity" name="goalActivity" (ngModelChange)="onDraftChange()">
           @for (opt of activityOptions; track opt.value) {
             <option [value]="opt.value">{{ opt.label }}</option>
           }
         </select>
-      </label>
-      <label class="field">Poids cible min (kg)
-        <input [(ngModel)]="draftWeightMin" name="goalMin" inputmode="decimal">
-      </label>
-      <label class="field">Poids cible max (kg)
-        <input [(ngModel)]="draftWeightMax" name="goalMax" inputmode="decimal">
       </label>
       <label class="field">Début
         <input [(ngModel)]="draftStart" name="goalStart" placeholder="Nov. 2026">
@@ -710,65 +706,13 @@
   </div>
 }
 
-@if (exercisePickerOpen()) {
-  <div class="modal-backdrop" (click)="closeExercisePicker()" role="presentation"></div>
-  <div class="modal form-modal sport-picker-modal" role="dialog" aria-modal="true" aria-labelledby="exercise-picker-title">
-    <header class="modal-head">
-      <h2 id="exercise-picker-title">Ajouter un exercice</h2>
-      <button type="button" class="modal-close" (click)="closeExercisePicker()" aria-label="Fermer">×</button>
-    </header>
-    <p class="hint sport-picker-hint">
-      Propositions pour <strong>{{ selectedDayDiscipline().label }}</strong>
-      ({{ dayExerciseCatalog().length }} modèles)
-    </p>
-    <div class="form-grid">
-      <label class="field wide">
-        Rechercher
-        <input
-          type="search"
-          [ngModel]="exerciseQuery()"
-          (ngModelChange)="exerciseQuery.set($event)"
-          name="exerciseQuery"
-          placeholder="Nom, muscle, bloc…"
-          autocomplete="off"
-        />
-      </label>
-      <ul class="discipline-list wide" role="listbox" aria-label="Exercices">
-        @for (tpl of filteredExerciseTemplates(); track tpl.id) {
-          <li>
-            <button type="button" class="discipline-row" (click)="pickExerciseTemplate(tpl)">
-              <span class="discipline-emoji" aria-hidden="true">{{ tpl.emoji }}</span>
-              <span class="discipline-main">
-                <strong>{{ tpl.name }}</strong>
-                <span>
-                  {{ tpl.muscle }} · {{ tpl.defaultSets }}×{{ tpl.defaultReps }}
-                  @if (tpl.defaultLoadKg != null) { · {{ tpl.defaultLoadKg }} kg }
-                  @if (store.personalBestForTemplate(tpl.id); as pr) {
-                    · record {{ numberFr(pr, pr % 1 === 0 ? 0 : 1) }} kg
-                  }
-                </span>
-              </span>
-              <span class="ex-add-label">Choisir</span>
-            </button>
-          </li>
-        } @empty {
-          <li class="discipline-empty">Aucun modèle — change de sport du jour ou affine la recherche.</li>
-        }
-      </ul>
-      <div class="sport-picker-actions wide">
-        <button type="button" class="btn ghost" (click)="closeExercisePicker()">Fermer</button>
-      </div>
-    </div>
-  </div>
-}
-
 @if (exerciseConfigureOpen()) {
   <div class="modal-backdrop" (click)="closeExerciseConfigure()" role="presentation"></div>
   <div class="modal form-modal sport-picker-modal exercise-config-modal" role="dialog" aria-modal="true" aria-labelledby="exercise-config-title">
     <header class="modal-head">
       <h2 id="exercise-config-title">
         @if (exerciseConfigureMode() === 'add') {
-          Paramètres — {{ configureExerciseTitle() }}
+          Ajouter un exercice
         } @else {
           Modifier — {{ configureExerciseTitle() }}
         }
@@ -781,6 +725,21 @@
     </p>
   }
     <div class="form-grid exercise-config-grid">
+      @if (exerciseConfigureMode() === 'add') {
+        <label class="field wide">
+          Nom de l’exercice
+          <select
+            [ngModel]="savedExerciseKey()"
+            (ngModelChange)="onSavedExerciseSelect($event)"
+            name="exName"
+          >
+            <option [ngValue]="null" disabled>Choisir un exercice</option>
+            @for (ex of savedExerciseOptions(); track ex.key) {
+              <option [ngValue]="ex.key">{{ ex.name }}</option>
+            }
+          </select>
+        </label>
+      }
       <label class="field">
         Séries
         <input type="number" min="1" max="20" [(ngModel)]="draftExerciseSets" name="exSets" />
@@ -811,12 +770,17 @@
       <p class="hint wide exercise-config-note">
         Ajuste les valeurs prévues pour cette séance. Le record perso se met à jour quand tu coches l'exercice comme fait.
       </p>
-      <div class="sport-picker-actions wide">
-        <button type="button" class="btn ghost" (click)="closeExerciseConfigure()">Annuler</button>
-        <button type="button" class="btn primary" (click)="confirmExerciseConfigure()">
-          @if (exerciseConfigureMode() === 'add') { Ajouter à la séance } @else { Enregistrer }
-        </button>
-      </div>
+    </div>
+    <div class="sport-picker-actions exercise-config-actions">
+      <button type="button" class="btn ghost" (click)="closeExerciseConfigure()">Annuler</button>
+      <button
+        type="button"
+        class="btn primary"
+        (click)="confirmExerciseConfigure()"
+        [disabled]="exerciseConfigureMode() === 'add' && !pendingExerciseTemplate"
+      >
+        @if (exerciseConfigureMode() === 'add') { Ajouter à la séance } @else { Enregistrer }
+      </button>
     </div>
   </div>
 }

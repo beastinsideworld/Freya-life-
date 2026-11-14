@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, DestroyRef, ElementRef, inject, signal, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { resolveAssetUrl } from '../../core/asset-url';
 import {
@@ -23,13 +23,50 @@ import {
   SportDisciplineId,
   SportSex,
   SportStore,
-  SportTab
+  SportTab,
+  exerciseTrackKey
 } from '../../core/sport.store';
 import {
   exerciseTemplatesForDay,
-  filterExerciseTemplates,
+  strengthLiftTemplates,
   type ExerciseTemplate
 } from '../../core/sport-exercise-catalog';
+
+interface SavedExerciseOption {
+  key: string;
+  name: string;
+  muscle: string;
+  emoji: string;
+  sets: number;
+  reps: number;
+  loadKg: number | null;
+  restSec: number;
+  rpe: number;
+  template: ExerciseTemplate;
+}
+
+function foldExerciseQuery(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '');
+}
+
+function savedExerciseOption(template: ExerciseTemplate): SavedExerciseOption {
+  return {
+    key: foldExerciseQuery(template.name),
+    name: template.name,
+    muscle: template.muscle,
+    emoji: template.emoji,
+    sets: template.defaultSets,
+    reps: template.defaultReps,
+    loadKg: template.defaultLoadKg,
+    restSec: template.defaultRestSec,
+    rpe: template.defaultRpe,
+    template
+  };
+}
 
 @Component({
   selector: 'app-sport',
@@ -40,6 +77,24 @@ import {
 })
 export class SportComponent {
   readonly store = inject(SportStore);
+  private readonly destroyRef = inject(DestroyRef);
+  private timerHandle: ReturnType<typeof setInterval> | null = null;
+  private timerPreset = 90;
+  private timerEditLock = false;
+  timerMin = 1;
+  timerSec = 30;
+  readonly timerLeft = signal(90);
+  readonly timerRunning = signal(false);
+  readonly timerPaused = signal(false);
+  readonly timerDocked = signal(false);
+  readonly timerDockHeight = signal(240);
+  @ViewChild('sessionTimer') private sessionTimer?: ElementRef<HTMLElement>;
+  readonly timerClock = computed(() => {
+    const total = Math.max(0, this.timerLeft());
+    const minutes = Math.floor(total / 60);
+    const seconds = total % 60;
+    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  });
   get icons() {
     return muscuIconsForTheme();
   }
@@ -51,6 +106,8 @@ export class SportComponent {
   readonly period = signal<'1 mois' | '3 mois' | '6 mois'>('3 mois');
   readonly sportFilter = signal('Tous les sports');
   readonly loadExercise = signal('Développé couché');
+  readonly loadMenuOpen = signal(false);
+  readonly loadExerciseOptions = ['Développé couché', 'Squat', 'Soulevé de terre'];
   readonly goalFormOpen = signal(false);
   readonly sportPickerOpen = signal(false);
   readonly disciplineQuery = signal('');
@@ -84,35 +141,22 @@ export class SportComponent {
   });
 
   readonly sessionEditOpen = signal(false);
-  readonly exercisePickerOpen = signal(false);
   readonly exerciseConfigureOpen = signal(false);
   readonly expandedExerciseId = signal<string | null>(null);
   readonly exerciseConfigureMode = signal<'add' | 'edit'>('add');
-  readonly exerciseQuery = signal('');
   pendingExerciseTemplate: ExerciseTemplate | null = null;
   editingExerciseId: string | null = null;
+  draftExerciseName = '';
   draftExerciseSets = 3;
   draftExerciseReps = 10;
   draftExerciseLoadKg: number | null = null;
   draftExerciseRestSec = 90;
   draftExerciseRpe = 7;
+  readonly savedExerciseKey = signal<string | null>(null);
 
   draftSessionTitle = '';
   draftSessionDetail = '';
   draftSessionDuration = 45;
-
-  readonly dayExerciseCatalog = computed(() => {
-    const date = this.store.selectedDate();
-    const session = this.store.selectedSession();
-    const day = this.store.weekDays().find((d) => d.date === date);
-    const disciplineId = session?.disciplineId ?? day?.disciplineId ?? null;
-    const kind = session?.kind ?? day?.kind ?? null;
-    return exerciseTemplatesForDay(disciplineId, kind);
-  });
-
-  readonly filteredExerciseTemplates = computed(() =>
-    filterExerciseTemplates(this.dayExerciseCatalog(), this.exerciseQuery())
-  );
 
   readonly configurePersonalBestKg = computed(() => {
     if (this.exerciseConfigureMode() === 'add' && this.pendingExerciseTemplate) {
@@ -129,6 +173,57 @@ export class SportComponent {
     }
     const session = this.store.selectedSession();
     return session?.exercises.find((e) => e.id === this.editingExerciseId)?.name ?? 'Exercice';
+  });
+
+  readonly savedExerciseOptions = computed(() => {
+    const session = this.store.selectedSession();
+    const forceDay = session?.disciplineId === 'force';
+    const strengthDay = forceDay || session?.disciplineId === 'musculation' || session?.kind === 'musculation';
+    const dayTemplates = exerciseTemplatesForDay(session?.disciplineId, session?.kind ?? null);
+    const templates = strengthDay
+      ? [
+          ...dayTemplates,
+          ...strengthLiftTemplates().filter(
+            (template) => !dayTemplates.some((existing) => foldExerciseQuery(existing.name) === foldExerciseQuery(template.name))
+          )
+        ]
+      : dayTemplates;
+    const byName = new Map<string, SavedExerciseOption>();
+
+    for (const template of templates) {
+      byName.set(foldExerciseQuery(template.name), savedExerciseOption(template));
+    }
+
+    const sessions = [...this.store.sessions()].sort((a, b) => a.date.localeCompare(b.date));
+    for (const day of sessions) {
+      for (const ex of day.exercises) {
+        const name = ex.name.trim();
+        if (!name) continue;
+        const key = foldExerciseQuery(name);
+        if (forceDay && !byName.has(key)) continue;
+        const existing = byName.get(key);
+        const template: ExerciseTemplate = {
+          id: ex.templateId || existing?.template.id || exerciseTrackKey(undefined, name) || 'exercice',
+          name,
+          muscle: ex.muscle || existing?.muscle || '',
+          emoji: ex.emoji || existing?.emoji || '🏋️',
+          defaultSets: ex.sets,
+          defaultReps: ex.reps,
+          defaultLoadKg: ex.loadKg,
+          defaultRestSec: ex.restSec,
+          defaultRpe: ex.rpe
+        };
+        byName.set(key, savedExerciseOption(template));
+      }
+    }
+
+    if (forceDay) {
+      return templates
+        .map((template) => byName.get(foldExerciseQuery(template.name)))
+        .filter((option): option is SavedExerciseOption => option != null);
+    }
+
+    return [...byName.values()].sort((a, b) => a.name.localeCompare(b.name, 'fr', { sensitivity: 'base' }));
   });
 
   draftType: GoalType = 'prise_seche';
@@ -155,24 +250,6 @@ export class SportComponent {
     });
   });
 
-  readonly weightPoints = computed(() => {
-    const hist = this.store.weightHistory();
-    const min = Math.min(...hist.map((p) => p.kg));
-    const max = Math.max(...hist.map((p) => p.kg));
-    const span = Math.max(0.5, max - min);
-    return hist.map((p, i) => ({
-      ...p,
-      x: hist.length <= 1 ? 50 : (i / (hist.length - 1)) * 100,
-      y: 100 - ((p.kg - min) / span) * 78 - 8
-    }));
-  });
-
-  readonly weightPolyline = computed(() =>
-    this.weightPoints()
-      .map((p) => `${p.x},${p.y}`)
-      .join(' ')
-  );
-
   readonly loadMax = computed(() => Math.max(1, ...this.store.loadProgress().map((p) => p.kg)));
   readonly volumeMax = computed(() =>
     Math.max(1, ...this.store.volumeWeeks().map((w) => w.musculation + w.course + w.autres))
@@ -184,8 +261,93 @@ export class SportComponent {
   );
   readonly regularityRing = computed(() => this.store.regularityPct());
 
+  constructor() {
+    this.destroyRef.onDestroy(() => this.clearSessionTimer());
+  }
+
   setTab(tab: SportTab): void {
     this.tab.set(tab);
+  }
+
+  onTimerEdit(): void {
+    if (this.timerEditLock || this.timerRunning()) return;
+    const minutes = this.clampTimer(this.timerMin, 0, 180);
+    const seconds = this.clampTimer(this.timerSec, 0, 59);
+    this.timerEditLock = true;
+    this.timerMin = minutes;
+    this.timerSec = seconds;
+    this.timerEditLock = false;
+    const total = minutes * 60 + seconds;
+    if (!this.timerPaused()) this.timerPreset = total;
+    this.timerLeft.set(total);
+  }
+
+  startSessionTimer(): void {
+    if (this.timerRunning()) return;
+    if (this.timerLeft() <= 0) {
+      this.timerLeft.set(this.timerPreset);
+      this.writeTimerInputs(this.timerPreset);
+    }
+    if (this.timerLeft() <= 0) return;
+    this.rememberTimerHeight();
+    this.timerDocked.set(true);
+    this.timerPaused.set(false);
+    this.timerRunning.set(true);
+    this.clearSessionTimer();
+    this.timerHandle = setInterval(() => {
+      const next = this.timerLeft() - 1;
+      if (next <= 0) {
+        this.timerLeft.set(this.timerPreset);
+        this.writeTimerInputs(this.timerPreset);
+        this.timerRunning.set(false);
+        this.timerPaused.set(false);
+        this.timerDocked.set(false);
+        this.clearSessionTimer();
+        return;
+      }
+      this.timerLeft.set(next);
+    }, 1000);
+  }
+
+  pauseSessionTimer(): void {
+    if (!this.timerRunning()) return;
+    this.clearSessionTimer();
+    this.timerRunning.set(false);
+    this.timerPaused.set(true);
+    this.writeTimerInputs(this.timerLeft());
+  }
+
+  stopSessionTimer(): void {
+    this.clearSessionTimer();
+    this.timerRunning.set(false);
+    this.timerPaused.set(false);
+    this.timerDocked.set(false);
+    this.timerLeft.set(this.timerPreset);
+    this.writeTimerInputs(this.timerPreset);
+  }
+
+  private rememberTimerHeight(): void {
+    const height = this.sessionTimer?.nativeElement.getBoundingClientRect().height ?? 0;
+    if (height > 0) this.timerDockHeight.set(Math.ceil(height));
+  }
+
+  private writeTimerInputs(total: number): void {
+    const safe = Math.max(0, total);
+    this.timerEditLock = true;
+    this.timerMin = Math.floor(safe / 60);
+    this.timerSec = safe % 60;
+    this.timerEditLock = false;
+  }
+
+  private clearSessionTimer(): void {
+    if (!this.timerHandle) return;
+    clearInterval(this.timerHandle);
+    this.timerHandle = null;
+  }
+
+  private clampTimer(value: number, min: number, max: number): number {
+    const parsed = Math.floor(Number(value) || 0);
+    return Math.min(max, Math.max(min, parsed));
   }
 
   openGoalForm(): void {
@@ -290,25 +452,17 @@ export class SportComponent {
 
   openExercisePicker(): void {
     if (!this.requireSession()) return;
-    this.exerciseQuery.set('');
-    this.exercisePickerOpen.set(true);
-  }
-
-  closeExercisePicker(): void {
-    this.exercisePickerOpen.set(false);
-    this.closeExerciseConfigure();
-  }
-
-  pickExerciseTemplate(template: ExerciseTemplate): void {
-    this.pendingExerciseTemplate = template;
+    this.pendingExerciseTemplate = null;
     this.editingExerciseId = null;
     this.exerciseConfigureMode.set('add');
-    this.draftExerciseSets = template.defaultSets;
-    this.draftExerciseReps = template.defaultReps;
-    this.draftExerciseLoadKg = template.defaultLoadKg;
-    this.draftExerciseRestSec = template.defaultRestSec;
-    this.draftExerciseRpe = template.defaultRpe;
-    this.exercisePickerOpen.set(false);
+    this.draftExerciseName = '';
+    this.draftExerciseSets = 3;
+    this.draftExerciseReps = 10;
+    this.draftExerciseLoadKg = null;
+    this.draftExerciseRestSec = 90;
+    this.draftExerciseRpe = 7;
+    this.savedExerciseKey.set(null);
+    this.sessionEditOpen.set(false);
     this.exerciseConfigureOpen.set(true);
   }
 
@@ -325,7 +479,6 @@ export class SportComponent {
     this.draftExerciseRestSec = ex.restSec;
     this.draftExerciseRpe = ex.rpe;
     this.sessionEditOpen.set(false);
-    this.exercisePickerOpen.set(false);
     this.exerciseConfigureOpen.set(false);
     this.expandedExerciseId.set(exerciseId);
   }
@@ -355,6 +508,31 @@ export class SportComponent {
     this.exerciseConfigureOpen.set(false);
     this.pendingExerciseTemplate = null;
     this.editingExerciseId = null;
+    this.savedExerciseKey.set(null);
+  }
+
+  pickLoadExercise(name: string): void {
+    this.loadExercise.set(name);
+    this.loadMenuOpen.set(false);
+  }
+
+  onSavedExerciseSelect(key: string | null): void {
+    if (!key) {
+      this.savedExerciseKey.set(null);
+      this.pendingExerciseTemplate = null;
+      this.draftExerciseName = '';
+      return;
+    }
+    const option = this.savedExerciseOptions().find((ex) => ex.key === key);
+    if (!option) return;
+    this.savedExerciseKey.set(option.key);
+    this.pendingExerciseTemplate = option.template;
+    this.draftExerciseName = option.name;
+    this.draftExerciseSets = option.sets;
+    this.draftExerciseReps = option.reps;
+    this.draftExerciseLoadKg = option.loadKg;
+    this.draftExerciseRestSec = option.restSec;
+    this.draftExerciseRpe = option.rpe;
   }
 
   parseExerciseLoadKg(raw: number | null | string): number | null {
@@ -372,14 +550,10 @@ export class SportComponent {
     const restSec = Math.max(0, Math.round(Number(this.draftExerciseRestSec) || 0));
     const rpe = Math.min(10, Math.max(1, Math.round(Number(this.draftExerciseRpe) || 7)));
 
-    if (this.exerciseConfigureMode() === 'add' && this.pendingExerciseTemplate) {
-      this.store.addExerciseFromTemplate(session.id, this.pendingExerciseTemplate, {
-        sets,
-        reps,
-        loadKg,
-        restSec,
-        rpe
-      });
+    if (this.exerciseConfigureMode() === 'add') {
+      const template = this.pendingExerciseTemplate;
+      if (!template) return;
+      this.store.addExerciseFromTemplate(session.id, template, { sets, reps, loadKg, restSec, rpe });
       this.closeExerciseConfigure();
       return;
     }

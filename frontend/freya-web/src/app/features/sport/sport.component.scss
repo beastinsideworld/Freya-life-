@@ -5,6 +5,10 @@
   padding-bottom: calc(var(--bottom-safe) + 2.5rem);
 }
 
+.sport-page.timer-docked {
+  padding-bottom: calc(var(--bottom-safe) + var(--timer-dock-h, 15rem) + 0.85rem);
+}
+
 .sport-ico {
   width: 100%;
   height: 100%;
@@ -119,6 +123,95 @@
   justify-content: space-between;
   gap: 0.5rem;
   margin-bottom: 0.7rem;
+
+  .load-select {
+    position: relative;
+    flex: 0 1 auto;
+    z-index: 6;
+  }
+
+  .load-select-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  .load-select-btn,
+  .load-select-menu,
+  .load-select-menu button {
+    color: var(--ivory, #fff5ec);
+    font-weight: 700;
+  }
+
+  .load-select-btn,
+  .load-select-menu {
+    border: 1.5px solid var(--contour, #c45c1a);
+    background-color: var(--bg-secondary, #180a00) !important;
+    background-image: linear-gradient(
+      160deg,
+      var(--bordeaux-lit, #3d1e02) 0%,
+      var(--bg-card, #251201) 55%,
+      var(--bg-secondary, #180a00) 100%
+    ) !important;
+    color: var(--ivory, #fff5ec);
+  }
+
+  .load-select-btn {
+    position: relative;
+    z-index: 22;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    max-width: 100%;
+    margin: 0;
+    padding: 0.45rem 0.7rem 0.45rem 0.85rem;
+    border-radius: 999px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.28);
+    cursor: pointer;
+    appearance: none;
+  }
+
+  .load-select-caret {
+    color: var(--champagne, #e7b671);
+    font-size: 0.85rem;
+    line-height: 1;
+  }
+
+  .load-select-menu {
+    position: absolute;
+    top: calc(100% + 0.35rem);
+    right: 0;
+    z-index: 23;
+    min-width: 12.5rem;
+    margin: 0;
+    padding: 0.35rem;
+    list-style: none;
+    border-radius: 0.8rem;
+    box-shadow: 0 14px 32px rgba(0, 0, 0, 0.4);
+
+    button {
+      width: 100%;
+      margin: 0;
+      padding: 0.6rem 0.75rem;
+      border: 0;
+      border-radius: 0.55rem;
+      background-color: transparent !important;
+      background-image: none !important;
+      color: var(--ivory, #fff5ec);
+      text-align: left;
+      cursor: pointer;
+
+      &:hover,
+      &.active {
+        background-color: color-mix(in srgb, var(--contour, #c45c1a) 42%, var(--bg-secondary, #180a00)) !important;
+        color: var(--ivory, #fff5ec);
+      }
+    }
+  }
 
   h2,
   .quick-title {
@@ -560,6 +653,10 @@
 .exercise-config-note {
   margin: 0;
   font-size: 0.78rem;
+}
+
+.exercise-config-actions {
+  margin-top: 0.85rem;
 }
 
 .meal-emoji,
@@ -1080,23 +1177,37 @@
 }
 
 .check {
-  width: 1.55rem;
-  height: 1.55rem;
+  width: 1.7rem;
+  height: 1.7rem;
   border-radius: 0.4rem;
   border: 1px solid color-mix(in srgb, var(--contour) 30%, transparent);
   background: transparent;
   color: #fff;
   display: grid;
   place-items: center;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .check.on {
-  background: var(--accent);
+  background: #1f9d4a;
   border-color: transparent;
+  color: #fff;
+}
+
+.check.fail {
+  background: #d12525;
+  border-color: transparent;
+  color: #fff;
 }
 
 .exercise-list li.done {
   opacity: 0.72;
+}
+
+.exercise-list li.failed {
+  border-color: color-mix(in srgb, #d12525 55%, transparent);
 }
 
 .session-actions {
@@ -1104,6 +1215,101 @@
   grid-template-columns: 1fr 1.2fr;
   gap: 0.5rem;
   margin-top: 0.85rem;
+}
+
+.session-timer {
+  display: grid;
+  gap: 0.75rem;
+
+  h2 {
+    margin: 0;
+    font-size: 1.02rem;
+    font-weight: 500;
+    color: var(--text-card, var(--title, var(--text)));
+  }
+}
+
+.timer-clock {
+  margin: 0;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-size: 2.6rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--text-card, var(--title, var(--text)));
+}
+
+.timer-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.55rem;
+
+  label {
+    display: grid;
+    gap: 0.3rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--text-card, var(--title, var(--text)));
+  }
+
+  input {
+    width: 100%;
+    min-height: 2.4rem;
+    border-radius: 0.65rem;
+    border: 1px solid color-mix(in srgb, var(--text-card, var(--text)) 35%, transparent);
+    background: var(--field-bg, #fff);
+    color: var(--text-card, #1a1a1a);
+    font: inherit;
+    font-weight: 600;
+    padding: 0.35rem 0.55rem;
+  }
+
+  input:disabled {
+    opacity: 0.7;
+  }
+}
+
+.timer-actions {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr;
+  gap: 0.45rem;
+
+  .btn:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+}
+
+.session-timer.is-docked {
+  position: fixed;
+  z-index: 35;
+  left: 1rem;
+  right: 1rem;
+  bottom: calc(var(--bottom-safe) + 0.45rem);
+  width: auto;
+  margin: 0;
+  background-color: var(--bg, #12080c);
+  background-image: var(--grad-panel);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.38);
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .session-timer.is-docked {
+    left: max(1.5rem, calc((100vw - 920px) / 2 + 1.5rem));
+    right: max(1.5rem, calc((100vw - 920px) / 2 + 1.5rem));
+  }
+}
+
+@media (min-width: 1024px) {
+  .sport-page.timer-docked {
+    padding-bottom: calc(var(--timer-dock-h, 15rem) + 1.5rem);
+  }
+
+  .session-timer.is-docked {
+    left: calc(220px + max(1.5rem, (100vw - 220px - 920px) / 2 + 1.5rem));
+    right: max(1.5rem, calc((100vw - 220px - 920px) / 2 + 1.5rem));
+    bottom: 1rem;
+  }
 }
 
 .filters {

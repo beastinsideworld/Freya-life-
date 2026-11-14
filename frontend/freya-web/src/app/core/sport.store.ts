@@ -393,6 +393,8 @@ export interface SportExercise {
   restSec: number;
   rpe: number;
   done: boolean;
+  /** Échec de la série. Incompatible avec `done`. */
+  failed?: boolean;
 }
 
 /** Clé stable pour agréger le poids max par type d'exercice. */
@@ -412,6 +414,7 @@ function buildExercisePersonalBests(sessions: DaySession[]): Record<string, numb
   for (const session of sessions) {
     for (const ex of session.exercises) {
       if (ex.loadKg == null || ex.loadKg <= 0) continue;
+      if (ex.failed) continue;
       if (!ex.done && !session.completed) continue;
       const key = exerciseTrackKey(ex.templateId, ex.name);
       map[key] = Math.max(map[key] ?? 0, ex.loadKg);
@@ -1170,7 +1173,8 @@ export class SportStore {
           loadKg,
           restSec: overrides?.restSec != null ? Math.max(0, Math.round(overrides.restSec)) : template.defaultRestSec,
           rpe: overrides?.rpe != null ? Math.min(10, Math.max(1, Math.round(overrides.rpe))) : template.defaultRpe,
-          done: false
+          done: false,
+          failed: false
         };
         return recomputeSession({ ...session, exercises: [...session.exercises, exercise] });
       })
@@ -1227,7 +1231,7 @@ export class SportStore {
     }));
   }
 
-  toggleExercise(sessionId: string, exerciseId: string): void {
+  cycleExerciseResult(sessionId: string, exerciseId: string): void {
     this.patch((s) => ({
       ...s,
       sessions: s.sessions.map((session) =>
@@ -1235,9 +1239,12 @@ export class SportStore {
           ? session
           : {
               ...session,
-              exercises: session.exercises.map((ex) =>
-                ex.id === exerciseId ? { ...ex, done: !ex.done } : ex
-              )
+              exercises: session.exercises.map((ex) => {
+                if (ex.id !== exerciseId) return ex;
+                if (!ex.done && !ex.failed) return { ...ex, done: true, failed: false };
+                if (ex.done) return { ...ex, done: false, failed: true };
+                return { ...ex, done: false, failed: false };
+              })
             }
       )
     }));
@@ -1251,7 +1258,9 @@ export class SportStore {
           ? {
               ...session,
               completed: true,
-              exercises: session.exercises.map((ex) => ({ ...ex, done: true }))
+              exercises: session.exercises.map((ex) =>
+                ex.failed ? { ...ex, done: false, failed: true } : { ...ex, done: true, failed: false }
+              )
             }
           : session
       ),
