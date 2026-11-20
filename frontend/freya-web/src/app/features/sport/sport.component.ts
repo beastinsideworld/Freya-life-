@@ -24,6 +24,7 @@ import {
   SportSex,
   SportStore,
   SportTab,
+  type ArchivedSession,
   exerciseTrackKey
 } from '../../core/sport.store';
 import {
@@ -82,6 +83,7 @@ export class SportComponent {
   readonly store = inject(SportStore);
   private readonly destroyRef = inject(DestroyRef);
   private timerHandle: ReturnType<typeof setInterval> | null = null;
+  private timerAudio: AudioContext | null = null;
   private timerPreset = 90;
   private timerEditLock = false;
   timerMin = 1;
@@ -159,6 +161,7 @@ export class SportComponent {
   readonly exerciseNameQuery = signal('');
   readonly exerciseNameMenuOpen = signal(false);
   readonly exerciseLibraryOpen = signal(false);
+  readonly reviewedSession = signal<ArchivedSession | null>(null);
   libraryExerciseName = '';
 
   draftSessionTitle = '';
@@ -322,7 +325,11 @@ export class SportComponent {
   readonly regularityRing = computed(() => this.store.regularityPct());
 
   constructor() {
-    this.destroyRef.onDestroy(() => this.clearSessionTimer());
+    this.destroyRef.onDestroy(() => {
+      this.clearSessionTimer();
+      void this.timerAudio?.close();
+      this.timerAudio = null;
+    });
   }
 
   setTab(tab: SportTab): void {
@@ -353,10 +360,12 @@ export class SportComponent {
     this.timerDocked.set(true);
     this.timerPaused.set(false);
     this.timerRunning.set(true);
+    this.prepareTimerAudio();
     this.clearSessionTimer();
     this.timerHandle = setInterval(() => {
       const next = this.timerLeft() - 1;
       if (next <= 0) {
+        this.playTimerBeep('end');
         this.timerLeft.set(this.timerPreset);
         this.writeTimerInputs(this.timerPreset);
         this.timerRunning.set(false);
@@ -365,6 +374,7 @@ export class SportComponent {
         this.clearSessionTimer();
         return;
       }
+      if (next % 60 === 0) this.playTimerBeep('minute');
       this.timerLeft.set(next);
     }, 1000);
   }
@@ -397,6 +407,40 @@ export class SportComponent {
     this.timerMin = Math.floor(safe / 60);
     this.timerSec = safe % 60;
     this.timerEditLock = false;
+  }
+
+  private prepareTimerAudio(): void {
+    const AudioCtor =
+      window.AudioContext ??
+      (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AudioCtor) return;
+    this.timerAudio ??= new AudioCtor();
+    if (this.timerAudio.state === 'suspended') void this.timerAudio.resume();
+  }
+
+  private playTimerBeep(kind: 'minute' | 'end'): void {
+    const ctx = this.timerAudio;
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    const tone = (frequency: number, start: number, duration: number, volume: number) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = kind === 'end' ? 'square' : 'sine';
+      osc.frequency.setValueAtTime(frequency, start);
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(volume, start + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start + duration + 0.02);
+    };
+    if (kind === 'minute') {
+      tone(880, now, 0.16, 0.22);
+      return;
+    }
+    tone(440, now, 0.45, 0.34);
+    tone(880, now + 0.22, 0.7, 0.4);
   }
 
   private clearSessionTimer(): void {
@@ -510,6 +554,22 @@ export class SportComponent {
     this.closeSessionEditor();
   }
 
+  openSessionReview(session: ArchivedSession): void {
+    this.reviewedSession.set(session);
+  }
+
+  closeSessionReview(): void {
+    this.reviewedSession.set(null);
+  }
+
+  historyDate(iso: string): string {
+    return new Date(`${iso}T12:00:00`).toLocaleDateString('fr-FR', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short'
+    });
+  }
+
   toggleExerciseLibrary(): void {
     if (this.exerciseLibraryOpen()) {
       this.closeExerciseLibrary();
@@ -605,6 +665,10 @@ export class SportComponent {
 
   addExerciseSetLine(sessionId: string, exerciseId: string, afterLineId: string | null): void {
     this.store.addExerciseSetLine(sessionId, exerciseId, afterLineId);
+  }
+
+  removeExerciseSetLine(sessionId: string, exerciseId: string, lineId: string | null): void {
+    this.store.removeExerciseSetLine(sessionId, exerciseId, lineId);
   }
 
   updateSessionExerciseLine(

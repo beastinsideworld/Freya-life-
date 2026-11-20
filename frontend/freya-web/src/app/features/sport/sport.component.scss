@@ -600,7 +600,7 @@
 
 .ex-live-line {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto auto;
   gap: 0.4rem;
   align-items: end;
   margin-top: 0.15rem;
@@ -628,11 +628,26 @@
   }
 
   .check,
-  .ex-line-spacer {
+  .ex-line-spacer,
+  .ex-remove {
     width: 2.2rem;
     height: 2.2rem;
     align-self: end;
   }
+}
+
+.ex-remove {
+  margin: 0;
+  padding: 0;
+  border-radius: 0.4rem;
+  border: 1px solid color-mix(in srgb, var(--contour) 45%, transparent);
+  background: var(--bg-secondary, #180a00);
+  color: var(--ivory, #fff5ec);
+  font: inherit;
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
 }
 
 .ex-edit-hint {
@@ -1215,6 +1230,72 @@
   place-items: center;
   background: var(--accent);
   font-size: 0.7rem;
+}
+
+.session-history h2 {
+  margin: 0 0 0.7rem;
+  font-size: 1.02rem;
+}
+
+.history-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.45rem;
+  max-height: 18rem;
+  overflow: auto;
+
+  button {
+    width: 100%;
+    display: grid;
+    gap: 0.12rem;
+    text-align: left;
+    padding: 0.65rem 0.75rem;
+    border-radius: 0.75rem;
+    border: 1px solid var(--contour, #c45c1a);
+    background: var(--bg-secondary, #180a00);
+    color: var(--ivory, #fff5ec);
+    cursor: pointer;
+
+    span,
+    em {
+      color: var(--text-card, var(--ivory, #fff5ec));
+      font-style: normal;
+      font-size: 0.82rem;
+    }
+  }
+}
+
+.session-review {
+  width: min(36rem, 100%);
+  max-height: min(88vh, 760px);
+  overflow: auto;
+}
+
+.review-exercises {
+  list-style: none;
+  margin: 0.8rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.45rem;
+
+  li {
+    display: grid;
+    gap: 0.15rem;
+    padding: 0.55rem 0.7rem;
+    border-radius: 0.7rem;
+    background: var(--bg-secondary, #180a00);
+    color: var(--ivory, #fff5ec);
+  }
+
+  span.done {
+    color: var(--accent, #e39a4b);
+  }
+
+  span.failed {
+    color: #e07070;
+  }
 }
 
 .session-hero .stat-grid,

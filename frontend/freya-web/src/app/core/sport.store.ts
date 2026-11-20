@@ -442,6 +442,21 @@ function buildExercisePersonalBests(sessions: DaySession[]): Record<string, numb
   return map;
 }
 
+export interface ArchivedSession {
+  id: string;
+  date: string;
+  savedAt: string;
+  kind: SportKind;
+  title: string;
+  detail: string;
+  durationMin: number;
+  seriesTotal: number;
+  volumeKg: number;
+  kcalEstimate: number;
+  completed: boolean;
+  exercises: SportExercise[];
+}
+
 export interface DaySession {
   id: string;
   date: string;
@@ -511,6 +526,7 @@ export interface SportState {
   weekDays: WeekDayCard[];
   selectedDate: string;
   sessions: DaySession[];
+  sessionHistory: ArchivedSession[];
   weightHistory: WeightPoint[];
   records: PersonalRecord[];
   loadProgress: LoadWeekPoint[];
@@ -859,6 +875,7 @@ function demoState(): SportState {
     weekDays,
     selectedDate: today,
     sessions,
+    sessionHistory: [],
     weightHistory: [
       { date: '2026-08-11', label: '11 août', kg: 78 },
       { date: '2026-08-28', label: '28 août', kg: 77.6 },
@@ -901,6 +918,67 @@ function demoState(): SportState {
     customExercises: [],
     hiddenExerciseKeys: []
   };
+}
+
+function cloneExercise(ex: SportExercise): SportExercise {
+  return {
+    ...ex,
+    setLines: (ex.setLines ?? []).map((line) => ({ ...line }))
+  };
+}
+
+function snapshotSession(session: DaySession, previous?: ArchivedSession): ArchivedSession {
+  return {
+    id: previous?.id ?? session.id,
+    date: session.date,
+    savedAt: new Date().toISOString(),
+    kind: session.kind,
+    title: session.title,
+    detail: session.detail,
+    durationMin: session.durationMin,
+    seriesTotal: session.seriesTotal,
+    volumeKg: session.volumeKg,
+    kcalEstimate: session.kcalEstimate,
+    completed: session.completed,
+    exercises: session.exercises.map(cloneExercise)
+  };
+}
+
+function upsertSessionHistory(history: ArchivedSession[], sessions: DaySession[]): ArchivedSession[] {
+  const byDate = new Map(history.map((item) => [item.date, item]));
+  for (const session of sessions) {
+    if (!session.date || !session.title.trim()) continue;
+    byDate.set(session.date, snapshotSession(session, byDate.get(session.date)));
+  }
+  return [...byDate.values()].sort((a, b) => b.date.localeCompare(a.date));
+}
+
+function normalizeArchivedSession(raw: Partial<ArchivedSession> | null | undefined): ArchivedSession | null {
+  if (!raw || typeof raw.date !== 'string' || !raw.date || typeof raw.title !== 'string' || !raw.title.trim()) {
+    return null;
+  }
+  const exercises = Array.isArray(raw.exercises) ? raw.exercises.map((ex) => normalizeExercise(ex as SportExercise)) : [];
+  return {
+    id: typeof raw.id === 'string' && raw.id ? raw.id : createId(),
+    date: raw.date,
+    savedAt: typeof raw.savedAt === 'string' ? raw.savedAt : raw.date,
+    kind: raw.kind ?? 'autre',
+    title: raw.title.trim(),
+    detail: typeof raw.detail === 'string' ? raw.detail : '',
+    durationMin: Math.max(0, Math.round(Number(raw.durationMin) || 0)),
+    seriesTotal: Math.max(0, Math.round(Number(raw.seriesTotal) || 0)),
+    volumeKg: Math.max(0, Math.round(Number(raw.volumeKg) || 0)),
+    kcalEstimate: Math.max(0, Math.round(Number(raw.kcalEstimate) || 0)),
+    completed: raw.completed === true,
+    exercises
+  };
+}
+
+function normalizeSessionHistory(raw: unknown): ArchivedSession[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((item) => normalizeArchivedSession(item as Partial<ArchivedSession>))
+    .filter((item): item is ArchivedSession => item != null);
 }
 
 function normalizeSetLine(raw: Partial<ExerciseSetLine> | null | undefined): ExerciseSetLine | null {
@@ -1000,6 +1078,7 @@ function loadState(): SportState {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) {
       const seeded = demoState();
+      seeded.sessionHistory = upsertSessionHistory([], seeded.sessions);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(seeded));
       return seeded;
     }
@@ -1021,6 +1100,7 @@ function loadState(): SportState {
       weeklyGoal: parsed.weeklyGoal ?? seeded.weeklyGoal,
       avgNutrition: parsed.avgNutrition ?? seeded.avgNutrition,
       avgTargets: parsed.avgTargets ?? seeded.avgTargets,
+      sessionHistory: [],
       customExercises: normalizeCustomExercises(parsed.customExercises),
       hiddenExerciseKeys: Array.isArray(parsed.hiddenExerciseKeys)
         ? parsed.hiddenExerciseKeys.filter((key): key is string => typeof key === 'string' && key.length > 0)
@@ -1039,6 +1119,7 @@ function loadState(): SportState {
     const norm = normalizeSessionsAndDays(merged.sessions, merged.weekDays);
     merged.sessions = norm.sessions;
     merged.weekDays = norm.weekDays;
+    merged.sessionHistory = upsertSessionHistory(normalizeSessionHistory(parsed.sessionHistory), merged.sessions);
     return merged;
   } catch {
     return demoState();
@@ -1057,6 +1138,7 @@ export class SportStore {
   readonly weekDays = computed(() => this.state().weekDays);
   readonly selectedDate = computed(() => this.state().selectedDate);
   readonly sessions = computed(() => this.state().sessions);
+  readonly sessionHistory = computed(() => this.state().sessionHistory);
   readonly weightHistory = computed(() => this.state().weightHistory);
   readonly records = computed(() => this.state().records);
   readonly loadProgress = computed(() => this.state().loadProgress);
@@ -1419,6 +1501,36 @@ export class SportStore {
     }));
   }
 
+  removeExerciseSetLine(sessionId: string, exerciseId: string, lineId: string | null): void {
+    this.patch((s) => ({
+      ...s,
+      sessions: s.sessions.map((session) => {
+        if (session.id !== sessionId) return session;
+        const exercises = session.exercises.flatMap((ex) => {
+          if (ex.id !== exerciseId) return [ex];
+          const lines = ex.setLines ?? [];
+          if (lineId) {
+            return [{ ...ex, setLines: lines.filter((line) => line.id !== lineId) }];
+          }
+          const [first, ...rest] = lines;
+          if (!first) return [];
+          return [
+            {
+              ...ex,
+              sets: first.sets,
+              reps: first.reps,
+              loadKg: first.loadKg,
+              done: first.done,
+              failed: first.failed === true,
+              setLines: rest
+            }
+          ];
+        });
+        return recomputeSession({ ...session, exercises });
+      })
+    }));
+  }
+
   removeExercise(sessionId: string, exerciseId: string): void {
     this.patch((s) => ({
       ...s,
@@ -1565,8 +1677,12 @@ export class SportStore {
 
   private patch(updater: (s: SportState) => SportState): void {
     const next = updater(this.state());
-    this.state.set(next);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    const saved: SportState = {
+      ...next,
+      sessionHistory: upsertSessionHistory(next.sessionHistory ?? [], next.sessions)
+    };
+    this.state.set(saved);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
   }
 }
 
