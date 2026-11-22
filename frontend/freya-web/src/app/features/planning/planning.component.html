@@ -190,6 +190,22 @@
           <label class="field">Tâche
             <input type="text" name="planningTaskTitle" [(ngModel)]="planningTaskTitle" placeholder="Ex. Appeler le garage" required autocomplete="off">
           </label>
+          <fieldset class="repeat-field">
+            <legend>Échéance</legend>
+            <div class="seg repeat-options">
+              <button type="button" class="chip" [class.active]="planningTaskWhen === 'asap'" (click)="planningTaskWhen = 'asap'">
+                À faire au plus tôt
+              </button>
+              <button type="button" class="chip" [class.active]="planningTaskWhen === 'date'" (click)="planningTaskWhen = 'date'">
+                À une date
+              </button>
+            </div>
+          </fieldset>
+          @if (planningTaskWhen === 'date') {
+            <label class="field">Date
+              <app-date-picker name="planningTaskDate" [(ngModel)]="planningTaskDate"></app-date-picker>
+            </label>
+          }
           <div class="form-actions">
             <button type="button" class="btn" (click)="toggleTaskForm()">Annuler</button>
             <button type="submit" class="btn primary">Ajouter</button>
@@ -208,6 +224,7 @@
               </button>
               <div class="item-body">
                 <strong>{{ item.title }}</strong>
+                <span>{{ taskSchedule(item) }}</span>
               </div>
               <button type="button" class="ghost trash" (click)="deletePlanningTask(item.id)" aria-label="Supprimer">🗑</button>
             </li>

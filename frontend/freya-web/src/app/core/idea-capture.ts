@@ -283,7 +283,7 @@ export class IdeaCaptureService {
 
   private addTask(title: string): void {
     const items = loadTasks();
-    items.unshift({ id: createId(), title, done: false });
+    items.unshift({ id: createId(), title, done: false, when: 'asap', date: null });
     saveTasks(items);
   }
 

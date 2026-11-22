@@ -14,6 +14,7 @@ import {
   saveObjectives,
   saveRooms,
   saveTasks,
+  taskWhenLabel,
   toIsoDate
 } from '../../core/planning-local';
 import { createId } from '../../core/id';
@@ -82,6 +83,8 @@ export class PlanningComponent implements OnInit {
   newTaskDate = toIsoDate(new Date());
   newTaskRepeat: RepeatMode = 'daily';
   planningTaskTitle = '';
+  planningTaskWhen: 'asap' | 'date' = 'asap';
+  planningTaskDate = toIsoDate(new Date());
   editEventTitle = '';
   editEventDate = toIsoDate(new Date());
   editEventEndDate = toIsoDate(new Date());
@@ -378,13 +381,22 @@ export class PlanningComponent implements OnInit {
   addPlanningTask(): void {
     const title = this.planningTaskTitle.trim();
     if (!title) return;
+    const when = this.planningTaskWhen === 'date' ? 'date' : 'asap';
+    const date = when === 'date' ? this.planningTaskDate : null;
+    if (when === 'date' && !date) return;
     this.tasks.update((list) => [
-      { id: createId(), title, done: false },
+      { id: createId(), title, done: false, when, date },
       ...list
     ]);
     this.persistTasks();
     this.planningTaskTitle = '';
+    this.planningTaskWhen = 'asap';
+    this.planningTaskDate = toIsoDate(new Date());
     this.showTaskForm.set(false);
+  }
+
+  taskSchedule(item: PlanningTask): string {
+    return taskWhenLabel(item);
   }
 
   togglePlanningTask(id: string): void {

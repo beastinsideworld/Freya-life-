@@ -24,10 +24,14 @@ export interface HabitRoom {
   tasks: HabitTask[];
 }
 
+export type TaskWhen = 'asap' | 'date';
+
 export interface PlanningTask {
   id: string;
   title: string;
   done: boolean;
+  when: TaskWhen;
+  date: string | null;
 }
 
 export const OBJECTIVES_KEY = 'freya.planning.objectives.v2';
@@ -150,17 +154,38 @@ export function saveRooms(rooms: HabitRoom[]): void {
   localStorage.setItem(ROOMS_KEY, JSON.stringify(rooms));
 }
 
+export function taskVisibleOnHome(task: PlanningTask, today: string): boolean {
+  if (task.when !== 'date' || !task.date) return true;
+  return task.date <= today;
+}
+
+export function taskWhenLabel(task: PlanningTask): string {
+  if (task.when === 'date' && task.date) {
+    return new Date(`${task.date}T12:00:00`).toLocaleDateString('fr-FR', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short'
+    });
+  }
+  return 'À faire au plus tôt';
+}
+
 export function loadTasks(): PlanningTask[] {
   try {
     const raw = localStorage.getItem(TASKS_KEY);
     if (raw) {
       const parsed = JSON.parse(raw) as PlanningTask[];
       if (Array.isArray(parsed)) {
-        return parsed.map((item) => ({
-          id: item.id,
-          title: item.title,
-          done: !!item.done
-        }));
+        return parsed.map((item) => {
+          const when: TaskWhen = item.when === 'date' && item.date ? 'date' : 'asap';
+          return {
+            id: item.id,
+            title: item.title,
+            done: !!item.done,
+            when,
+            date: when === 'date' ? item.date : null
+          };
+        });
       }
     }
   } catch {

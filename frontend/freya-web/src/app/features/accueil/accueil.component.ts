@@ -20,6 +20,8 @@ import {
   loadObjectives,
   loadRooms,
   loadTasks,
+  taskVisibleOnHome,
+  taskWhenLabel,
   repeatLabel,
   saveObjectives,
   saveRooms,
@@ -853,15 +855,17 @@ export class AccueilComponent implements OnInit, OnDestroy {
     this.todayHabits.set(habits);
 
     this.todayTasks.set(
-      loadTasks().map((item) => ({
-        id: item.id,
-        title: item.title,
-        meta: 'Tâche',
-        done: item.done,
-        kind: 'task' as const,
-        ownerName: me,
-        mine: true
-      }))
+      loadTasks()
+        .filter((item) => taskVisibleOnHome(item, today))
+        .map((item) => ({
+          id: item.id,
+          title: item.title,
+          meta: taskWhenLabel(item),
+          done: item.done,
+          kind: 'task' as const,
+          ownerName: me,
+          mine: true
+        }))
     );
   }
 

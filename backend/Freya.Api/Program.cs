@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using Freya.Application.Auth;
@@ -1344,13 +1345,14 @@ api.MapGet("/families/{id:guid}/today", async (Guid id, DateOnly? date, ICurrent
 
         foreach (var task in ParseTasks(snapshot.TasksJson))
         {
+            if (!TaskVisibleOnHome(task, dayIso)) continue;
             tasks.Add(new FamilyPlanItemDto(
                 task.Id,
                 snapshot.UserId,
                 ownerName,
                 mine,
                 task.Title,
-                "Tâche",
+                TaskWhenLabel(task),
                 task.Done,
                 "task",
                 null));
@@ -2077,6 +2079,27 @@ static List<PlanRoomJson> ParseRooms(string json)
     }
 }
 
+static bool TaskVisibleOnHome(PlanTaskJson task, string dayIso)
+{
+    if (!string.Equals(task.When, "date", StringComparison.OrdinalIgnoreCase) || string.IsNullOrWhiteSpace(task.Date))
+    {
+        return true;
+    }
+
+    return string.CompareOrdinal(task.Date, dayIso) <= 0;
+}
+
+static string TaskWhenLabel(PlanTaskJson task)
+{
+    if (string.Equals(task.When, "date", StringComparison.OrdinalIgnoreCase)
+        && DateOnly.TryParse(task.Date, out var date))
+    {
+        return date.ToString("ddd d MMM", CultureInfo.GetCultureInfo("fr-FR"));
+    }
+
+    return "À faire au plus tôt";
+}
+
 static List<PlanTaskJson> ParseTasks(string json)
 {
     try
@@ -2190,6 +2213,8 @@ internal sealed class PlanTaskJson
     public string Id { get; set; } = string.Empty;
     public string Title { get; set; } = string.Empty;
     public bool Done { get; set; }
+    public string? When { get; set; }
+    public string? Date { get; set; }
 }
 
 internal record MealCreateRequest(DateOnly Date, MealSlotType Slot, string Title, Guid? RecipeId, string? ImageUrl, int? Kcal);
