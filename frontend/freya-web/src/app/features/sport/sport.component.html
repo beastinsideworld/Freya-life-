@@ -144,32 +144,6 @@
 
   @if (tab() === 'entrainement') {
     <section class="panel">
-      <header class="card-head">
-        <h2>Ma semaine d’entraînement</h2>
-      </header>
-      <div class="week-scroller" role="list">
-        @for (day of store.weekDays(); track day.date) {
-          <button
-            type="button"
-            class="day-card"
-            role="listitem"
-            [class.active]="store.selectedDate() === day.date"
-            [class.done]="day.completed"
-            (click)="store.selectDate(day.date)"
-          >
-            @if (day.completed) {
-              <span class="day-check" aria-hidden="true">✓</span>
-            }
-            <strong>{{ day.label }}</strong>
-            <span class="day-ico" aria-hidden="true">
-              <img class="sport-ico" [src]="kindIconSrc(day.kind)" alt="" draggable="false" />
-            </span>
-            <span class="day-title">{{ day.title }}</span>
-            <em>{{ day.detail }}</em>
-          </button>
-        }
-      </div>
-
       <button type="button" class="sport-pick-bubble" (click)="openSportPicker()">
         <span class="sport-pick-emoji" aria-hidden="true">{{ selectedDayDiscipline().emoji }}</span>
         <span class="sport-pick-copy">
