@@ -453,4 +453,42 @@
       </div>
     </div>
   }
+
+  @if (reviewedSession(); as saved) {
+    <div class="modal-backdrop" (click)="closeSessionReview()" role="presentation"></div>
+    <div class="modal session-review" role="dialog" aria-modal="true" aria-labelledby="session-review-title">
+      <header class="modal-head">
+        <h2 id="session-review-title">{{ saved.title }}</h2>
+        <button type="button" class="modal-close" (click)="closeSessionReview()" aria-label="Fermer">×</button>
+      </header>
+      <p class="hint">{{ historyDate(saved.date) }}@if (saved.detail) { · {{ saved.detail }} }</p>
+      <div class="summary-grid">
+        <div><span>Durée</span><strong>{{ formatDuration(saved.durationMin) }}</strong></div>
+        <div><span>Séries</span><strong>{{ saved.seriesTotal }}</strong></div>
+        <div><span>Volume</span><strong>~ {{ numberFr(saved.volumeKg) }} kg</strong></div>
+      </div>
+      <ul class="review-exercises">
+        @for (ex of saved.exercises; track ex.id) {
+          <li>
+            <strong>{{ ex.name }}</strong>
+            <span [class.done]="ex.done" [class.failed]="ex.failed">
+              {{ ex.sets }}×{{ ex.reps }}@if (ex.loadKg != null) { · {{ ex.loadKg }} kg }
+              {{ ex.done ? '✓' : ex.failed ? '✕' : '' }}
+            </span>
+            @for (line of ex.setLines ?? []; track line.id) {
+              <span [class.done]="line.done" [class.failed]="line.failed">
+                {{ line.sets }}×{{ line.reps }}@if (line.loadKg != null) { · {{ line.loadKg }} kg }
+                {{ line.done ? '✓' : line.failed ? '✕' : '' }}
+              </span>
+            }
+          </li>
+        } @empty {
+          <li class="empty-row">Aucun exercice enregistré pour cette séance.</li>
+        }
+      </ul>
+      <div class="modal-actions">
+        <button type="button" class="btn" (click)="closeSessionReview()">Fermer</button>
+      </div>
+    </div>
+  }
 </section>

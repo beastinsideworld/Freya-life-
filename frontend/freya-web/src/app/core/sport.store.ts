@@ -947,10 +947,56 @@ function snapshotSession(session: DaySession, previous?: ArchivedSession): Archi
 function upsertSessionHistory(history: ArchivedSession[], sessions: DaySession[]): ArchivedSession[] {
   const byDate = new Map(history.map((item) => [item.date, item]));
   for (const session of sessions) {
-    if (!session.date || !session.title.trim()) continue;
+    if (!session.completed || !session.date || !session.title.trim()) continue;
     byDate.set(session.date, snapshotSession(session, byDate.get(session.date)));
   }
   return [...byDate.values()].sort((a, b) => b.date.localeCompare(a.date));
+}
+
+function padTimePart(value: number): string {
+  return String(value).padStart(2, '0');
+}
+
+function clockOf(date: Date): string {
+  return `${padTimePart(date.getHours())}:${padTimePart(date.getMinutes())}:00`;
+}
+
+/** Convertit une séance terminée en événement planning (catégorie Sport). */
+export function archivedSessionToCalendarEvent(session: ArchivedSession): {
+  id: string;
+  title: string;
+  date: string;
+  endDate: string;
+  startTime: string;
+  endTime: string;
+  allDay: boolean;
+  kind: 0;
+  category: 1;
+  sportSessionId: string;
+} {
+  const parsedEnd = new Date(session.savedAt);
+  const end = Number.isNaN(parsedEnd.getTime())
+    ? new Date(`${session.date}T18:00:00`)
+    : parsedEnd;
+  const durationMs = Math.max(20, session.durationMin || 45) * 60_000;
+  let start = new Date(end.getTime() - durationMs);
+  const dayStart = new Date(`${session.date}T00:00:00`);
+  if (!Number.isNaN(dayStart.getTime()) && start < dayStart) {
+    start = dayStart;
+  }
+
+  return {
+    id: `sport:${session.id}`,
+    title: session.title,
+    date: session.date,
+    endDate: session.date,
+    startTime: clockOf(start),
+    endTime: clockOf(end),
+    allDay: false,
+    kind: 0,
+    category: 1,
+    sportSessionId: session.id
+  };
 }
 
 function normalizeArchivedSession(raw: Partial<ArchivedSession> | null | undefined): ArchivedSession | null {
@@ -1586,7 +1632,13 @@ export class SportStore {
     }));
   }
 
-  completeSession(sessionId: string): void {
+  completeSession(sessionId: string): ArchivedSession | null {
+    const current = this.state().sessions.find((session) => session.id === sessionId);
+    if (!current) return null;
+    if (current.completed) {
+      return this.state().sessionHistory.find((item) => item.date === current.date) ?? null;
+    }
+
     this.patch((s) => ({
       ...s,
       sessions: s.sessions.map((session) =>
@@ -1610,8 +1662,11 @@ export class SportStore {
       weeklyGoal: {
         ...s.weeklyGoal,
         done: Math.min(s.weeklyGoal.target, s.weeklyGoal.done + 1)
-      }
+      },
+      doneSessions: s.doneSessions + 1
     }));
+
+    return this.state().sessionHistory.find((item) => item.date === current.date) ?? null;
   }
 
   updateGoal(input: {

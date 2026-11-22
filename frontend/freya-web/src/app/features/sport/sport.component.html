@@ -322,7 +322,9 @@
         </ul>
         <div class="session-actions">
           <button type="button" class="btn" (click)="openExercisePicker()">+ Ajouter un exercice</button>
-          <button type="button" class="btn primary" (click)="store.completeSession(session.id)">▶ Terminer la séance</button>
+          <button type="button" class="btn primary" (click)="finishSession(session.id)" [disabled]="session.completed">
+            {{ session.completed ? '✓ Séance terminée' : '▶ Terminer la séance' }}
+          </button>
         </div>
       </section>
 

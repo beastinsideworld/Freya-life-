@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CalendarEvent, EventsService } from '../../core/api/events.service';
 import {
@@ -23,6 +23,14 @@ import { isFrenchHoliday } from '../../core/french-holidays';
 import { DatePickerComponent } from '../../shared/date-picker/date-picker.component';
 import { environment } from '../../../environments/environment';
 import { NavIconComponent } from '../../shared/nav-icon/nav-icon.component';
+import {
+  archivedSessionToCalendarEvent,
+  formatDuration,
+  SportStore,
+  type ArchivedSession
+} from '../../core/sport.store';
+
+type PlanningCalendarEvent = CalendarEvent & { sportSessionId?: string };
 
 interface MonthCell {
   day: number | null;
@@ -50,6 +58,10 @@ interface DayCol {
   styleUrl: './planning.component.scss'
 })
 export class PlanningComponent implements OnInit {
+  private readonly eventsApi = inject(EventsService);
+  private readonly families = inject(FamilyService);
+  private readonly sport = inject(SportStore);
+
   readonly tab = signal<TabMode>('semaine');
   readonly events = signal<CalendarEvent[]>([]);
   readonly error = signal('');
@@ -59,6 +71,7 @@ export class PlanningComponent implements OnInit {
   readonly showHabitForm = signal(false);
   readonly showTaskForm = signal(false);
   readonly editingEvent = signal<CalendarEvent | null>(null);
+  readonly reviewedSession = signal<ArchivedSession | null>(null);
   readonly editingObjective = signal<ObjectiveItem | null>(null);
   readonly editingHabit = signal<{ roomId: string; taskId: string } | null>(null);
   readonly roomToDelete = signal<HabitRoom | null>(null);
@@ -68,6 +81,7 @@ export class PlanningComponent implements OnInit {
   readonly selectedRoomId = signal<string>('');
   readonly hours = Array.from({ length: 16 }, (_, i) => `${String(7 + i).padStart(2, '0')}:00`);
   readonly repeatOptions = REPEAT_OPTIONS;
+  readonly formatDuration = formatDuration;
 
   title = '';
   date = toIsoDate(new Date());
@@ -102,15 +116,15 @@ export class PlanningComponent implements OnInit {
   readonly days = signal<DayCol[]>(this.buildDays(this.weekStart()));
   readonly monthCursor = signal(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
   readonly monthEvents = signal<CalendarEvent[]>([]);
-  readonly monthCells = computed(() => this.buildMonth(this.monthCursor(), this.monthEvents()));
+  readonly weekCalendarEvents = computed(() =>
+    this.mergeCalendarEvents(this.events().length ? this.events() : this.fallbackEvents())
+  );
+  readonly monthCells = computed(() =>
+    this.buildMonth(this.monthCursor(), this.mergeCalendarEvents(this.monthEvents()))
+  );
   readonly selectedRoom = computed(
     () => this.rooms().find((room) => room.id === this.selectedRoomId()) ?? this.rooms()[0] ?? null
   );
-
-  constructor(
-    private readonly eventsApi: EventsService,
-    private readonly families: FamilyService
-  ) {}
 
   ngOnInit(): void {
     this.objectives.set(loadObjectives());
@@ -137,8 +151,28 @@ export class PlanningComponent implements OnInit {
 
   closeAllEditors(): void {
     this.editingEvent.set(null);
+    this.reviewedSession.set(null);
     this.editingObjective.set(null);
     this.editingHabit.set(null);
+  }
+
+  closeSessionReview(): void {
+    this.reviewedSession.set(null);
+  }
+
+  historyDate(iso: string): string {
+    return new Date(`${iso}T12:00:00`).toLocaleDateString('fr-FR', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short'
+    });
+  }
+
+  numberFr(value: number, digits = 0): string {
+    return new Intl.NumberFormat('fr-FR', {
+      maximumFractionDigits: digits,
+      minimumFractionDigits: digits
+    }).format(value);
   }
 
   toggleComposer(): void {
@@ -269,6 +303,11 @@ export class PlanningComponent implements OnInit {
   openEventEditor(event: CalendarEvent, ev?: Event): void {
     ev?.stopPropagation();
     this.closeAllEditors();
+    const session = this.findSportSession(event);
+    if (session) {
+      this.reviewedSession.set(session);
+      return;
+    }
     this.editingEvent.set(event);
     this.editEventTitle = event.title;
     this.editEventDate = event.date;
@@ -558,9 +597,8 @@ export class PlanningComponent implements OnInit {
     this.persistRooms();
   }
 
-  blocksFor(date: string): Array<CalendarEvent & { top: number; height: number; tone: string }> {
-    const source = this.events().length ? this.events() : this.fallbackEvents();
-    return source
+  blocksFor(date: string): Array<PlanningCalendarEvent & { top: number; height: number; tone: string }> {
+    return this.weekCalendarEvents()
       .filter((e) => this.occursOn(e, date))
       .map((e) => {
         const { start, end } = this.blockRange(e, date);
@@ -571,6 +609,45 @@ export class PlanningComponent implements OnInit {
           tone: this.toneFor(e)
         };
       });
+  }
+
+  private mergeCalendarEvents(apiEvents: CalendarEvent[]): PlanningCalendarEvent[] {
+    const sportEvents = this.sport
+      .sessionHistory()
+      .filter((session) => session.completed)
+      .map((session) => archivedSessionToCalendarEvent(session));
+    const sportKeys = new Set(
+      sportEvents.map((event) => `${event.date}|${event.title.trim().toLowerCase()}`)
+    );
+    const filteredApi = apiEvents.filter((event) => {
+      if (String(event.id).startsWith('sport:')) return false;
+      const cat = typeof event.category === 'number' ? event.category : Number(event.category);
+      if (cat === 1 && sportKeys.has(`${event.date}|${event.title.trim().toLowerCase()}`)) {
+        return false;
+      }
+      return true;
+    });
+    return [...filteredApi, ...sportEvents];
+  }
+
+  private findSportSession(event: CalendarEvent): ArchivedSession | null {
+    const sportSessionId = (event as PlanningCalendarEvent).sportSessionId;
+    if (sportSessionId) {
+      return this.sport.sessionHistory().find((item) => item.id === sportSessionId) ?? null;
+    }
+    if (String(event.id).startsWith('sport:')) {
+      const id = String(event.id).slice('sport:'.length);
+      return this.sport.sessionHistory().find((item) => item.id === id) ?? null;
+    }
+    const cat = typeof event.category === 'number' ? event.category : Number(event.category);
+    if (cat !== 1) return null;
+    const title = event.title.trim().toLowerCase();
+    return (
+      this.sport
+        .sessionHistory()
+        .find((item) => item.completed && item.date === event.date && item.title.trim().toLowerCase() === title) ??
+      null
+    );
   }
 
   private occursOn(event: CalendarEvent, date: string): boolean {

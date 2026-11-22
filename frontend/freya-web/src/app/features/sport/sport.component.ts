@@ -4,6 +4,7 @@ import { resolveAssetUrl } from '../../core/asset-url';
 import {
   ACTIVITY_OPTIONS,
   ActivityLevel,
+  archivedSessionToCalendarEvent,
   computeEnergy,
   disciplineEmoji,
   disciplineLabel,
@@ -35,6 +36,7 @@ import {
   strengthLiftTemplates,
   type ExerciseTemplate
 } from '../../core/sport-exercise-catalog';
+import { EventsService } from '../../core/api/events.service';
 
 interface SavedExerciseOption {
   key: string;
@@ -81,6 +83,7 @@ function savedExerciseOption(template: ExerciseTemplate): SavedExerciseOption {
 })
 export class SportComponent {
   readonly store = inject(SportStore);
+  private readonly eventsApi = inject(EventsService);
   private readonly destroyRef = inject(DestroyRef);
   private timerHandle: ReturnType<typeof setInterval> | null = null;
   private timerAudio: AudioContext | null = null;
@@ -554,12 +557,35 @@ export class SportComponent {
     this.closeSessionEditor();
   }
 
+  finishSession(sessionId: string): void {
+    const archived = this.store.completeSession(sessionId);
+    if (!archived) return;
+    this.publishSessionToPlanning(archived);
+    this.openSessionReview(archived);
+  }
+
   openSessionReview(session: ArchivedSession): void {
     this.reviewedSession.set(session);
   }
 
   closeSessionReview(): void {
     this.reviewedSession.set(null);
+  }
+
+  private publishSessionToPlanning(session: ArchivedSession): void {
+    const event = archivedSessionToCalendarEvent(session);
+    this.eventsApi
+      .create({
+        title: event.title,
+        date: event.date,
+        endDate: event.endDate,
+        startTime: event.startTime,
+        endTime: event.endTime,
+        allDay: false,
+        kind: 0,
+        category: 1
+      })
+      .subscribe({ error: () => undefined });
   }
 
   historyDate(iso: string): string {
