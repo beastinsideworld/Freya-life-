@@ -985,6 +985,157 @@
   }
 }
 
+.sport-planning {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.sport-planning .week-head {
+  display: grid;
+  grid-template-columns: 2.4rem minmax(0, 1fr) 2.4rem;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.sport-planning .week-head-copy {
+  display: grid;
+  gap: 0.15rem;
+  justify-items: center;
+  text-align: center;
+}
+
+.sport-planning .week-head-copy .eyebrow {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.sport-planning .week-head h2 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--gold);
+  text-transform: capitalize;
+}
+
+.sport-planning .nav-arrow {
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 50%;
+  border: 1px solid var(--border, color-mix(in srgb, var(--contour) 22%, transparent));
+  background: color-mix(in srgb, var(--bg-secondary) 95%, transparent);
+  color: var(--text);
+  font-size: 1.35rem;
+  line-height: 1;
+  padding: 0;
+  display: grid;
+  place-items: center;
+}
+
+.sport-planning .nav-arrow:hover,
+.sport-planning .nav-arrow:focus-visible {
+  border-color: color-mix(in srgb, var(--contour) 85%, transparent);
+  box-shadow: var(--shadow-glow);
+  color: var(--gold);
+}
+
+.planning-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.4rem;
+}
+
+.planning-day {
+  position: relative;
+  display: grid;
+  gap: 0.2rem;
+  justify-items: center;
+  min-height: 5.6rem;
+  padding: 0.55rem 0.25rem 0.6rem;
+  border-radius: 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--contour) 14%, transparent);
+  background: color-mix(in srgb, var(--bg-secondary) 85%, transparent);
+  color: var(--text);
+  text-align: center;
+}
+
+.planning-day .dow {
+  font-size: 0.7rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.planning-day .dom {
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+.planning-day-title {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  max-width: 100%;
+  font-size: 0.68rem;
+  line-height: 1.2;
+  color: var(--muted);
+}
+
+.planning-day .day-check {
+  position: absolute;
+  top: 0.3rem;
+  right: 0.3rem;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 0.62rem;
+  background: color-mix(in srgb, var(--accent) 55%, transparent);
+  color: var(--text);
+}
+
+.planning-day.today {
+  border-color: color-mix(in srgb, var(--gold) 45%, transparent);
+}
+
+.planning-day.active {
+  border-color: color-mix(in srgb, var(--red-glow, var(--accent)) 55%, transparent);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--accent) 45%, transparent),
+    color-mix(in srgb, var(--bg-card) 95%, transparent)
+  );
+  box-shadow: var(--shadow-glow);
+}
+
+.planning-day.active .planning-day-title,
+.planning-day.active .dow {
+  color: color-mix(in srgb, var(--text) 88%, transparent);
+}
+
+.planning-day.done:not(.active) {
+  border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+@media (max-width: 720px) {
+  .planning-days {
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(4.4rem, 28%);
+    grid-template-columns: none;
+    overflow-x: auto;
+    padding-bottom: 0.2rem;
+    scroll-snap-type: x mandatory;
+  }
+
+  .planning-day {
+    scroll-snap-align: start;
+  }
+}
+
 .week-scroller {
   display: grid;
   grid-auto-flow: column;

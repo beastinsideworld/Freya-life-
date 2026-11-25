@@ -21,6 +21,37 @@
     </button>
   </div>
 
+  <section class="panel sport-planning" aria-label="Planning de la semaine">
+    <div class="week-head">
+      <button type="button" class="nav-arrow" (click)="shiftPlanningWeek(-1)" aria-label="Semaine précédente">‹</button>
+      <div class="week-head-copy">
+        <p class="eyebrow">Planning</p>
+        <h2>{{ planningWeekLabel() }}</h2>
+      </div>
+      <button type="button" class="nav-arrow" (click)="shiftPlanningWeek(1)" aria-label="Semaine suivante">›</button>
+    </div>
+    <div class="planning-days" role="list">
+      @for (day of planningDays(); track day.date) {
+        <button
+          type="button"
+          class="planning-day"
+          role="listitem"
+          [class.today]="day.isToday"
+          [class.active]="store.selectedDate() === day.date"
+          [class.done]="day.completed"
+          (click)="selectPlanningDay(day.date)"
+        >
+          @if (day.completed) {
+            <span class="day-check" aria-hidden="true">✓</span>
+          }
+          <span class="dow">{{ day.dow }}</span>
+          <strong class="dom">{{ day.dayNum }}</strong>
+          <span class="planning-day-title">{{ day.title }}</span>
+        </button>
+      }
+    </div>
+  </section>
+
   @if (tab() === 'suivi') {
     <section class="panel goal-card">
       <div class="goal-media" aria-hidden="true">

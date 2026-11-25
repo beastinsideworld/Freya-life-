@@ -51,12 +51,39 @@ interface SavedExerciseOption {
   template: ExerciseTemplate;
 }
 
+interface PlanningDayCard {
+  date: string;
+  dow: string;
+  dayNum: string;
+  title: string;
+  kind: string | null;
+  completed: boolean;
+  isToday: boolean;
+}
+
 function foldExerciseQuery(value: string): string {
   return value
     .trim()
     .toLowerCase()
     .normalize('NFD')
     .replace(/\p{M}/gu, '');
+}
+
+function toIsoDateLocal(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+function startOfWeekMonday(ref: Date = new Date()): Date {
+  const day = new Date(ref.getFullYear(), ref.getMonth(), ref.getDate());
+  const offset = (day.getDay() + 6) % 7;
+  day.setDate(day.getDate() - offset);
+  return day;
+}
+
+function addDaysLocal(ref: Date, delta: number): Date {
+  const next = new Date(ref.getFullYear(), ref.getMonth(), ref.getDate());
+  next.setDate(next.getDate() + delta);
+  return next;
 }
 
 function savedExerciseOption(template: ExerciseTemplate): SavedExerciseOption {
@@ -121,10 +148,45 @@ export class SportComponent {
   readonly disciplineQuery = signal('');
   readonly disciplineCategory = signal<SportDisciplineCategory>('Toutes');
   readonly draftDisciplineId = signal<SportDisciplineId | 'custom' | null>(null);
+  readonly planningWeekStart = signal(startOfWeekMonday());
 
   readonly goalTypes = GOAL_TYPE_OPTIONS;
   readonly activityOptions = ACTIVITY_OPTIONS;
   readonly disciplineCategories = SPORT_DISCIPLINE_CATEGORIES;
+
+  readonly planningWeekLabel = computed(() => {
+    const start = this.planningWeekStart();
+    const end = addDaysLocal(start, 6);
+    const startLabel = start.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+    const endLabel = end.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+    return `${startLabel} – ${endLabel}`;
+  });
+
+  readonly planningDays = computed((): PlanningDayCard[] => {
+    const start = this.planningWeekStart();
+    const today = toIsoDateLocal(new Date());
+    const sessions = this.store.sessions();
+    const history = this.store.sessionHistory();
+    const dowLabels = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+
+    return Array.from({ length: 7 }, (_, index) => {
+      const dateObj = addDaysLocal(start, index);
+      const date = toIsoDateLocal(dateObj);
+      const session = sessions.find((item) => item.date === date);
+      const archived = history.find((item) => item.date === date);
+      const title = session?.title ?? archived?.title ?? 'Repos';
+      const completed = !!(session?.completed || archived?.completed);
+      return {
+        date,
+        dow: dowLabels[index],
+        dayNum: String(dateObj.getDate()),
+        title,
+        kind: session?.kind ?? archived?.kind ?? null,
+        completed,
+        isToday: date === today
+      };
+    });
+  });
 
   readonly selectedDayDiscipline = computed(() => {
     const date = this.store.selectedDate();
@@ -337,6 +399,17 @@ export class SportComponent {
 
   setTab(tab: SportTab): void {
     this.tab.set(tab);
+  }
+
+  shiftPlanningWeek(delta: number): void {
+    this.planningWeekStart.update((start) => addDaysLocal(start, delta * 7));
+  }
+
+  selectPlanningDay(date: string): void {
+    this.store.selectDate(date);
+    if (this.tab() !== 'entrainement') {
+      this.setTab('entrainement');
+    }
   }
 
   onTimerEdit(): void {
